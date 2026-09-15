@@ -79,7 +79,7 @@ h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.05em;line-he
   width:100%;background:none;border:0;cursor:pointer;text-align:left;
   font-family:inherit;color:inherit;padding:34px 0;
   display:grid;grid-template-columns:120px 1fr auto;gap:44px;align-items:center;
-  transition:opacity .2s ease;-webkit-tap-highlight-color:transparent;
+  transition:opacity .5s var(--ease-out);-webkit-tap-highlight-color:transparent;
 }.acc-row:focus-visible{outline:2px solid var(--signal);outline-offset:6px;border-radius:4px}
 .acc-mark{display:flex;align-items:flex-end;height:48px}
 .acc-mark svg{display:block;color:#fff}
@@ -116,19 +116,23 @@ h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.05em;line-he
 }
 .prac-note{font-size:14px;color:#7C7C78;margin-top:28px;max-width:64ch}
 
-/* process */
-.track{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:52px}
-.step{background:var(--surface);border-radius:var(--r-lg);padding:30px 28px;min-height:250px;
-  display:flex;flex-direction:column}
-.step .dot{width:38px;height:38px;border-radius:var(--r-cap);background:var(--ink);color:#fff;
-  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
-.step h3{font-size:20px;font-weight:800;letter-spacing:-0.035em;margin-top:26px}
-.step p{font-size:14px;line-height:1.6;color:#5A5A55;margin-top:12px}
-.step .len{margin-top:auto;padding-top:22px;font-size:12.5px;font-weight:700;color:var(--signal-text)}
-.step-last{background:var(--ink);color:#fff}
-.step-last .dot{background:var(--signal-deep);color:#fff}
-.step-last p{color:#9C9C97}
-.step-last .len{color:var(--signal)}
+/* hairline used by process steps, deliverables and focus items — drawn in by the "rule" reveal */
+.step::before,.dl::before,.focus-item::before{content:"";position:absolute;left:0;right:0;top:0;height:1.5px;background:#2A2A28;
+  transform-origin:left;transition:transform 1.2s var(--ease-io) var(--d,0ms),background-color .5s var(--ease-out)}
+
+/* process — a timeline: icon dots strung on one hairline */
+.track{display:grid;grid-template-columns:repeat(4,1fr);margin-top:56px}
+.step{position:relative;padding-right:36px}
+/* the rule leads into each icon: from 12px after the previous icon to 12px before this one */
+.step::before{top:calc(20px - .75px);right:36px}
+.step + .step::before{left:-24px}
+/* icons sit right-aligned on the rule; the black backing masks the line around them */
+.step .dot{position:relative;display:flex;width:max-content;margin:0 -12px 0 auto;padding:0 12px;background:var(--ink);color:#E4E4DF}
+.step .dot svg{display:block;width:40px;height:40px}
+.step-last .dot{color:var(--signal-deep)}
+.step h3{font-size:20px;font-weight:800;letter-spacing:-0.035em;margin-top:28px}
+.step p{font-size:14.5px;line-height:1.6;color:#8E8E8A;margin-top:10px}
+.step .len{margin-top:18px;font-size:12.5px;font-weight:700;color:var(--signal)}
 
 /* entry — deliverables read as a ruled spec sheet */
 .entry{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:start}
@@ -136,9 +140,6 @@ h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.05em;line-he
 .dl{position:relative;display:grid;grid-template-columns:150px 1fr;gap:24px;align-items:baseline;padding:20px 0}
 .dl b{font-size:15px;font-weight:700;letter-spacing:-0.02em}
 .dl span{font-size:15px;color:#8E8E8A;line-height:1.5}
-/* hairline above each deliverable and focus item — drawn in by the "rule" reveal */
-.dl::before,.focus-item::before{content:"";position:absolute;left:0;right:0;top:0;height:1.5px;background:#2A2A28;
-  transform-origin:left;transition:transform 1.2s var(--ease-io) var(--d,0ms)}
 
 /* focus */
 h2 em{font-style:normal;color:var(--signal)}
@@ -205,16 +206,14 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 .motion .cta[data-rv]:not(.in)::before{clip-path:inset(4% 3% round 40px)}
 .motion .cta[data-rv].in::before{clip-path:inset(0% 0% round 0px)}
 
-.motion .step[data-rv] .dot{transition:transform .7s var(--ease-pop) calc(var(--d,0ms) + 300ms)}
-.motion .step[data-rv]:not(.in) .dot{transform:scale(0)}
-
-/* ruled rows (deliverables, focus items): the rule draws first, then the contents rise in */
+/* ruled rows (process steps, deliverables, focus items): the rule draws first, then the contents rise in */
 .motion [data-rv="rule"]:not(.in)::before{transform:scaleX(0)}
 .motion [data-rv="rule"] > *{transition:opacity .8s var(--ease-out),transform .8s var(--ease-out);
   transition-delay:calc(var(--d,0ms) + 200ms + var(--i,0) * 80ms)}
 .motion [data-rv="rule"]:not(.in) > *{opacity:0;transform:translateY(16px)}
 .motion [data-rv="rule"] > :nth-child(2){--i:1}
 .motion [data-rv="rule"] > :nth-child(3){--i:2}
+.motion [data-rv="rule"] > :nth-child(4){--i:3}
 
 /* motion — interaction */
 .btn{position:relative;overflow:hidden;isolation:isolate;
@@ -233,8 +232,8 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 .acc-out span:nth-child(2){--i:1}
 .acc-out span:nth-child(3){--i:2}
 .acc-out span:nth-child(4){--i:3}
-.step{transition:transform .5s var(--ease-out)}
-.step .dot{transition:transform .5s var(--ease-pop)}
+/* :where() keeps these below the reveal transitions until a step has finished revealing */
+:where(.step, .step .dot, .step p){transition:opacity .5s var(--ease-out),color .5s var(--ease-out)}
 .dl b,.dl span{transition:color .35s ease}
 @media(hover:hover){
   .btn:hover::before{transform:none}
@@ -243,12 +242,16 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   .cta .btn-white:hover{color:#fff}
   .cta .btn-line-c:hover{color:var(--signal-text)}
   .acc-list:has(.acc-row:hover) .acc-row:not(:hover){opacity:.45}
-  .acc-row:hover .acc-mark svg{transform:translateX(6px) rotate(-6deg)}
+  .acc-row:hover .acc-mark svg{transform:translateX(6px)}
   .acc-row:hover .acc-name{transform:translateX(8px)}
   .acc-row:hover .acc-ic::before,.acc-row:hover .acc-ic::after{background:#fff}
   .acc-row:hover .acc-seg{box-shadow:inset 0 0 0 1.5px #7C7C78}
-  .step:hover{transform:translateY(-6px)}
-  .step:hover .dot{transform:scale(1.12)}
+  /* hovering a stage lights every rule up to it at once; only its own icon brightens; later stages dim */
+  .step:hover ~ .step{opacity:.45}
+  :is(.step:hover, .step:has(~ .step:hover))::before{background:#D6D6D1}
+  .step:hover .dot{color:#fff}
+  .step-last:hover .dot{color:var(--signal)}
+  .step:hover p{color:#C8C8C3}
   .dl:hover b{color:var(--signal)}
   .dl:hover span{color:#C8C8C3}
 }
@@ -260,8 +263,9 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 
 /* responsive — laptop */
 @media(max-width:1100px){
-  .track{gap:12px}
-  .step{padding:28px 22px}
+  .step{padding-right:24px}
+  .step::before{right:24px}
+  .step + .step::before{left:-12px}
   .entry{gap:48px}
 }
 /* tablet */
@@ -279,8 +283,17 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   .acc-name .code{font-size:26px}
   .acc-right{gap:14px}
   .acc-inner{padding-left:0;padding-bottom:30px}
-  .track{grid-template-columns:repeat(2,1fr)}
-  .step{min-height:220px}
+  /* timeline turns vertical: icons on the right, rule running down between them */
+  .track{grid-template-columns:1fr}
+  .step{padding:0 68px 48px 0}
+  .step-last{padding-bottom:0}
+  .step-last::before{display:none}
+  .step::before,.step + .step::before{top:0;bottom:0;left:auto;right:calc(20px - .75px);width:1.5px;height:auto;transform-origin:top}
+  .motion .step[data-rv]:not(.in)::before{transform:scaleY(0)}
+  .step .dot{position:absolute;right:0;top:-12px;margin:0;padding:12px 0}
+  /* vertically a stage's rule runs on to the next stage, so only the rules before the hovered stage light */
+  @media(hover:hover){.track .step:hover::before{background:#2A2A28}}
+  .step h3{margin-top:4px}
   .entry{grid-template-columns:1fr;gap:36px}
   footer{padding:56px 0 40px}
   .fgrid{grid-template-columns:1fr 1fr;gap:40px 32px}
@@ -309,10 +322,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   .acc-row{padding:22px 0}
   .acc-inner{padding-bottom:26px}
   .prac-note{margin-top:24px}
-  .track{grid-template-columns:1fr;gap:10px}
-  .step{min-height:0;padding:24px 22px;border-radius:22px}
-  .step h3{margin-top:18px}
-  .step .len{padding-top:16px}
+  .step{padding-right:60px}
   .dl{grid-template-columns:1fr;gap:4px;padding:16px 0}
   .focus-item{padding:22px 0 32px}
   .focus-item h3{margin-top:16px}
@@ -350,6 +360,11 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   <symbol id="m-ux" viewBox="0 0 83 39"><g fill="currentColor"><path d="M12.945,25.89l2.945,0c2.652,0 5.196,-1.054 7.071,-2.929c1.875,-1.875 2.929,-4.419 2.929,-7.071l-0,-9.418c-0,-1.716 0.682,-3.363 1.896,-4.576c1.214,-1.214 2.86,-1.896 4.576,-1.896c0,-0 0.001,-0 0.001,-0c1.716,-0 3.363,0.682 4.576,1.896c1.214,1.214 1.896,2.86 1.896,4.576c-0,6.097 -0,15.32 -0,22.363c0,2.652 -1.054,5.196 -2.929,7.071c-1.875,1.875 -4.419,2.929 -7.071,2.929c-1.932,-0 -3.957,-0 -5.89,-0c-2.652,0 -5.196,-1.054 -7.071,-2.929c-1.875,-1.875 -2.929,-4.419 -2.929,-7.071l-0,-2.945Zm-2.945,0c-2.652,0 -5.196,-1.054 -7.071,-2.929c-1.875,-1.875 -2.929,-4.419 -2.929,-7.071l0,-9.418c-0,-1.716 0.682,-3.363 1.896,-4.576c1.214,-1.214 2.86,-1.896 4.576,-1.896c0,-0 0.001,-0 0.001,-0c1.716,-0 3.363,0.682 4.576,1.896c1.214,1.214 1.896,2.86 1.896,4.576c-0,7.669 -0,19.418 -0,19.418l-2.945,0Z"/><path d="M69.725,25.89l6.473,0c1.716,-0 3.363,0.682 4.576,1.896c1.214,1.214 1.896,2.86 1.896,4.576l0,0.001c0,1.716 -0.682,3.363 -1.896,4.576c-1.214,1.214 -2.86,1.896 -4.576,1.896l-0.001,-0c-1.716,0 -3.363,-0.682 -4.576,-1.896c-1.214,-1.214 -1.896,-2.86 -1.896,-4.576l0,-6.473Zm-12.945,-12.945l-6.473,0c-1.716,0 -3.363,-0.682 -4.576,-1.896c-1.214,-1.214 -1.896,-2.86 -1.896,-4.576l0,-0.001c-0,-1.716 0.682,-3.363 1.896,-4.576c1.214,-1.214 2.86,-1.896 4.576,-1.896l0.001,0c1.716,-0 3.363,0.682 4.576,1.896c1.214,1.214 1.896,2.86 1.896,4.576l-0,6.473Zm12.945,0l0,-6.473c-0,-1.716 0.682,-3.363 1.896,-4.576c1.214,-1.214 2.86,-1.896 4.576,-1.896l0.001,-0c1.716,-0 3.363,0.682 4.576,1.896c1.214,1.214 1.896,2.86 1.896,4.576l-0,0.001c0,1.716 -0.682,3.363 -1.896,4.576c-1.214,1.214 -2.86,1.896 -4.576,1.896l-6.473,-0Zm-12.945,12.945l0,6.473c0,1.716 -0.682,3.363 -1.896,4.576c-1.214,1.214 -2.86,1.896 -4.576,1.896l-0.001,-0c-1.716,0 -3.363,-0.682 -4.576,-1.896c-1.214,-1.214 -1.896,-2.86 -1.896,-4.576l0,-0.001c-0,-1.716 0.682,-3.363 1.896,-4.576c1.214,-1.214 2.86,-1.896 4.576,-1.896l6.473,0Zm0,-12.945l12.945,0l0,12.945l-12.945,0l0,-12.945Z"/></g></symbol>
   <symbol id="m-df" viewBox="0 0 86 53"><g fill="currentColor"><path d="M19.8214 13.2143C23.4705 13.2143 26.4286 10.2562 26.4286 6.60714C26.4286 2.95812 29.3867 0 33.0357 0C36.6847 0 39.6429 2.95812 39.6429 6.60714V45.5819C39.6429 49.5999 36.3856 52.8571 32.3676 52.8571H7.27529C3.25726 52.8571 0 49.5999 0 45.5819V20.4896C0 16.4715 3.25725 13.2143 7.27528 13.2143H19.8214ZM19.8214 26.4286C16.1724 26.4286 13.2143 29.3867 13.2143 33.0357C13.2143 36.6847 16.1724 39.6429 19.8214 39.6429C23.4705 39.6429 26.4286 36.6847 26.4286 33.0357C26.4286 29.3867 23.4705 26.4286 19.8214 26.4286Z"/>
 <path d="M79.1372 0C82.7863 0 85.7444 2.95812 85.7444 6.60714C85.7444 10.2562 82.7863 13.2143 79.1372 13.2143H59.3158V7.27528C59.3158 3.25725 62.5731 0 66.5911 0H79.1372ZM59.3158 13.2143V19.8214C59.3158 23.4705 62.2739 26.4286 65.923 26.4286C69.572 26.4286 72.5301 29.3867 72.5301 33.0357C72.5301 36.6847 69.572 39.6429 65.923 39.6429C62.2739 39.6429 59.3158 42.601 59.3158 46.25C59.3158 49.899 56.3577 52.8571 52.7087 52.8571C49.0596 52.8571 46.1015 49.899 46.1015 46.25V20.4896C46.1015 16.4715 49.3588 13.2143 53.3768 13.2143H59.3158Z"/></g></symbol>
+  <!-- process step icons: Lucide (lucide.dev), ISC License, Copyright (c) Lucide Contributors -->
+  <symbol id="i-frame" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180 12 12)"><path d="M15 15V9H9"/><path d="m9 15 6-6"/><rect x="3" y="3" width="18" height="18" rx="2"/></g></symbol>
+  <symbol id="i-concept" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 21h1"/><path d="M21 14v1"/><path d="M21 19a2 2 0 0 1-2 2"/><path d="M21 9v1"/><path d="M3 14v1"/><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2"/><path d="M3 9v1"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M9 21h1"/></g></symbol>
+  <symbol id="i-system" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m18.065 8.496-12.125 7"/><path d="m5.94 8.504 12.125 7"/></g></symbol>
+  <symbol id="i-entry" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3v10"/><path d="m12.67 5.5 8.66 5"/><path d="m12.67 10.5 8.66-5"/><path d="M9 17a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2z"/></g></symbol>
 </svg>
 
 <nav>
@@ -390,8 +405,8 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
     </div>
     <h2>What cnpt does.</h2>
     <div class="acc-list">
-      <div class="acc" data-open="true">
-        <button class="acc-row" aria-expanded="true" aria-controls="panel-ai" id="btn-ai">
+      <div class="acc" data-open="false">
+        <button class="acc-row" aria-expanded="false" aria-controls="panel-ai" id="btn-ai">
           <span class="acc-mark"><svg class="mk-ai" viewBox="0 0 81 53"><use href="#m-ai"/></svg></span>
           <span class="acc-name"><span class="code">ai</span><span class="kor">Information system design</span></span>
           <span class="acc-right">
@@ -444,7 +459,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 </section>
 
 <!-- PROCESS -->
-<section class="sec" id="process">
+<section class="sec dark sec-join" id="process">
   <div class="wrap">
     <div class="sec-head">
       <span class="eyebrow">process</span>
@@ -453,25 +468,25 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
     <h2>You can stop after any stage and still own something useful.</h2>
     <div class="track">
       <div class="step">
-        <div class="dot">1</div>
+        <div class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-frame"/></svg></div>
         <h3>Frame</h3>
         <p>We interview your team and your customers, audit what exists, and rewrite the brief. Half of our engagements change shape at this point.</p>
         <div class="len">2–3 weeks</div>
       </div>
       <div class="step">
-        <div class="dot">2</div>
+        <div class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-concept"/></svg></div>
         <h3>Concept</h3>
         <p>Two or three genuinely different directions, built far enough to test. We recommend one and say plainly what it costs you.</p>
         <div class="len">3–5 weeks</div>
       </div>
       <div class="step">
-        <div class="dot">3</div>
+        <div class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-system"/></svg></div>
         <h3>System</h3>
         <p>The chosen direction becomes a system — data model, components, spatial standards, and the rules that keep them consistent.</p>
         <div class="len">6–12 weeks</div>
       </div>
       <div class="step step-last">
-        <div class="dot">4</div>
+        <div class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-entry"/></svg></div>
         <h3>Entry</h3>
         <p>We design the launch sequence, run it with your team, and stay through the first weeks of real traffic to fix what only real use reveals.</p>
         <div class="len">4–8 weeks</div>
@@ -481,7 +496,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 </section>
 
 <!-- DELIVERABLES -->
-<section class="sec dark">
+<section class="sec dark sec-join">
   <div class="wrap">
     <div class="entry">
       <div>
@@ -653,8 +668,8 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
     ['.eyebrow', 'clip'],
     ['.sec h2, .cta h2', 'split'],
     ['.sec-head p, .prac-note, .lede, .cta p, .cta-row', 'up'],
-    ['.acc, .step, .fgrid > *', 'up'],
-    ['.dl, .focus-item', 'rule'],
+    ['.acc, .fgrid > *', 'up'],
+    ['.step, .dl, .focus-item', 'rule'],
     ['.cta', 'cta'],
     ['.fbottom', 'fade']
   ];
