@@ -149,7 +149,8 @@ h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.05em;line-he
 .fit-n li::before{background:var(--signal)}
 
 /* cta band */
-.cta{background:var(--signal);color:#fff;padding:96px 0}
+.cta{position:relative;isolation:isolate;background:var(--ink);color:#fff;padding:96px 0}
+.cta::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--signal)}
 .cta h2{max-width:20ch}
 .cta p{font-size:17px;color:rgba(255,255,255,.88);max-width:52ch;margin-top:22px;line-height:1.6}
 .cta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:40px}
@@ -200,9 +201,10 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 .motion [data-rv="split"] .wd > span{transition:transform 1.1s var(--ease-out) calc(var(--d,0ms) + var(--i,0) * 45ms)}
 .motion [data-rv="split"]:not(.in) .wd > span{transform:translateY(115%)}
 
-.motion .cta[data-rv]{transition:clip-path 1.2s var(--ease-out) var(--d,0ms)}
-.motion .cta[data-rv]:not(.in){clip-path:inset(4% 3% round 40px)}
-.motion .cta[data-rv].in{clip-path:inset(0% 0% round 0px)}
+/* contact: the red layer opens out over the black section */
+.motion .cta[data-rv]::before{transition:clip-path 1.2s var(--ease-out) var(--d,0ms)}
+.motion .cta[data-rv]:not(.in)::before{clip-path:inset(4% 3% round 40px)}
+.motion .cta[data-rv].in::before{clip-path:inset(0% 0% round 0px)}
 
 .motion .step[data-rv] .dot{transition:transform .7s var(--ease-pop) calc(var(--d,0ms) + 300ms)}
 .motion .step[data-rv]:not(.in) .dot{transform:scale(0)}
