@@ -130,20 +130,20 @@ h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.05em;line-he
 .step-last p{color:#9C9C97}
 .step-last .len{color:var(--signal)}
 
-/* entry */
-.entry{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
-.deliver{display:flex;flex-direction:column;gap:2px}
-.dl{display:flex;align-items:center;gap:18px;min-height:66px;padding:14px 26px;
-  background:#141413;border-radius:var(--r-cap)}
-.dl b{font-size:15px;font-weight:700;letter-spacing:-0.02em;flex:none;min-width:132px}
-.dl span{font-size:13.5px;color:#8E8E8A;line-height:1.45}
+/* entry — deliverables read as a ruled spec sheet */
+.entry{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:start}
+.deliver{border-bottom:1.5px solid #2A2A28}
+.dl{position:relative;display:grid;grid-template-columns:150px 1fr;gap:24px;align-items:baseline;padding:20px 0}
+.dl b{font-size:15px;font-weight:700;letter-spacing:-0.02em}
+.dl span{font-size:15px;color:#8E8E8A;line-height:1.5}
+/* hairline above each deliverable and focus item — drawn in by the "rule" reveal */
+.dl::before,.focus-item::before{content:"";position:absolute;left:0;right:0;top:0;height:1.5px;background:#2A2A28;
+  transform-origin:left;transition:transform 1.2s var(--ease-io) var(--d,0ms)}
 
 /* focus */
 h2 em{font-style:normal;color:var(--signal)}
 .focus{display:grid;grid-template-columns:repeat(2,1fr);gap:0 64px;margin-top:52px}
 .focus-item{position:relative;padding:28px 0 44px}
-.focus-item::before{content:"";position:absolute;left:0;right:0;top:0;height:1.5px;background:#2A2A28;
-  transform-origin:left;transition:transform 1.2s var(--ease-io) var(--d,0ms)}
 .focus-no{display:block;font-size:13px;font-weight:700;color:var(--signal)}
 .focus-item h3{font-size:clamp(24px,2.8vw,34px);font-weight:800;letter-spacing:-0.045em;line-height:1.05;margin-top:22px}
 .focus-item p{font-size:15px;line-height:1.6;color:#8E8E8A;max-width:40ch;margin-top:12px}
@@ -171,7 +171,7 @@ footer .tag{font-size:14px;color:#7C7C78;margin-top:22px;max-width:34ch;line-hei
 
 /* motion — entrance reveals
    Only active while <html> has .motion (set in <head> when JS runs and reduced-motion is off).
-   The script tags targets with data-rv="up|left|fade|clip|split|line|cta" and adds .in as they
+   The script tags targets with data-rv="up|fade|clip|split|line|rule|cta" and adds .in as they
    scroll into view; the attribute is dropped once the reveal ends so hover transitions take over. */
 :root{--ease-out:cubic-bezier(.16,1,.3,1);--ease-io:cubic-bezier(.7,0,.2,1);--ease-pop:cubic-bezier(.34,1.56,.64,1)}
 .motion:not(.motion-ready) body{visibility:hidden}
@@ -188,7 +188,6 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 
 .motion [data-rv]{transition:opacity .9s var(--ease-out) var(--d,0ms),transform .9s var(--ease-out) var(--d,0ms)}
 .motion [data-rv="up"]:not(.in){opacity:0;transform:translateY(28px)}
-.motion [data-rv="left"]:not(.in){opacity:0;transform:translateX(32px)}
 .motion [data-rv="fade"]:not(.in){opacity:0}
 .motion [data-rv="clip"]{transition:clip-path .8s var(--ease-io) var(--d,0ms)}
 .motion [data-rv="clip"]:not(.in){clip-path:inset(0 100% 0 0 round 999px)}
@@ -209,13 +208,13 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 .motion .step[data-rv] .dot{transition:transform .7s var(--ease-pop) calc(var(--d,0ms) + 300ms)}
 .motion .step[data-rv]:not(.in) .dot{transform:scale(0)}
 
-/* focus items: the rule draws first, then number, title and text rise in */
-.motion [data-rv="focus"]:not(.in)::before{transform:scaleX(0)}
-.motion [data-rv="focus"] > *{transition:opacity .8s var(--ease-out),transform .8s var(--ease-out);
+/* ruled rows (deliverables, focus items): the rule draws first, then the contents rise in */
+.motion [data-rv="rule"]:not(.in)::before{transform:scaleX(0)}
+.motion [data-rv="rule"] > *{transition:opacity .8s var(--ease-out),transform .8s var(--ease-out);
   transition-delay:calc(var(--d,0ms) + 200ms + var(--i,0) * 80ms)}
-.motion [data-rv="focus"]:not(.in) > *{opacity:0;transform:translateY(16px)}
-.focus-item > :nth-child(2){--i:1}
-.focus-item > :nth-child(3){--i:2}
+.motion [data-rv="rule"]:not(.in) > *{opacity:0;transform:translateY(16px)}
+.motion [data-rv="rule"] > :nth-child(2){--i:1}
+.motion [data-rv="rule"] > :nth-child(3){--i:2}
 
 /* motion — interaction */
 .btn{position:relative;overflow:hidden;isolation:isolate;
@@ -236,8 +235,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 .acc-out span:nth-child(4){--i:3}
 .step{transition:transform .5s var(--ease-out)}
 .step .dot{transition:transform .5s var(--ease-pop)}
-.dl{transition:background-color .35s ease}
-.dl b{transition:color .35s ease}
+.dl b,.dl span{transition:color .35s ease}
 @media(hover:hover){
   .btn:hover::before{transform:none}
   .btn-sig:hover,.btn-line:hover{color:var(--ink)}
@@ -251,8 +249,8 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   .acc-row:hover .acc-seg{box-shadow:inset 0 0 0 1.5px #7C7C78}
   .step:hover{transform:translateY(-6px)}
   .step:hover .dot{transform:scale(1.12)}
-  .dl:hover{background:#1D1D1B}
   .dl:hover b{color:var(--signal)}
+  .dl:hover span{color:#C8C8C3}
 }
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
@@ -315,8 +313,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   .step{min-height:0;padding:24px 22px;border-radius:22px}
   .step h3{margin-top:18px}
   .step .len{padding-top:16px}
-  .dl{flex-direction:column;align-items:flex-start;gap:6px;padding:18px 20px;border-radius:20px}
-  .dl b{min-width:0}
+  .dl{grid-template-columns:1fr;gap:4px;padding:16px 0}
   .focus-item{padding:22px 0 32px}
   .focus-item h3{margin-top:16px}
   .lede{font-size:16px;margin-top:18px}
@@ -657,8 +654,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
     ['.sec h2, .cta h2', 'split'],
     ['.sec-head p, .prac-note, .lede, .cta p, .cta-row', 'up'],
     ['.acc, .step, .fgrid > *', 'up'],
-    ['.focus-item', 'focus'],
-    ['.dl', 'left'],
+    ['.dl, .focus-item', 'rule'],
     ['.cta', 'cta'],
     ['.fbottom', 'fade']
   ];
