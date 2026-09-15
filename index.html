@@ -17,11 +17,13 @@
 :root{
   --ink:#000000; --paper:#FFFFFF; --surface:#F4F4F1; --mist:#E4E4DF;
   --grey:#6F6F6C; --signal:#FF004D; --signal-deep:#E60045; --signal-text:#C2003C;
+  --ink-border:#2E2E2C; --text-dim:#A8A8A3;
+  --nav-h:74px;
   --r-cap:999px; --r-lg:28px; --r-sm:14px;
   --font:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:var(--nav-h)}
 body{background:var(--paper);color:var(--ink);font-family:var(--font);font-size:16px;
   line-height:1.6;font-weight:500;letter-spacing:-0.011em;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
@@ -30,7 +32,7 @@ a{color:inherit;text-decoration:none}
 
 /* nav */
 nav{position:sticky;top:0;z-index:20;background:var(--ink);border-bottom:1.5px solid #1C1C1A}
-nav .wrap{height:74px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+nav .wrap{height:var(--nav-h);display:flex;align-items:center;justify-content:space-between;gap:24px}
 nav .wm{width:86px;color:#fff;display:block;flex:none}
 .navlinks{display:flex;align-items:center;gap:30px;font-size:14px;font-weight:600;color:#9C9C97}
 .navlinks a:hover{color:#fff}
@@ -63,17 +65,19 @@ nav .wm{width:86px;color:#fff;display:block;flex:none}
 h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.05em;line-height:1.05;max-width:18ch}
 .lede{font-size:18px;line-height:1.6;color:#43433D;max-width:58ch;margin-top:22px}
 .dark .lede{color:#A8A8A3}
+.eyebrow + h2{margin-top:26px}
 
 /* practices — accordion rows */
+.acc-list{margin-top:52px}
 .acc{border-top:1.5px solid #222220}
 .acc:last-of-type{border-bottom:1.5px solid #222220}
 .acc-row{
   width:100%;background:none;border:0;cursor:pointer;text-align:left;
   font-family:inherit;color:inherit;padding:34px 0;
   display:grid;grid-template-columns:120px 1fr auto;gap:44px;align-items:center;
-  transition:opacity .2s ease;
+  transition:opacity .2s ease;-webkit-tap-highlight-color:transparent;
 }
-.acc-row:hover{opacity:.7}
+@media(hover:hover){.acc-row:hover{opacity:.7}}
 .acc-row:focus-visible{outline:2px solid var(--signal);outline-offset:6px;border-radius:4px}
 .acc-mark{display:flex;align-items:flex-end;height:48px}
 .acc-mark svg{display:block;color:#fff}
@@ -110,11 +114,12 @@ h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.05em;line-he
 }
 .prac-note{font-size:14px;color:#7C7C78;margin-top:28px;max-width:64ch}
 @media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
   .acc-panel,.acc-inner,.acc-ic::before,.acc-ic::after{transition:none}
 }
 
 /* process */
-.track{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.track{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:52px}
 .step{background:var(--surface);border-radius:var(--r-lg);padding:30px 28px;min-height:250px;
   display:flex;flex-direction:column}
 .step .dot{width:38px;height:38px;border-radius:var(--r-cap);background:var(--ink);color:#fff;
@@ -136,7 +141,7 @@ h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.05em;line-he
 .dl span{font-size:13.5px;color:#8E8E8A;line-height:1.45}
 
 /* fit */
-.fit{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.fit{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:46px}
 .fitbox{border-radius:var(--r-lg);padding:32px 34px}
 .fit-y{background:var(--surface)}
 .fit-n{background:#FFF0F4}
@@ -154,6 +159,7 @@ h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.05em;line-he
 .cta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:40px}
 .cta .btn-white{background:#fff;color:var(--signal-text)}
 .cta .btn-line-c{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6);color:#fff}
+.cta .eyebrow{background:transparent;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6);color:#fff}
 
 /* footer */
 footer{padding:72px 0 56px}
@@ -166,29 +172,79 @@ footer .tag{font-size:14px;color:#7C7C78;margin-top:22px;max-width:34ch;line-hei
 .fbottom{margin-top:64px;padding-top:26px;border-top:1.5px solid #1C1C1A;display:flex;
   justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:13px;color:#5A5A57;font-weight:600}
 
+/* responsive — laptop */
+@media(max-width:1100px){
+  .track{gap:12px}
+  .step{padding:28px 22px}
+  .entry{gap:48px}
+}
+/* tablet */
 @media(max-width:1000px){
-  .wrap{padding:0 22px}
-  .sec{padding:72px 0}
-  .hero{padding:72px 0 64px}
+  .wrap{padding:0 32px}
+  .sec{padding:80px 0}
+  .hero{padding:80px 0 64px}
   .hero-foot{margin-top:56px}
-  .navlinks span.hide{display:none}
-  .navlinks{gap:18px}
-  .fit,.fgrid{grid-template-columns:1fr}
-  .acc-row{grid-template-columns:1fr auto;gap:16px;padding:26px 0}
+  .sec-head{margin-bottom:36px}
+  .acc-list,.track{margin-top:40px}
+  .fit{margin-top:36px}
+  .navlinks{gap:20px}
+  .acc-row{grid-template-columns:1fr auto;gap:18px 16px;padding:26px 0}
   .acc-mark{grid-column:1 / -1;height:40px}
   .mk-ai{width:61px;height:40px} .mk-ux{width:64px;height:30px} .mk-df{width:65px;height:40px}
-  .acc-name{margin-top:14px}
   .acc-name .code{font-size:26px}
   .acc-right{gap:14px}
   .acc-inner{padding-left:0;padding-bottom:30px}
   .track{grid-template-columns:repeat(2,1fr)}
+  .step{min-height:220px}
   .entry{grid-template-columns:1fr;gap:36px}
-  .dl{flex-direction:column;align-items:flex-start;gap:6px;border-radius:var(--r-lg);padding:20px 24px}
-  .dl b{min-width:0}
+  footer{padding:56px 0 40px}
+  .fgrid{grid-template-columns:1fr 1fr;gap:40px 32px}
+  .fgrid > :first-child{grid-column:1 / -1}
+  .fbottom{margin-top:48px}
 }
+@media(max-width:760px){
+  .fit{grid-template-columns:1fr}
+  .lede{font-size:17px}
+}
+/* phone */
 @media(max-width:620px){
-  .track{grid-template-columns:1fr}
-  .navlinks a{display:none}
+  :root{--nav-h:62px}
+  .wrap{padding:0 20px}
+  nav .wm{width:74px}
+  .navlinks{gap:16px}
+  .navlinks .btn{height:36px;padding:0 16px;font-size:13px}
+  .sec{padding:64px 0}
+  .hero{padding:56px 0 48px}
+  .hero p{margin-top:22px}
+  .hero-cta{margin-top:32px}
+  .hero-foot{margin-top:44px;padding-top:26px;gap:8px}
+  .chip{height:36px;padding:0 16px;font-size:13px}
+  .sec-head{gap:12px 16px;margin-bottom:28px}
+  .eyebrow + h2{margin-top:20px}
+  .acc-list,.track{margin-top:32px}
+  .fit{margin-top:28px}
+  .acc-row{padding:22px 0}
+  .acc-inner{padding-bottom:26px}
+  .prac-note{margin-top:24px}
+  .track{grid-template-columns:1fr;gap:10px}
+  .step{min-height:0;padding:24px 22px;border-radius:22px}
+  .step h3{margin-top:18px}
+  .step .len{padding-top:16px}
+  .dl{flex-direction:column;align-items:flex-start;gap:6px;padding:18px 20px;border-radius:20px}
+  .dl b{min-width:0}
+  .fitbox{padding:26px 22px;border-radius:22px}
+  .lede{font-size:16px;margin-top:18px}
+  .cta{padding:64px 0}
+  .cta p{font-size:16px}
+  .cta-row{margin-top:32px}
+  .fbottom{margin-top:40px}
+}
+@media(max-width:480px){
+  .navlinks a:not(.btn){display:none}
+  .hero-cta .btn,.cta-row .btn{flex:1 1 100%;justify-content:center}
+}
+@media(max-width:400px){
+  .fgrid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -239,7 +295,7 @@ footer .tag{font-size:14px;color:#7C7C78;margin-top:22px;max-width:34ch;line-hei
       <p>Three practices. A project can use one of them or all three.</p>
     </div>
     <h2>What cnpt does.</h2>
-    <div class="acc-list" style="margin-top:52px">
+    <div class="acc-list">
       <div class="acc" data-open="true">
         <button class="acc-row" aria-expanded="true" aria-controls="panel-ai" id="btn-ai">
           <span class="acc-mark"><svg class="mk-ai" viewBox="0 0 81 53"><use href="#m-ai"/></svg></span>
@@ -301,7 +357,7 @@ footer .tag{font-size:14px;color:#7C7C78;margin-top:22px;max-width:34ch;line-hei
       <p>Four stages. Each one ends with something you can act on without us.</p>
     </div>
     <h2>You can stop after any stage and still own something useful.</h2>
-    <div class="track" style="margin-top:52px">
+    <div class="track">
       <div class="step">
         <div class="dot">1</div>
         <h3>Frame</h3>
@@ -336,7 +392,7 @@ footer .tag{font-size:14px;color:#7C7C78;margin-top:22px;max-width:34ch;line-hei
     <div class="entry">
       <div>
         <span class="eyebrow">what you get</span>
-        <h2 style="margin-top:26px">Working material, handed over with the rules attached.</h2>
+        <h2>Working material, handed over with the rules attached.</h2>
         <p class="lede">Every engagement ends with assets your team can operate. We write the rules down because a system nobody can maintain is a system that lasts one quarter.</p>
       </div>
       <div class="deliver">
@@ -358,7 +414,7 @@ footer .tag{font-size:14px;color:#7C7C78;margin-top:22px;max-width:34ch;line-hei
       <p>Worth reading before you write to us.</p>
     </div>
     <h2>We are a good fit for some projects and a bad fit for others.</h2>
-    <div class="fit" style="margin-top:46px">
+    <div class="fit">
       <div class="fitbox fit-y">
         <h3>Write to us when</h3>
         <ul>
@@ -385,8 +441,8 @@ footer .tag{font-size:14px;color:#7C7C78;margin-top:22px;max-width:34ch;line-hei
 <!-- CTA -->
 <section class="cta" id="contact">
   <div class="wrap">
-    <span class="eyebrow" style="background:transparent;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6);color:#fff">contact</span>
-    <h2 style="margin-top:26px">Tell us what market you are walking into.</h2>
+    <span class="eyebrow">contact</span>
+    <h2>Tell us what market you are walking into.</h2>
     <p>Send a paragraph. We reply within two working days, and the first conversation is a real working session rather than a credentials presentation.</p>
     <div class="cta-row">
       <a class="btn btn-white btn-lg" href="mailto:hello@cnpt.studio">hello@cnpt.studio</a>
