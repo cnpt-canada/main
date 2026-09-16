@@ -46,8 +46,8 @@ nav .wm{width:86px;color:#fff;display:block;flex:none}
 
 /* hero */
 .hero{padding:0 0 96px;overflow:hidden}
-/* full-bleed band; the crop sits high so the head stays whole and the shoulders give way */
-.hero-video{display:block;width:100%;aspect-ratio:3/1;object-fit:cover;object-position:center 12%;
+/* full-bleed band; the crop is placed so the video's own type lands in the middle of the band */
+.hero-video{display:block;width:100%;aspect-ratio:3/1;object-fit:cover;object-position:center 54%;
   background:#0B0B0A;margin-bottom:64px}
 .hero h1{font-size:clamp(38px,6.4vw,80px);font-weight:800;letter-spacing:-0.055em;line-height:1.0;max-width:15ch}
 .hero h1 em{font-style:normal;color:var(--signal)}
@@ -297,7 +297,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   .wrap{padding:0 32px}
   :root{--sec-pad:80px}
   .hero{padding:0 0 64px}
-  .hero-video{aspect-ratio:2/1;margin-bottom:40px}
+  .hero-video{aspect-ratio:2/1;object-position:center 65%;margin-bottom:40px}
   .hero-foot{margin-top:56px}
   .sec-head{margin-bottom:36px}
   .acc-list,.track,.focus{margin-top:40px}
