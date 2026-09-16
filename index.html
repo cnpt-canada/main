@@ -45,9 +45,10 @@ nav .wm{width:86px;color:#fff;display:block;flex:none}
 .btn-lg{height:52px;padding:0 30px;font-size:15px}
 
 /* hero */
-.hero{padding:56px 0 96px;overflow:hidden}
-.hero-video{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:var(--r-lg);
-  background:#0B0B0A;margin-bottom:56px}
+.hero{padding:0 0 96px;overflow:hidden}
+/* full-bleed band; the crop sits high so the head stays whole and the shoulders give way */
+.hero-video{display:block;width:100%;aspect-ratio:3/1;object-fit:cover;object-position:center 12%;
+  background:#0B0B0A;margin-bottom:64px}
 .hero h1{font-size:clamp(38px,6.4vw,80px);font-weight:800;letter-spacing:-0.055em;line-height:1.0;max-width:15ch}
 .hero h1 em{font-style:normal;color:var(--signal)}
 .hero p{margin-top:30px;font-size:clamp(16px,1.5vw,19px);color:#9C9C97;max-width:54ch;line-height:1.6}
@@ -295,8 +296,8 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 @media(max-width:1000px){
   .wrap{padding:0 32px}
   :root{--sec-pad:80px}
-  .hero{padding:48px 0 64px}
-  .hero-video{margin-bottom:40px}
+  .hero{padding:0 0 64px}
+  .hero-video{aspect-ratio:2/1;margin-bottom:40px}
   .hero-foot{margin-top:56px}
   .sec-head{margin-bottom:36px}
   .acc-list,.track,.focus{margin-top:40px}
@@ -338,8 +339,8 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   nav .wm{width:74px}
   .navlinks{gap:16px}
   .navlinks .btn{height:36px;padding:0 16px;font-size:13px}
-  .hero{padding:32px 0 48px}
-  .hero-video{margin-bottom:28px;border-radius:20px}
+  .hero{padding:0 0 48px}
+  .hero-video{aspect-ratio:16/9;margin-bottom:28px}
   .hero p{margin-top:22px}
   .hero-cta{margin-top:32px}
   .hero-foot{margin-top:44px;padding-top:26px;gap:8px}
@@ -418,8 +419,8 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 
 <!-- HERO -->
 <header class="dark hero" id="top">
+  <video class="hero-video" src="cnptherovid-web.mp4" autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
   <div class="wrap">
-    <video class="hero-video" src="cnptherovid-web.mp4" autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
     <h1>We design the experience a market meets <em>first.</em></h1>
     <p>cnpt is a design consultancy. We shape the concept, build the system behind it, and design every point where it touches a customer — so that entering a new market is a designed act rather than an improvised one.</p>
     <div class="hero-cta">
