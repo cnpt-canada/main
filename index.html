@@ -45,7 +45,9 @@ nav .wm{width:86px;color:#fff;display:block;flex:none}
 .btn-lg{height:52px;padding:0 30px;font-size:15px}
 
 /* hero */
-.hero{padding:104px 0 96px;overflow:hidden}
+.hero{padding:56px 0 96px;overflow:hidden}
+.hero-video{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:var(--r-lg);
+  background:#0B0B0A;margin-bottom:56px}
 .hero h1{font-size:clamp(38px,6.4vw,80px);font-weight:800;letter-spacing:-0.055em;line-height:1.0;max-width:15ch}
 .hero h1 em{font-style:normal;color:var(--signal)}
 .hero p{margin-top:30px;font-size:clamp(16px,1.5vw,19px);color:#9C9C97;max-width:54ch;line-height:1.6}
@@ -293,7 +295,8 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 @media(max-width:1000px){
   .wrap{padding:0 32px}
   :root{--sec-pad:80px}
-  .hero{padding:80px 0 64px}
+  .hero{padding:48px 0 64px}
+  .hero-video{margin-bottom:40px}
   .hero-foot{margin-top:56px}
   .sec-head{margin-bottom:36px}
   .acc-list,.track,.focus{margin-top:40px}
@@ -335,7 +338,8 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   nav .wm{width:74px}
   .navlinks{gap:16px}
   .navlinks .btn{height:36px;padding:0 16px;font-size:13px}
-  .hero{padding:56px 0 48px}
+  .hero{padding:32px 0 48px}
+  .hero-video{margin-bottom:28px;border-radius:20px}
   .hero p{margin-top:22px}
   .hero-cta{margin-top:32px}
   .hero-foot{margin-top:44px;padding-top:26px;gap:8px}
@@ -415,6 +419,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 <!-- HERO -->
 <header class="dark hero" id="top">
   <div class="wrap">
+    <video class="hero-video" src="cnptherovid-web.mp4" autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
     <h1>We design the experience a market meets <em>first.</em></h1>
     <p>cnpt is a design consultancy. We shape the concept, build the system behind it, and design every point where it touches a customer — so that entering a new market is a designed act rather than an improvised one.</p>
     <div class="hero-cta">
@@ -703,6 +708,23 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   window.addEventListener('resize', onScroll);
   onScroll();
 
+  // the hero video plays only while it is on screen, and not at all under reduced motion
+  var heroVideo = document.querySelector('.hero-video');
+  if (heroVideo) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      heroVideo.removeAttribute('autoplay');
+      heroVideo.pause();
+    } else if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) return heroVideo.pause();
+          var played = heroVideo.play();
+          if (played && played.catch) played.catch(function () {});
+        });
+      }, { threshold: 0.05 }).observe(heroVideo);
+    }
+  }
+
   if (!motion) return;
 
   // wrap every word in a mask span so headings can rise word by word
@@ -732,6 +754,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   // [selector, reveal type, fixed delay ms, extra delay per match]
   // Targets without a fixed delay are staggered in the order they enter the viewport.
   var plan = [
+    ['.hero-video', 'up', 40],
     ['.hero h1', 'split', 120],
     ['.hero p', 'up', 480],
     ['.hero-cta .btn', 'up', 620, 80],
