@@ -132,8 +132,8 @@ h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.05em;line-he
 }
 .prac-note{font-size:14px;color:#7C7C78;margin-top:28px;max-width:64ch}
 
-/* hairline used by value rows, process steps, deliverables and focus items — drawn in by the "rule" reveal */
-.value::before,.step::before,.dl::before,.focus-item::before{content:"";position:absolute;left:0;right:0;top:0;height:1.5px;background:#2A2A28;
+/* hairline used by value rows, process steps, deliverables, focus items and team rows — drawn in by the "rule" reveal */
+.value::before,.step::before,.dl::before,.focus-item::before,.member::before{content:"";position:absolute;left:0;right:0;top:0;height:1.5px;background:#2A2A28;
   transform-origin:left;transition:transform 1.2s var(--ease-io) var(--d,0ms),background-color .5s var(--ease-out)}
 
 /* process — a timeline: icon dots strung on one hairline */
@@ -165,6 +165,33 @@ h2 em{font-style:normal;color:var(--signal)}
 .focus-no{display:block;font-size:13px;font-weight:700;color:var(--signal)}
 .focus-item h3{font-size:clamp(24px,2.8vw,34px);font-weight:800;letter-spacing:-0.045em;line-height:1.05;margin-top:22px}
 .focus-item p{font-size:15px;line-height:1.6;color:#8E8E8A;max-width:40ch;margin-top:12px}
+
+/* team — two ruled cards side by side, like the focus grid: portrait left; name on top, spec sheet level with the portrait's foot */
+.team{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 40px;margin-top:56px}
+.member{position:relative;display:grid;grid-template-columns:200px minmax(0,1fr);grid-template-rows:auto 1fr;
+  gap:0 28px;padding:36px 0 44px}
+.member-photo{grid-row:span 2}
+.member-spec{align-self:end;margin-top:20px}
+/* the frame matches the portraits' own 1350×1764 crop, so nothing is cut off */
+.member-photo{position:relative;display:flex;align-items:center;justify-content:center;aspect-ratio:1350/1764;
+  border-radius:var(--r-sm);overflow:hidden;background:#161615}
+/* initials sit behind the photo and only show if the image file is missing */
+.member-init{font-size:clamp(40px,5vw,64px);font-weight:800;letter-spacing:-0.05em;color:#2E2E2C}
+.member-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 20%;
+  transition:transform .8s var(--ease-out)}
+.member h3{font-size:clamp(22px,1.9vw,26px);font-weight:800;letter-spacing:-0.04em;line-height:1.1}
+.member-role{font-size:14.5px;color:#A8A8A3;margin-top:10px}
+.member-role span{white-space:nowrap}
+/* spec sheet: label | value rows */
+.member-spec > div{display:grid;grid-template-columns:72px minmax(0,1fr);gap:14px;align-items:baseline;
+  padding:12px 0;border-top:1.5px solid #1C1C1A}
+.member-spec > div:last-child{padding-bottom:0}
+.member-spec dt{font-size:12.5px;font-weight:700;color:#7C7C78}
+.member-spec dd{font-size:14px;line-height:1.5;color:#D6D6D1}
+.member-spec dd span{color:#8E8E8A}
+.member-spec a{display:inline-flex;align-items:center;gap:6px;transition:color .25s ease}
+.member-spec svg{display:block;width:10px;height:10px;flex:none}
+.member-spec a:focus-visible{outline:2px solid var(--signal);outline-offset:3px;border-radius:4px}
 
 /* cta band */
 .cta{position:relative;isolation:isolate;background:var(--ink);color:#fff;padding:96px 0}
@@ -200,6 +227,7 @@ footer .tag{font-size:14px;color:#7C7C78;margin-top:22px;max-width:34ch;line-hei
 .motion .navlinks > :nth-child(1){animation-delay:.08s}
 .motion .navlinks > :nth-child(2){animation-delay:.14s}
 .motion .navlinks > :nth-child(3){animation-delay:.2s}
+.motion .navlinks > :nth-child(4){animation-delay:.26s}
 @keyframes nav-in{from{opacity:0;transform:translateY(-12px)}}
 nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;background:var(--signal);
   transform:scaleX(var(--progress,0));transform-origin:left;pointer-events:none}
@@ -250,7 +278,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 .acc-out span:nth-child(3){--i:2}
 .acc-out span:nth-child(4){--i:3}
 /* :where() keeps these below the reveal transitions until a step has finished revealing */
-:where(.step > *, .step .dot, .step .dot svg, .value > *){transition:opacity .5s var(--ease-out),color .5s var(--ease-out)}
+:where(.step > *, .step .dot, .step .dot svg, .value > *, .member > *){transition:opacity .5s var(--ease-out),color .5s var(--ease-out)}
 .dl b,.dl span{transition:color .35s ease}
 @media(hover:hover){
   .btn:hover::before{transform:none}
@@ -278,6 +306,11 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   .value-core:hover .value-ic{color:var(--signal)}
   .dl:hover b{color:var(--signal)}
   .dl:hover span{color:#C8C8C3}
+  /* team rows answer hover like the value rows: the rule lights, the other person dims, the portrait leans in */
+  .member:hover::before{background:#D6D6D1}
+  .team:has(.member:hover) .member:not(:hover) > *{opacity:.45}
+  .member:hover img{transform:scale(1.03)}
+  .member-spec a:hover{color:var(--signal)}
 }
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
@@ -291,6 +324,8 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   .step::before{right:24px}
   .step + .step::before{left:-12px}
   .entry{gap:48px}
+  /* team cards stack once two no longer fit side by side */
+  .team{grid-template-columns:1fr}
 }
 /* tablet */
 @media(max-width:1000px){
@@ -323,6 +358,8 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   .value{grid-template-columns:56px minmax(0,1fr);gap:14px 24px;padding:34px 0}
   .value-body{grid-column:2}
   .entry{grid-template-columns:1fr;gap:36px}
+  .team{margin-top:44px}
+  .member{padding:32px 0 40px}
   footer{padding:56px 0 40px}
   .fgrid{grid-template-columns:1fr 1fr;gap:40px 32px}
   .fgrid > :first-child{grid-column:1 / -1}
@@ -359,6 +396,14 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   .dl{grid-template-columns:1fr;gap:4px;padding:16px 0}
   .focus-item{padding:22px 0 32px}
   .focus-item h3{margin-top:16px}
+  /* phone: small portrait beside the name, spec sheet full width underneath */
+  .team{margin-top:36px}
+  .member{grid-template-columns:112px minmax(0,1fr);grid-template-rows:auto;gap:0 18px;padding:28px 0 32px;align-items:center}
+  .member-photo{grid-row:auto}
+  .member h3{font-size:22px}
+  .member-role{font-size:14px;margin-top:8px}
+  .member-spec{grid-column:1 / -1;align-self:auto}
+  .member-spec > div{grid-template-columns:84px minmax(0,1fr)}
   .lede{font-size:16px;margin-top:18px}
   .cta{padding:64px 0}
   .cta p{font-size:16px}
@@ -412,6 +457,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
       <a href="#what">What we do</a>
       <a href="#practices">Practices</a>
       <a href="#process">Process</a>
+      <a href="#team">Team</a>
       <a class="btn btn-sig" href="#contact">Start a project</a>
     </div>
   </div>
@@ -626,6 +672,50 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   </div>
 </section>
 
+<!-- TEAM -->
+<section class="sec dark sec-join" id="team">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">team</span>
+      <p>The people behind cnpt.</p>
+    </div>
+    <h2>Meet the team.</h2>
+    <p class="lede">Our team brings together industrial design and UX product design. We help organisations turn early ideas into products, services, and customer experiences that are ready for market, and we stay involved at every stage of the work.</p>
+    <div class="team">
+      <div class="member">
+        <div class="member-photo">
+          <span class="member-init" aria-hidden="true">MP</span>
+          <img src="cnptmichaelpark-web.jpg" alt="" width="800" height="1045" loading="lazy" onerror="this.remove()">
+        </div>
+        <div class="member-id">
+          <h3>Michael (Joongmin) Park</h3>
+          <p class="member-role"><span>Co-owner</span> · <span>UX Product Designer</span></p>
+        </div>
+        <dl class="member-spec">
+          <div><dt>Education</dt><dd>OCAD University<br><span>Industrial Design (BDes), 2026</span></dd></div>
+          <div><dt>Email</dt><dd><a href="mailto:michael@cnpt.ca">michael@cnpt.ca</a></dd></div>
+          <div><dt>Portfolio</dt><dd><a href="https://michaeljpark.github.io/portfolio2026/" target="_blank" rel="noopener">michaeljpark.github.io<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 8 8 2M3 2h5v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a></dd></div>
+        </dl>
+      </div>
+      <div class="member">
+        <div class="member-photo">
+          <span class="member-init" aria-hidden="true">BS</span>
+          <img src="cnptbrandonsiow-web.jpg" alt="" width="800" height="1045" loading="lazy" onerror="this.remove()">
+        </div>
+        <div class="member-id">
+          <h3>Brandon Siow</h3>
+          <p class="member-role"><span>Co-owner</span> · <span>UX Product Designer</span></p>
+        </div>
+        <dl class="member-spec">
+          <div><dt>Education</dt><dd>OCAD University<br><span>Industrial Design (BDes), 2026</span></dd></div>
+          <div><dt>Email</dt><dd><a href="mailto:brandon@cnpt.ca">brandon@cnpt.ca</a></dd></div>
+          <!-- portfolio row to come: copy Michael's Portfolio row here with Brandon's URL -->
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- CTA -->
 <section class="cta" id="contact">
   <div class="wrap">
@@ -654,8 +744,8 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
       </div>
       <div class="fcol">
         <h4>Studio</h4>
-        <div>Michael Joongmin Park</div>
-        <div>Brandon Siow</div>
+        <a href="#team">Michael (Joongmin) Park</a>
+        <a href="#team">Brandon Siow</a>
         <a href="mailto:info@cnpt.ca">info@cnpt.ca</a>
       </div>
     </div>
@@ -765,7 +855,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
     ['.sec h2, .cta h2', 'split'],
     ['.sec-head p, .prac-note, .lede, .cta p, .cta-row', 'up'],
     ['.acc, .fgrid > *', 'up'],
-    ['.value, .step, .dl, .focus-item', 'rule'],
+    ['.value, .step, .dl, .focus-item, .member', 'rule'],
     ['.cta', 'cta'],
     ['.fbottom', 'fade']
   ];
