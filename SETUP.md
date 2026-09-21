@@ -1,0 +1,73 @@
+# cnpt — setup
+
+The site is static HTML plus a few Vercel functions in `api/`. Without any of the setup below the public
+pages still work; sign-in, the account and admin pages, and saving enquiries need the three services here.
+
+| What | Service | Used for |
+| --- | --- | --- |
+| Sign-in | Google OAuth client | "Continue with Google" on `/signin` (a first sign-in creates the account) |
+| Data | Supabase (Postgres) | users, enquiries, projects |
+| Email (optional) | Resend | a copy of every enquiry in your inbox |
+
+All values go in **Vercel → Project → Settings → Environment Variables**. `.env.example` lists every one.
+
+## 1. Supabase
+
+1. Create a project at <https://supabase.com/dashboard>.
+2. **SQL Editor → New query**, paste `supabase/schema.sql`, **Run**. It creates `users`, `enquiries` and `projects`
+   and turns on row level security with no policies, so only the server can read or write them.
+3. **Project Settings → API**: copy the Project URL to `SUPABASE_URL` and the `service_role` key to
+   `SUPABASE_SERVICE_ROLE_KEY`. The service-role key bypasses row level security: keep it in Vercel only.
+
+## 2. Google sign-in
+
+1. <https://console.cloud.google.com> → create or pick a project.
+2. **APIs & Services → OAuth consent screen**: app name `cnpt`, support email, scopes `openid`, `email`, `profile`.
+   Publish the app (while it is in "Testing", only listed test users can sign in).
+3. **Credentials → Create credentials → OAuth client ID → Web application**.
+   - Authorized redirect URI: `https://<your-domain>/api/auth/callback`
+     (add one per domain you use, e.g. the `*.vercel.app` domain and later `https://cnpt.ca`).
+4. Copy the client ID and secret to `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+5. Set `PUBLIC_URL` to the same origin as the redirect URI, e.g. `https://cnpt.ca`.
+
+## 3. Secrets and admins
+
+- `JWT_SECRET`: 32+ random characters; signs the session cookie. Changing it signs everyone out.
+  `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`
+- `ADMIN_EMAILS`: the Google accounts that are always admins, comma-separated. They can give admin access to
+  other members on `/admin` → Members, and can't be demoted there.
+
+## 4. Enquiry emails (optional)
+
+Enquiries are always saved and shown on `/admin` → Enquiries. To also receive them by email:
+
+1. <https://resend.com> → API Keys → create one → `RESEND_API_KEY`.
+2. `CONTACT_TO`: where enquiries go. Until a domain is verified in Resend, this must be the address the Resend
+   account was created with.
+3. Once `cnpt.ca` is verified in Resend, set `CONTACT_FROM`, e.g. `cnpt <hello@cnpt.ca>`.
+
+## 5. Deploy
+
+Push to `main`; Vercel builds automatically (it installs `package.json` dependencies; there is no build step).
+After adding or changing environment variables, redeploy so the functions pick them up.
+
+If Vercel shows a login page to visitors, turn off **Settings → Deployment Protection → Vercel Authentication**
+for production.
+
+## How it fits together
+
+- `/signin` → `/api/auth/google` → Google → `/api/auth/callback` → session cookie → `/account`.
+- The session cookie is HttpOnly, SameSite=Lax, Secure (`__Host-` prefixed on HTTPS) and holds only the user id.
+  The role is read from the database on every request, so admin changes and account deletion apply at once.
+- The OAuth `state` is signed and tied to a short-lived cookie, which stops login CSRF; `next=` only accepts
+  paths on this site.
+- Every write checks the request's `Origin`; admin routes check the admin role; all input is validated against
+  the same lists the database enforces (`api/_lib/rules.js`, `supabase/schema.sql`).
+- `vercel.json` sets security headers site-wide; `/signin`, `/account` and `/admin` add a strict CSP with no
+  inline scripts.
+
+| Page | Who | What |
+| --- | --- | --- |
+| `/signin` | anyone | Continue with Google |
+| `/account` | signed in | projects and their stage, enquiries and their status, profile, sign out, delete account |
+| `/admin` | admins | enquiries (filter, change status, reply by email), projects (create, edit, delete), members (grant/remove admin) |

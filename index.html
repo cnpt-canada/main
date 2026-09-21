@@ -36,6 +36,8 @@ nav .wrap{height:var(--nav-h);display:flex;align-items:center;justify-content:sp
 nav .wm{width:86px;color:#fff;display:block;flex:none}
 .navlinks{display:flex;align-items:center;gap:30px;font-size:14px;font-weight:600;color:#9C9C97}
 .navlinks a:not(.btn):hover{color:#fff}
+/* Sign in, or once signed in: the person's photo and "Account" */
+.nav-account img{display:block;width:24px;height:24px;margin:0 8px 0 -10px;border-radius:50%;object-fit:cover}
 .btn{display:inline-flex;align-items:center;height:40px;padding:0 22px;border-radius:var(--r-cap);
   font-size:14px;font-weight:700;letter-spacing:-0.02em;flex:none}
 .btn-sig{background:var(--signal-deep);color:#fff}
@@ -205,7 +207,7 @@ h2 em{font-style:normal;color:var(--signal)}
 .cta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:40px}
 .cta .btn-white{background:#fff;color:var(--signal-text)}
 .cta .btn-line-c{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6);color:#fff}
-.cta .eyebrow{background:transparent;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6);color:#fff}
+.cta .eyebrow{background:var(--ink);color:#fff}
 /* copy on the left, the enquiry form on the right */
 .cta-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:64px;align-items:start}
 
@@ -279,6 +281,7 @@ footer .tag{font-size:14px;color:#7C7C78;margin-top:22px;max-width:34ch;line-hei
 .motion .navlinks > :nth-child(2){animation-delay:.14s}
 .motion .navlinks > :nth-child(3){animation-delay:.2s}
 .motion .navlinks > :nth-child(4){animation-delay:.26s}
+.motion .navlinks > :nth-child(5){animation-delay:.32s}
 @keyframes nav-in{from{opacity:0;transform:translateY(-12px)}}
 nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;background:var(--signal);
   transform:scaleX(var(--progress,0));transform-origin:left;pointer-events:none}
@@ -471,7 +474,8 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   .cta-row{margin-top:32px}
   .fbottom{margin-top:40px}
 }
-@media(max-width:540px){
+/* the section links give way before the two buttons run out of room */
+@media(max-width:760px){
   .navlinks a:not(.btn){display:none}
 }
 @media(max-width:480px){
@@ -528,6 +532,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
       <a href="#practices">Practices</a>
       <a href="#process">Process</a>
       <a href="#team">Team</a>
+      <a class="btn btn-line nav-account" href="/signin">Sign in</a>
       <a class="btn btn-sig" href="#contact">Start a project</a>
     </div>
   </div>
@@ -949,6 +954,33 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
         sync();
       });
   });
+})();
+
+/* signed-in visitors: the nav shows their photo and "Account", and the contact form knows their email */
+(function () {
+  var link = document.querySelector('.nav-account');
+  if (!link || !window.fetch) return;
+  fetch('/api/auth/me', { credentials: 'same-origin' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (data) {
+      var user = data && data.user;
+      if (!user) return;
+      link.href = '/account';
+      link.textContent = 'Account';
+      if (user.picture && /^https:\/\//.test(user.picture)) {
+        var img = document.createElement('img');
+        img.src = user.picture;
+        img.alt = '';
+        img.referrerPolicy = 'no-referrer';
+        link.prepend(img);
+      }
+      var email = document.getElementById('cf-email');
+      if (email && !email.value) {
+        email.value = user.email;
+        email.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    })
+    .catch(function () {}); // no API (e.g. a static preview): keep "Sign in"
 })();
 
 /* motion — scroll progress, hero parallax, entrance reveals */

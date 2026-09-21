@@ -52,12 +52,14 @@ function render({ user, projects, enquiries }) {
     ? enquiries.map(enquiryRow)
     : [h('li', { class: 'empty' }, 'You have not sent an enquiry yet. ', h('a', { href: '/#contact' }, 'Tell us about your company'), '.')]));
 
-  $('profile').replaceChildren(
+  const rows = [
     specRow('Name', user.name || '—'),
     specRow('Email', user.email),
     specRow('Signed in with', 'Google'),
     specRow('Member since', fmtDate(user.created_at)),
-    user.role === 'admin' ? specRow('Access', 'Studio admin · ', h('a', { href: '/admin' }, 'Open admin')) : null);
+    user.role === 'admin' && specRow('Access', 'Studio admin · ', h('a', { href: '/admin' }, 'Open admin'))
+  ];
+  $('profile').replaceChildren(...rows.filter(Boolean));
 }
 
 const user = await signedInUser('/account');

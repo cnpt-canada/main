@@ -97,12 +97,13 @@ export async function signOut() {
 // Fills the right side of the nav: page links, the person, and Sign out.
 export function renderNav(user, current) {
   const link = (href, label, page) => h('a', { href, 'aria-current': current === page ? 'page' : null }, label);
-  document.getElementById('nav-right').replaceChildren(
+  const items = [
     link('/account', 'Account', 'account'),
-    user.role === 'admin' ? link('/admin', 'Admin', 'admin') : null,
+    user.role === 'admin' && link('/admin', 'Admin', 'admin'),
     h('span', { class: 'nav-me' }, avatar(user), h('span', {}, user.name || user.email)),
     h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: signOut }, 'Sign out')
-  );
+  ];
+  document.getElementById('nav-right').replaceChildren(...items.filter(Boolean));
 }
 
 let flashTimer;
