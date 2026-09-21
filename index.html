@@ -225,27 +225,31 @@ button.btn{border:0;font-family:inherit;cursor:pointer}
   transition:background-color .25s ease,color .25s ease,box-shadow .25s ease}
 .stage-opt input:checked + span{background:#fff;color:var(--signal-text);box-shadow:inset 0 0 0 1.5px #fff}
 .stage-opt input:focus-visible + span{outline:2px solid #fff;outline-offset:3px}
-.composer{background:#fff;color:var(--ink);border-radius:var(--r-sm);transition:box-shadow .25s ease}
-.composer:focus-within{box-shadow:0 0 0 3px rgba(255,255,255,.45)}
-.composer textarea,.composer input{font-family:inherit;font-size:16px;font-weight:500;letter-spacing:-0.011em;color:var(--ink);
-  background:none;border:0;outline:none}
+/* the composer is drawn like the chips and outline buttons: transparent, a 1.5px white line, white type */
+.composer{border-radius:var(--r-sm);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6);transition:box-shadow .25s ease}
+.composer:hover{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.85)}
+.composer:focus-within{box-shadow:inset 0 0 0 1.5px #fff}
+.composer textarea,.composer input{font-family:inherit;font-size:16px;font-weight:500;letter-spacing:-0.011em;color:#fff;
+  background:none;border:0;outline:none;caret-color:#fff}
 .composer textarea{display:block;width:100%;min-height:130px;padding:8px 22px 14px;line-height:1.55;resize:none}
-.composer ::placeholder{color:#8E8E8A;opacity:1}
+.composer ::placeholder{color:rgba(255,255,255,.62);opacity:1}
+.composer ::selection{background:#fff;color:var(--signal-text)}
+/* keep browser autofill from painting a light box inside the transparent field */
+.composer input:-webkit-autofill{-webkit-text-fill-color:#fff;box-shadow:0 0 0 1000px var(--signal) inset}
 .composer-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:16px 22px 0}
-.composer-head label,.composer-foot label{font-size:12.5px;font-weight:700;color:var(--grey);white-space:nowrap;cursor:text}
-/* required marks: red inside the white box, white on the red band */
-.req{color:var(--signal-text)}
-.stage .req{color:#fff}
-.composer-foot{display:flex;align-items:center;gap:14px;padding:10px 10px 10px 22px;border-top:1.5px solid var(--mist)}
+.composer-head label,.composer-foot label{font-size:12.5px;font-weight:700;color:rgba(255,255,255,.88);white-space:nowrap;cursor:text}
+.req{color:#fff}
+.composer-foot{display:flex;align-items:center;gap:14px;padding:10px 10px 10px 22px;border-top:1.5px solid rgba(255,255,255,.35)}
 .composer input{flex:1;min-width:0;height:40px}
-.count{font-size:12.5px;font-weight:700;color:var(--grey);font-variant-numeric:tabular-nums;white-space:nowrap}
-.count.is-near{color:var(--signal-text)}
-.btn-send{gap:8px;background:var(--signal-deep);color:#fff;--btn-fill:var(--ink)}
+.count{font-size:12.5px;font-weight:700;color:rgba(255,255,255,.75);font-variant-numeric:tabular-nums;white-space:nowrap}
+.count.is-near{color:#fff}
+/* Send matches the band's white button: white capsule, fills black on hover */
+.btn-send{gap:8px;background:#fff;color:var(--signal-text);--btn-fill:var(--ink)}
 .btn-send svg{display:block;width:10px;height:10px}
 /* Send stays disabled until every required field is filled in */
-.btn-send:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-send:disabled{background:transparent;color:rgba(255,255,255,.7);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.4);
+  cursor:not-allowed;transform:none}
 .cta-form.is-sending .btn-send{opacity:.7;cursor:progress}
-.btn-send:focus-visible{outline-color:var(--ink)}
 .form-foot{display:grid;gap:6px;margin-top:-8px}
 .form-note{font-size:13px;font-weight:600;color:rgba(255,255,255,.8)}
 .form-status{min-height:1.6em;font-size:14.5px;font-weight:600;color:#fff}
@@ -334,6 +338,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   .cta .btn-white:hover{color:#fff}
   .cta .btn-line-c:hover{color:var(--signal-text)}
   .stage-opt:hover input:not(:checked) + span{box-shadow:inset 0 0 0 1.5px #fff}
+  .btn-send:not(:disabled):hover{color:#fff}
   .acc-list:has(.acc-row:hover) .acc-row:not(:hover){opacity:.45}
   .acc-row:hover .acc-mark svg{transform:translateX(6px)}
   .acc-row:hover .acc-name{transform:translateX(8px)}
