@@ -176,7 +176,7 @@ export function mountShell(user, page, { query = '' } = {}) {
       item('/admin#onboarding', 'admin:onboarding', 'Onboarding', 'list-checks'),
       item('/admin#members', 'admin:members', 'Members', 'users')),
     group('Account',
-      item(`/account${query}#enquiries`, 'account:enquiries', 'Your enquiries', 'file'),
+      item(`/account${query}#enquiries`, 'account:enquiries', 'Your enquiries', 'message'),
       item(`/account${query}#profile`, 'account:profile', 'Profile', 'user')),
     h('div', { class: 'nav-group' },
       h('a', { class: 'nav-item', href: '/onboarding' }, icon('plus'), h('span', { class: 'nav-label' }, 'New enquiry')),
