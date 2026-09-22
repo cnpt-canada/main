@@ -1,0 +1,6 @@
+# Files the website doesn't need at runtime; kept out of the Vercel deployment so they aren't publicly served.
+supabase/
+SETUP.md
+README.md
+.env.example
+.github/

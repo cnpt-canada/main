@@ -36,8 +36,11 @@ nav .wrap{height:var(--nav-h);display:flex;align-items:center;justify-content:sp
 nav .wm{width:86px;color:#fff;display:block;flex:none}
 .navlinks{display:flex;align-items:center;gap:30px;font-size:14px;font-weight:600;color:#9C9C97}
 .navlinks a:not(.btn):hover{color:#fff}
-/* Sign in, or once signed in: the person's photo and "Account" */
-.nav-account img{display:block;width:24px;height:24px;margin:0 8px 0 -10px;border-radius:50%;object-fit:cover}
+/* Sign in, or once signed in: the person's photo and "Account" — an underlined text link, white so it reads as the one action among the section links */
+.navlinks .nav-account{display:inline-flex;align-items:center;gap:8px;color:#fff;text-decoration:underline;
+  text-decoration-thickness:1.5px;text-underline-offset:5px;transition:text-decoration-color .25s ease}
+.navlinks .nav-account:hover{text-decoration-color:var(--signal)}
+.nav-account img{display:block;width:24px;height:24px;border-radius:50%;object-fit:cover}
 .btn{display:inline-flex;align-items:center;height:40px;padding:0 22px;border-radius:var(--r-cap);
   font-size:14px;font-weight:700;letter-spacing:-0.02em;flex:none}
 .btn-sig{background:var(--signal-deep);color:#fff}
@@ -476,7 +479,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 }
 /* the section links give way before the two buttons run out of room */
 @media(max-width:760px){
-  .navlinks a:not(.btn){display:none}
+  .navlinks a:not(.btn):not(.nav-account){display:none}
 }
 @media(max-width:480px){
   .hero-cta .btn,.cta-row .btn{flex:1 1 100%;justify-content:center}
@@ -532,7 +535,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
       <a href="#practices">Practices</a>
       <a href="#process">Process</a>
       <a href="#team">Team</a>
-      <a class="btn btn-line nav-account" href="/signin">Sign in</a>
+      <a class="nav-account" href="/signin">Sign in</a>
       <a class="btn btn-sig" href="#contact">Start a project</a>
     </div>
   </div>
