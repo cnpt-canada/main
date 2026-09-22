@@ -2,7 +2,7 @@
 import { db, run } from './db.js';
 
 export const ONBOARDING_COLUMNS =
-  'id,user_id,step,stage,brief,enquiry_id,tags,consultant,estimated_cost,submitted_at,created_at,updated_at';
+  'id,user_id,step,stage,brief,enquiry_id,tags,consultants,estimated_cost,submitted_at,created_at,updated_at';
 
 export function loadOnboarding(userId) {
   return run(db().from('onboarding').select(ONBOARDING_COLUMNS).eq('user_id', userId).maybeSingle());
@@ -18,7 +18,7 @@ export function toPublicOnboarding(row) {
     brief: row.brief,
     enquiry_id: row.enquiry_id,
     tags: row.tags || [],
-    consultant: row.consultant,
+    consultants: row.consultants || [],
     estimated_cost: row.estimated_cost,
     submitted_at: row.submitted_at,
     created_at: row.created_at,

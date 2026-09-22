@@ -22,6 +22,12 @@ export function toId(value) {
   return isId(n) ? n : null;
 }
 
+// Consultants picked during onboarding: known keys only, no duplicates. Returns null when anything isn't allowed.
+export function cleanConsultants(value) {
+  if (!Array.isArray(value) || !value.every((c) => CONSULTANTS.includes(c))) return null;
+  return [...new Set(value)];
+}
+
 // Field tags from onboarding: trimmed, single-spaced, at most MAX_TAGS, no duplicates (ignoring case).
 // Returns the cleaned list, or null when anything in it isn't allowed.
 export function cleanTags(value) {

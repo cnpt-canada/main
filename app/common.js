@@ -8,8 +8,8 @@ export const FUNDING_STAGES = ['Pre-Seed', 'Seed Level', 'Series A', 'Series B']
 
 // Consultants a client can pick during onboarding. Keys match CONSULTANTS in api/_lib/rules.js.
 export const CONSULTANTS = {
-  michael: { name: 'Michael (Joongmin) Park', role: 'Startup Builder · UX Product Designer', photo: '/cnptmichaelpark-web.jpg' },
-  brandon: { name: 'Brandon Siow', role: 'Startup Builder · UX Product Designer', photo: '/cnptbrandonsiow-web.jpg' },
+  michael: { name: 'Michael (Joongmin) Park', role: 'Consultant', photo: '/cnptmichaelpark-web.jpg' },
+  brandon: { name: 'Brandon Siow', role: 'Consultant', photo: '/cnptbrandonsiow-web.jpg' },
   kenny: { name: 'Kenny', role: 'Consultant', photo: null }
 };
 
@@ -84,8 +84,31 @@ export function consultantAvatar(key, large) {
   return h('span', { class: cls, 'aria-hidden': 'true' }, c.name.charAt(0));
 }
 
+// Estimates are whole Canadian dollars: "$25,000 CAD".
 export function fmtCost(n) {
-  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
+  return `$${new Intl.NumberFormat('en-CA', { maximumFractionDigits: 0 }).format(n)} CAD`;
+}
+
+// "Michael", "Michael and Kenny", "Michael, Brandon and Kenny"
+export function firstNames(keys) {
+  const names = keys.filter((k) => CONSULTANTS[k]).map((k) => CONSULTANTS[k].name.split(' ')[0]);
+  return new Intl.ListFormat('en', { style: 'long', type: 'conjunction' }).format(names);
+}
+
+// The estimate: the amount once an admin has set it; until then it loads for a moment and then says
+// it will be confirmed later.
+export function estimateBlock(cost, consultants) {
+  const who = consultants?.length ? firstNames(consultants) : 'your consultant';
+  if (cost != null) {
+    return h('div', { class: 'estimate' }, h('p', { class: 'estimate-value' }, fmtCost(cost)),
+      h('p', { class: 'sub' }, `Confirmed by ${who}. We’ll walk you through it on your first call.`));
+  }
+  const el = h('div', { class: 'estimate', role: 'status' },
+    h('span', { class: 'shimmer', 'aria-label': 'Loading the estimate' }), h('p', { class: 'sub' }, 'Estimating…'));
+  setTimeout(() => el.replaceChildren(
+    h('p', { class: 'estimate-tbc' }, 'To be confirmed'),
+    h('p', { class: 'sub' }, `We’ll confirm your estimate once ${who} ${consultants?.length > 1 ? 'have' : 'has'} read your brief.`)), 1600);
+  return el;
 }
 
 export function badge(kind, label) {

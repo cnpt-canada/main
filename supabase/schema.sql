@@ -41,12 +41,25 @@ create table if not exists public.onboarding (
   brief          text check (char_length(brief) <= 500),
   enquiry_id     bigint references public.enquiries (id) on delete set null, -- the enquiry it continues or created
   tags           text[] not null default '{}' check (cardinality(tags) <= 5),
-  consultant     text check (consultant in ('michael', 'brandon', 'kenny')),
+  consultants    text[] not null default '{}'                                -- one or more
+                 check (consultants <@ array['michael', 'brandon', 'kenny']::text[] and cardinality(consultants) <= 3),
   estimated_cost integer check (estimated_cost between 0 and 10000000),     -- CAD, set by an admin
   submitted_at   timestamptz,
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );
+
+-- upgrade from the first version, which allowed a single `consultant`
+alter table public.onboarding add column if not exists consultants text[] not null default '{}'
+  check (consultants <@ array['michael', 'brandon', 'kenny']::text[] and cardinality(consultants) <= 3);
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+             where table_schema = 'public' and table_name = 'onboarding' and column_name = 'consultant') then
+    update public.onboarding set consultants = array[consultant] where consultant is not null and cardinality(consultants) = 0;
+    alter table public.onboarding drop column consultant;
+  end if;
+end $$;
 
 alter table public.users enable row level security;
 alter table public.enquiries enable row level security;

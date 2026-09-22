@@ -2,7 +2,7 @@
 // Admins can open /account?as=<id> to see a member's account exactly as they do ("view as user", read-only).
 import {
   CONSULTANTS, ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
-  api, avatar, badge, consultantAvatar, dataTable, flash, fmtCost, fmtDate, fmtDateTime, h, icon, keepFocus, kv,
+  api, avatar, badge, consultantAvatar, dataTable, estimateBlock, flash, fmtDate, fmtDateTime, h, icon, keepFocus, kv,
   markSelected, mountShell, section, showPanel, signOut, signedInUser, sortRows, toggleSort
 } from '/app/common.js';
 
@@ -46,15 +46,10 @@ function renderProject() {
       !state.viewingAs && h('a', { class: 'btn btn-white btn-sm', href: '/onboarding' }, started ? 'Continue onboarding' : 'Start onboarding', icon('arrow-right'))));
     return;
   }
-  const c = CONSULTANTS[o.consultant];
-  const first = c ? c.name.split(' ')[0] : 'Your consultant';
-  const estimate = o.estimated_cost != null
-    ? [h('p', { class: 'estimate-value' }, fmtCost(o.estimated_cost)), h('p', { class: 'sub' }, `Confirmed by ${first}. We’ll walk you through it on your first call.`)]
-    : [h('span', { class: 'shimmer shimmer-lg', role: 'status', 'aria-label': 'Estimating' }), h('p', { class: 'sub' }, `Estimating… ${first} confirms it after reading your brief.`)];
   el.replaceChildren(
-    card('card-estimate', 'Estimated cost', estimate),
-    card('', 'Your consultant', h('div', { class: 'who who-lg' }, consultantAvatar(o.consultant, true),
-      h('span', { class: 'who-text' }, h('strong', {}, c ? c.name : '—'), h('span', { class: 'sub' }, c ? c.role : '')))),
+    card('card-estimate', 'Estimated cost', estimateBlock(o.estimated_cost, o.consultants)),
+    card('', o.consultants.length > 1 ? 'Your consultants' : 'Your consultant', h('div', { class: 'who-list' }, o.consultants.map((k) => h('div', { class: 'who who-lg' },
+      consultantAvatar(k, true), h('span', { class: 'who-text' }, h('strong', {}, CONSULTANTS[k]?.name || '—'), h('span', { class: 'sub' }, CONSULTANTS[k]?.role || '')))))),
     card('card-wide', 'Your brief',
       h('div', { class: 'brief-head' }, h('span', { class: 'chip' }, o.stage), h('span', { class: 'sub' }, `Submitted ${fmtDate(o.submitted_at)}`)),
       h('p', { class: 'msg' }, o.brief),

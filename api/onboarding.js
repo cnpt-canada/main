@@ -1,12 +1,12 @@
 // GET  /api/onboarding → my onboarding so far, plus the latest enquiry I sent (to continue from it)
-// PUT  /api/onboarding {step?, stage?, brief?, enquiry_id?, tags?, consultant?} → saves progress
+// PUT  /api/onboarding {step?, stage?, brief?, enquiry_id?, tags?, consultants?} → saves progress
 // POST /api/onboarding → submits it. If it didn't continue an enquiry, one is created from the brief,
 //                        so the studio sees it in Enquiries. Submitted answers can't be changed here.
 import { db, run } from './_lib/db.js';
 import { emailStudio } from './_lib/notify.js';
 import { loadOnboarding, ONBOARDING_COLUMNS, toPublicOnboarding } from './_lib/onboarding.js';
 import { fail, json, methodNotAllowed, readBody, route } from './_lib/http.js';
-import { cleanTags, CONSULTANTS, FUNDING_STAGES, MAX_MESSAGE, toId } from './_lib/rules.js';
+import { cleanConsultants, cleanTags, FUNDING_STAGES, MAX_MESSAGE, toId } from './_lib/rules.js';
 import { requireUser } from './_lib/users.js';
 
 const CONSULTANT_NAMES = { michael: 'Michael (Joongmin) Park', brandon: 'Brandon Siow', kenny: 'Kenny' };
@@ -38,9 +38,10 @@ async function readChanges(body, user) {
     if (!tags) return { error: 'invalid_tags' };
     changes.tags = tags;
   }
-  if ('consultant' in body) {
-    if (!CONSULTANTS.includes(body.consultant)) return { error: 'invalid_consultant' };
-    changes.consultant = body.consultant;
+  if ('consultants' in body) {
+    const consultants = cleanConsultants(body.consultants);
+    if (!consultants) return { error: 'invalid_consultants' };
+    changes.consultants = consultants;
   }
   if ('enquiry_id' in body) {
     if (body.enquiry_id === null) changes.enquiry_id = null;
@@ -76,7 +77,7 @@ export default route(async (req, res) => {
   }
 
   // POST: submit
-  if (!row || !row.stage || !row.brief || !row.tags?.length || !row.consultant) return fail(res, 400, 'incomplete');
+  if (!row || !row.stage || !row.brief || !row.tags?.length || !row.consultants?.length) return fail(res, 400, 'incomplete');
   let enquiryId = row.enquiry_id;
   if (!enquiryId) {
     const enquiry = await run(db().from('enquiries')
@@ -94,7 +95,7 @@ export default route(async (req, res) => {
       `Client: ${user.name || '—'} <${user.email}>`,
       `Stage: ${row.stage}`,
       `Fields: ${row.tags.map((t) => `#${t}`).join(' ')}`,
-      `Consultant: ${CONSULTANT_NAMES[row.consultant]}`,
+      `Consultants: ${row.consultants.map((c) => CONSULTANT_NAMES[c]).join(', ')}`,
       '', row.brief, '',
       'Add the estimated cost on /admin → Onboarding.'
     ].join('\n'),

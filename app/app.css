@@ -246,6 +246,12 @@ th[aria-sort] .th-sort .ic{opacity:1}
 @keyframes shimmer{from{background-position:100% 0}to{background-position:-100% 0}}
 .estimate{display:grid;gap:10px}
 .estimate-value{font-size:40px;font-weight:800;letter-spacing:-0.05em;line-height:1.1}
+.estimate-tbc{font-size:22px;font-weight:800;letter-spacing:-0.035em;line-height:1.2;animation:rise .4s cubic-bezier(.2,.7,.2,1) both}
+.onb-summary .estimate-tbc{font-size:17px}
+.who-list{display:grid;gap:14px}
+.stack{display:inline-flex;flex:none}
+.stack .avatar{width:24px;height:24px;font-size:11px;box-shadow:0 0 0 2px var(--panel)}
+.stack .avatar + .avatar{margin-left:-7px}
 .cost{font-weight:700;color:#fff}
 .as-banner{display:flex;align-items:center;gap:12px;padding:10px 32px;background:rgba(230,0,69,.12);border-bottom:1px solid rgba(230,0,69,.35);
   color:#FFB3C4;font-size:13.5px}
@@ -259,7 +265,8 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .who-lg strong{font-size:17px;font-weight:800;letter-spacing:-0.03em}
 .avatar-photo{object-position:center 20%}
 .c-tags{width:22%;max-width:0}
-.c-consultant{width:120px;white-space:nowrap}
+.c-consultant{width:170px;max-width:170px;white-space:nowrap}
+.c-consultant .who-sm{min-width:0}
 .c-cost{width:120px;white-space:nowrap}
 .text-link{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#fff}
 .text-link .ic{width:15px;height:15px}
@@ -268,8 +275,10 @@ th[aria-sort] .th-sort .ic{opacity:1}
 /* estimate editor in the admin onboarding panel */
 .cost-form{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .cost-field{position:relative;flex:1 1 150px}
-.cost-prefix{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:700;color:var(--muted);pointer-events:none}
-.input-cost{padding-left:44px;font-weight:700;-moz-appearance:textfield}
+.cost-prefix,.cost-suffix{position:absolute;top:50%;transform:translateY(-50%);font-size:13px;font-weight:700;color:var(--muted);pointer-events:none}
+.cost-prefix{left:12px}
+.cost-suffix{right:12px}
+.input-cost{padding-left:26px;padding-right:48px;font-weight:700;-moz-appearance:textfield}
 .input-cost::-webkit-inner-spin-button,.input-cost::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 
 /* the client's project page */

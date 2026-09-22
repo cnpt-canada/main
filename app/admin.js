@@ -2,7 +2,7 @@
 // every change is checked again on the server (admin role, allowed values, owners locked).
 import {
   CONSULTANTS, ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
-  api, avatar, badge, consultantAvatar, dataTable, flash, fmtCost, fmtDate, fmtDateTime, h, icon, keepFocus, kv, markSelected,
+  api, avatar, badge, consultantAvatar, dataTable, firstNames, flash, fmtCost, fmtDate, fmtDateTime, h, icon, keepFocus, kv, markSelected,
   mountShell, section, showPanel, signedInUser, sortRows, toggleSort
 } from '/app/common.js';
 
@@ -161,9 +161,9 @@ const ONB_COLUMNS = [
   { key: 'stage', label: 'Stage', cls: 'c-stage', sort: (o) => FUNDING_STAGES.indexOf(o.stage),
     cell: (o) => (o.stage ? h('span', { class: 'chip' }, o.stage) : h('span', { class: 'sub' }, '—')) },
   { key: 'tags', label: 'Fields', cls: 'c-tags', cell: (o) => h('span', { class: 'clip' }, o.tags.length ? o.tags.map((t) => `#${t}`).join('  ') : '—') },
-  { key: 'consultant', label: 'Consultant', cls: 'c-consultant', sort: (o) => o.consultant || '',
-    cell: (o) => (o.consultant
-      ? h('span', { class: 'who who-sm' }, consultantAvatar(o.consultant), CONSULTANTS[o.consultant].name.split(' ')[0])
+  { key: 'consultants', label: 'Consultants', cls: 'c-consultant', sort: (o) => o.consultants.join(','),
+    cell: (o) => (o.consultants.length
+      ? h('span', { class: 'who who-sm' }, h('span', { class: 'stack' }, o.consultants.map((k) => consultantAvatar(k))), h('span', { class: 'clip' }, firstNames(o.consultants)))
       : h('span', { class: 'sub' }, '—')) },
   { key: 'progress', label: 'Status', cls: 'c-status', sort: (o) => ['needs', 'progress', 'estimated'].indexOf(progressOf(o)), cell: progressBadge },
   { key: 'estimated_cost', label: 'Estimate', cls: 'c-cost', sort: (o) => o.estimated_cost ?? -1,
@@ -185,7 +185,7 @@ function renderOnboarding() {
   $('onboarding-meta').textContent = status || needle ? `${rows.length} of ${state.onboarding.length}` : `${rows.length} total`;
   keepFocus($('onboarding-table'), () => $('onboarding-table').replaceChildren(dataTable({
     label: 'Onboarding', columns: ONB_COLUMNS, rows, sort: state.onbSort, selected: state.onbOpen,
-    onSort: (key) => { toggleSort(state.onbSort, key, ['name', 'stage', 'consultant', 'progress'].includes(key) ? 1 : -1); renderOnboarding(); },
+    onSort: (key) => { toggleSort(state.onbSort, key, ['name', 'stage', 'consultants', 'progress'].includes(key) ? 1 : -1); renderOnboarding(); },
     onOpen: (o, replace) => go(`onboarding/${o.user_id}`, replace),
     empty: state.onboarding.length ? 'Nothing matches these filters.' : 'No one has started onboarding yet. New clients see it right after they sign up.'
   })));
@@ -210,8 +210,8 @@ function costEditor(o) {
     placeholder: 'e.g. 25000', 'aria-describedby': 'cost-hint' });
   if (o.estimated_cost != null) input.value = String(o.estimated_cost);
   const form = h('form', { class: 'cost-form', novalidate: true },
-    h('label', { class: 'cost-field' }, h('span', { class: 'cost-prefix', 'aria-hidden': 'true' }, 'CA$'),
-      h('span', { class: 'sr-only' }, 'Estimated cost in Canadian dollars'), input),
+    h('label', { class: 'cost-field' }, h('span', { class: 'cost-prefix', 'aria-hidden': 'true' }, '$'),
+      h('span', { class: 'sr-only' }, 'Estimated cost in Canadian dollars'), input, h('span', { class: 'cost-suffix', 'aria-hidden': 'true' }, 'CAD')),
     h('button', { class: 'btn btn-white btn-sm', type: 'submit' }, 'Save'),
     o.estimated_cost != null && h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => saveCost(o, null) }, 'Clear'));
   form.addEventListener('submit', (ev) => {
@@ -222,13 +222,12 @@ function costEditor(o) {
   });
   return [form, h('p', { class: 'hint', id: 'cost-hint' }, o.estimated_cost != null
     ? 'The client sees this on their project page.'
-    : 'The client sees “Estimating…” until you save a value.')];
+    : 'Until you save a value, the client sees “To be confirmed”.')];
 }
 
 function renderOnbDetail() {
   const o = state.onboarding.find((x) => x.user_id === state.onbOpen);
   if (!o) return;
-  const c = CONSULTANTS[o.consultant];
   $('onb-detail').replaceChildren(
     h('div', { class: 'detail-head' },
       h('span', { class: 'detail-id' }, `Onboarding · UID #${o.user_id}`),
@@ -246,8 +245,9 @@ function renderOnbDetail() {
         : `Stopped at step ${o.step} of 4. Their answers so far are below.`)),
       section('Brief', o.stage ? h('span', { class: 'chip' }, o.stage) : null, h('p', { class: 'msg' }, o.brief || '—')),
       section('Fields', o.tags.length ? tagList(o.tags) : h('p', { class: 'sub' }, '—')),
-      section('Consultant', c
-        ? h('div', { class: 'who' }, consultantAvatar(o.consultant), h('span', { class: 'who-text' }, h('strong', {}, c.name), h('span', { class: 'sub' }, c.role)))
+      section(o.consultants.length > 1 ? 'Consultants' : 'Consultant', o.consultants.length
+        ? h('div', { class: 'who-list' }, o.consultants.map((k) => h('div', { class: 'who' }, consultantAvatar(k),
+          h('span', { class: 'who-text' }, h('strong', {}, CONSULTANTS[k].name), h('span', { class: 'sub' }, CONSULTANTS[k].role)))))
         : h('p', { class: 'sub' }, 'Not chosen yet')),
       section('Details', kv([
         ['Started', fmtDateTime(o.created_at)],

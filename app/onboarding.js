@@ -1,15 +1,15 @@
 // /onboarding — the first thing a new client sees after signing up: a welcome screen, then four steps
-// (company, field, consultant, confirm). Each step is saved when you continue, so leaving and coming
+// (company, field, consultants, confirm). Each step is saved when you continue, so leaving and coming
 // back picks up where you stopped. Admins can open /onboarding?preview to see it without saving anything.
 import {
   CONSULTANTS, FIELD_TAGS, FUNDING_STAGES, MAX_TAG, MAX_TAGS,
-  api, consultantAvatar, flash, fmtDate, h, icon, signedInUser
+  api, consultantAvatar, estimateBlock, firstNames, flash, fmtDate, h, icon, signedInUser
 } from '/app/common.js';
 
 const $ = (id) => document.getElementById(id);
 const MAX_BRIEF = 500;
 const TAG_RE = /^[\p{L}\p{N}][\p{L}\p{N} &+./-]*$/u;
-const STEPS = ['Your company', 'Your field', 'Your consultant', 'Confirm'];
+const STEPS = ['Your company', 'Your field', 'Consultants', 'Confirm'];
 const ERRORS = {
   invalid_tags: 'One of the tags isn’t allowed. Use letters, numbers, spaces and & + . / -',
   incomplete: 'Something is missing. Go back and check each step.',
@@ -19,7 +19,7 @@ const errorText = (err) => ERRORS[err.message] || 'That didn’t save. Please tr
 
 const state = {
   user: null, preview: false, draft: null, fromDraft: false, returning: false,
-  stage: '', brief: '', enquiry_id: null, tags: [], consultant: '', resume: 1
+  stage: '', brief: '', enquiry_id: null, tags: [], consultants: [], resume: 1
 };
 
 /* ---------- saving ---------- */
@@ -34,7 +34,7 @@ function fieldsFor(step) {
     return f;
   }
   if (step === 2) return { tags: state.tags };
-  if (step === 3) return state.consultant ? { consultant: state.consultant } : {};
+  if (step === 3) return { consultants: state.consultants };
   return {};
 }
 
@@ -47,7 +47,7 @@ async function save(fields) {
 function reachable() {
   if (!state.stage || !state.brief.trim()) return 1;
   if (!state.tags.length) return 2;
-  if (!state.consultant) return 3;
+  if (!state.consultants.length) return 3;
   return 4;
 }
 
@@ -116,7 +116,7 @@ function splash() {
       h('h1', { id: 'step-h', tabindex: '-1' }, state.returning ? `Welcome back${first ? `, ${first}` : ''}.` : `Welcome to cnpt${first ? `, ${first}` : ''}.`),
       h('p', {}, state.returning
         ? 'Your answers are saved. Pick up where you left off.'
-        : 'Four short steps so your consultant can prepare before your first call. It takes about two minutes.'),
+        : 'Four short steps so we can prepare before your first call. It takes about two minutes.'),
       h('ol', { class: 'splash-steps' }, STEPS.map((s, i) => h('li', {}, h('span', {}, i + 1), s))),
       h('button', { class: 'btn btn-white btn-lg', type: 'button', onclick: () => go(Math.min(state.resume, reachable())) },
         state.returning ? 'Continue' : 'Let’s start', icon('arrow-right'))));
@@ -210,18 +210,20 @@ function stepField() {
 
 function stepConsultant() {
   const cards = h('div', { class: 'consultants' }, Object.entries(CONSULTANTS).map(([key, c]) => {
-    const input = h('input', { type: 'radio', name: 'consultant', value: key, checked: state.consultant === key, required: true });
-    input.addEventListener('change', () => { state.consultant = key; });
+    const input = h('input', { type: 'checkbox', name: 'consultants', value: key, checked: state.consultants.includes(key) });
+    input.addEventListener('change', () => {
+      state.consultants = input.checked ? [...state.consultants, key] : state.consultants.filter((k) => k !== key);
+    });
     return h('label', { class: 'consultant' }, input,
       h('span', { class: 'consultant-check', 'aria-hidden': 'true' }, icon('check')),
       consultantAvatar(key, true),
       h('strong', {}, c.name),
       h('span', { class: 'sub' }, c.role));
   }));
-  return stepFrame(3, 'Choose your consultant', 'The person who reviews your brief and leads your first call.', [
-    h('fieldset', { class: 'onb-field' }, h('legend', { class: 'sr-only' }, 'Consultant'), cards)
+  return stepFrame(3, 'Choose your consultants', 'Pick one or more. They review your brief and lead your first call.', [
+    h('fieldset', { class: 'onb-field' }, h('legend', { class: 'sr-only' }, 'Consultants'), cards)
   ], {
-    canContinue: () => Boolean(state.consultant),
+    canContinue: () => state.consultants.length > 0,
     onNext: async () => { await save({ ...fieldsFor(3), step: 4 }); go(4); }
   });
 }
@@ -229,17 +231,15 @@ function stepConsultant() {
 /* ---------- 4. confirm ---------- */
 
 function stepConfirm() {
-  const c = CONSULTANTS[state.consultant];
   const edit = (step) => h('button', { class: 'link', type: 'button', onclick: () => go(step) }, 'Edit');
   const row = (label, value, step) => h('div', {}, h('dt', {}, label), h('dd', {}, value), step ? edit(step) : h('span'));
-  return stepFrame(4, 'Check and confirm', 'This goes to your consultant. You can add more detail on your first call.', [
+  return stepFrame(4, 'Check and confirm', 'This goes to the consultants you picked. You can add more detail on your first call.', [
     h('dl', { class: 'onb-summary' },
       row('Company', [h('span', { class: 'chip' }, state.stage), h('p', { class: 'msg' }, state.brief.trim())], 1),
       row('Fields', h('div', { class: 'tag-list' }, state.tags.map((t) => h('span', { class: 'tag-chip tag-static' }, h('span', { class: 'tag-hash' }, '#'), t))), 2),
-      row('Consultant', h('div', { class: 'who' }, consultantAvatar(state.consultant), h('span', { class: 'who-text' }, h('strong', {}, c.name), h('span', { class: 'sub' }, c.role))), 3),
-      row('Estimated cost', h('div', { class: 'estimate' },
-        h('span', { class: 'shimmer', role: 'status', 'aria-label': 'Estimating' }),
-        h('span', { class: 'sub' }, 'Estimating… your consultant confirms it after reading your brief.'))))
+      row(state.consultants.length > 1 ? 'Consultants' : 'Consultant', h('div', { class: 'who-list' }, state.consultants.map((k) => h('div', { class: 'who' },
+        consultantAvatar(k), h('span', { class: 'who-text' }, h('strong', {}, CONSULTANTS[k].name), h('span', { class: 'sub' }, CONSULTANTS[k].role))))), 3),
+      row('Estimated cost', estimateBlock(null, state.consultants)))
   ], {
     next: 'Confirm and finish',
     canContinue: () => reachable() === 4,
@@ -251,13 +251,12 @@ function stepConfirm() {
 }
 
 function done() {
-  const c = CONSULTANTS[state.consultant];
   progress(5);
   history.replaceState(null, '', location.pathname + location.search + '#done');
   $('main').replaceChildren(h('section', { class: 'onb-done', 'aria-labelledby': 'step-h' },
     h('span', { class: 'onb-done-mark' }, icon('check')),
     h('h1', { id: 'step-h', tabindex: '-1' }, 'You’re all set.'),
-    h('p', {}, `${c ? c.name.split(' ')[0] : 'Your consultant'} will review your brief and add an estimate to your workspace.`),
+    h('p', {}, `${firstNames(state.consultants) || 'Your consultant'} will review your brief and confirm an estimate in your workspace.`),
     state.preview
       ? h('a', { class: 'btn btn-white btn-lg', href: '/admin#onboarding' }, 'Back to the workspace')
       : h('a', { class: 'btn btn-white btn-lg', href: '/account#project' }, 'Go to your workspace', icon('arrow-right'))));
@@ -302,7 +301,7 @@ if (user) {
         if (onboarding) {
           Object.assign(state, {
             stage: onboarding.stage || '', brief: onboarding.brief || '', enquiry_id: onboarding.enquiry_id,
-            tags: onboarding.tags || [], consultant: onboarding.consultant || '', resume: onboarding.step || 1
+            tags: onboarding.tags || [], consultants: onboarding.consultants || [], resume: onboarding.step || 1
           });
           state.returning = Boolean(onboarding.stage || onboarding.brief || onboarding.tags?.length);
         }
