@@ -17,7 +17,7 @@ const STATUS_NOTES = {
   closed: 'This enquiry is closed. You can send a new one any time.'
 };
 const state = { enquiries: [], sort: { key: 'created_at', dir: -1 }, open: null, viewingAs: null,
-  me: null, project: null, comments: [], meetings: [], busy: [], imageUrl: null, projectLoaded: false, picked: null };
+  me: null, project: null, comments: [], meetings: [], busy: [], imageUrl: null, projectLoaded: false, picked: null, members: null };
 let shell;
 
 const COLUMNS = [
@@ -118,6 +118,49 @@ function renderProfile(user) {
       ['Last sign-in', fmtDateTime(user.last_login)],
       user.role === 'admin' && !state.viewingAs && ['Access', 'Workspace admin · ', h('a', { href: '/admin' }, 'Open the workspace')]
     ]));
+}
+
+// Admins only, and not while already looking through someone else's eyes: pick a member and open their
+// account exactly as they see it. It sits with the admin's own profile rather than as a button on every
+// row of the Members table.
+async function renderViewAs() {
+  if (state.me?.role !== 'admin' || state.viewingAs) return;
+  const card = $('viewas-card');
+  const body = $('viewas');
+  card.hidden = false;
+  if (!state.members) {
+    body.replaceChildren(h('p', { class: 'loading' }, 'Loading members…'));
+    try {
+      state.members = (await api('/api/admin/users')).users.filter((u) => u.id !== state.me.id);
+    } catch {
+      state.members = [];
+      return body.replaceChildren(h('p', { class: 'sub' }, 'The member list could not be loaded.'));
+    }
+  }
+
+  const list = h('ul', { class: 'as-list' });
+  const find = h('input', { class: 'input', type: 'search', placeholder: 'Search name or email', autocomplete: 'off',
+    'aria-label': 'Search members' });
+  const draw = () => {
+    const needle = find.value.trim().toLowerCase();
+    const rows = state.members.filter((u) => !needle || `${u.name || ''} ${u.email}`.toLowerCase().includes(needle));
+    list.replaceChildren(...(rows.length
+      ? rows.slice(0, 40).map((u) => h('li', {},
+        h('a', { class: 'as-item', href: `/account?as=${u.id}#profile`, 'aria-label': `View as ${u.name || u.email}` },
+          avatar(u),
+          h('span', { class: 'who-text' },
+            h('strong', {}, u.name || u.email),
+            h('span', { class: 'sub' }, u.email)),
+          h('span', { class: 'as-note' }, u.role === 'admin' ? 'Admin' : u.last_login ? `Seen ${fmtDate(u.last_login)}` : ''),
+          icon('arrow-right'))))
+      : [h('li', { class: 'sub' }, 'Nobody matches that search.')]));
+  };
+  find.addEventListener('input', draw);
+  draw();
+  body.replaceChildren(
+    h('p', { class: 'sub' }, 'Opens their account the way they see it. Nothing can be changed from there.'),
+    h('label', { class: 'search' }, icon('search'), find),
+    list);
 }
 
 // The right-hand side of Profile: the project at a glance, from the enquiries.
@@ -333,6 +376,7 @@ function route() {
       $(view === 'process' ? 'process-body' : 'meeting-body').replaceChildren(h('p', { class: 'loading' }, 'This could not be loaded. Please refresh the page.'));
     });
   }
+  if (view === 'profile') renderViewAs();   // the member list is only fetched once, and only for an admin
 
   const previous = state.open;
   const wanted = view === 'enquiries' ? Number(id) : null;

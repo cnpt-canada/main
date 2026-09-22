@@ -210,7 +210,9 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .steps li.now::before{background:var(--signal)}
 
 /* settings cards (profile) */
-.cards{display:grid;gap:16px;max-width:760px}
+/* one column that is allowed to be narrower than its contents: without this a long enquiry line,
+   which is meant to be cut short with an ellipsis, widens the card and pushes the page sideways */
+.cards{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;max-width:760px}
 .card{border:1px solid var(--rule);border-radius:var(--r-card);background:var(--panel)}
 .card h2{font-size:15px;font-weight:800;letter-spacing:-0.016em}
 .card-head{padding:15px 20px;border-bottom:1px solid var(--rule)}
@@ -222,7 +224,7 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .profile-top strong{font-size:17px;font-weight:800;letter-spacing:-0.02em}
 .card .kv > div:first-child{padding-top:10px;border-top:1px solid var(--rule)}
 /* profile: account on the left, the client's project at a glance on the right */
-.profile-layout{display:grid;gap:16px;align-items:start}
+.profile-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
 .profile-layout .cards{max-width:none}
 @media(min-width:1100px){.profile-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
 .card-head-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -393,6 +395,21 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .as-banner .ic{width:17px;height:17px;color:var(--signal)}
 .as-banner strong{color:#fff}
 .as-banner .btn{margin-left:auto}
+/* picking a member to view as, on the admin's own profile */
+.as-list{list-style:none;margin:10px 0 0;padding:0;max-height:320px;overflow-y:auto}
+.as-list > li{border-top:1px solid var(--rule)}
+.as-list > li:first-child{border-top:0}
+.as-list .sub{padding:12px 2px}
+.as-item{display:flex;align-items:center;gap:12px;min-width:0;padding:10px 6px;border-radius:8px;
+  color:inherit;transition:background-color .15s}
+.as-item .who-text{min-width:0;flex:1 1 auto}
+.as-item .who-text strong{display:block;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.as-item .who-text .sub{display:block;padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.as-note{flex:none;font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
+.as-item .ic{flex:none;width:15px;height:15px;color:var(--grey);transition:transform .15s,color .15s}
+@media(hover:hover){.as-item:hover{background:var(--hover)}.as-item:hover .ic{transform:translateX(3px);color:#fff}}
+.as-item:focus-visible{outline:2px solid #fff;outline-offset:-2px}
+#viewas .search{max-width:none}
 .row-actions{display:inline-flex;align-items:center;gap:8px}
 .who-sm{gap:8px;font-weight:600}
 .who-sm .avatar{width:24px;height:24px;font-size:11px}

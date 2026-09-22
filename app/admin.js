@@ -292,15 +292,15 @@ async function setRole(u, role) {
   }
 }
 
+// "View as" used to sit here too, on every row. It lives with the admin's own profile now
+// (/account#profile), which leaves this column for the one thing that changes a member.
 function memberAction(u) {
   if (u.id === state.me) return h('span', { class: 'sub' }, 'You');
-  const viewAs = h('a', { class: 'btn btn-line btn-xs', href: `/account?as=${u.id}#project`, 'aria-label': `View as ${u.name || u.email}` },
-    icon('eye'), 'View as');
   const role = u.owner
     ? h('span', { class: 'sub' }, 'ADMIN_EMAILS')
     : h('button', { class: 'btn btn-line btn-xs', type: 'button', onclick: () => setRole(u, u.role === 'admin' ? 'user' : 'admin') },
       u.role === 'admin' ? 'Remove admin' : 'Make admin');
-  return h('span', { class: 'row-actions' }, viewAs, role);
+  return h('span', { class: 'row-actions' }, role);
 }
 
 function enquiryCount(u) {
