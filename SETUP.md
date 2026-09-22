@@ -57,7 +57,7 @@ for production.
 
 ## How it fits together
 
-- Public pages: `/`, `/what-we-do`, `/practices`, `/process`, `/work` (client works), `/team`, `/contact`. They share
+- Public pages: `/`, `/practices`, `/process` (what we do + process; `/what-we-do` redirects here), `/work` (client works), `/team`, `/contact`. They share
   `site.css`, `site.js` (motion, cursor label, phone menu, contact form) and `site-icons.svg`; old `/#section` links
   redirect to the matching page. Type is Helvetica (Helvetica Neue on Apple devices, Arial where Helvetica isn't installed).
 

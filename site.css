@@ -1,4 +1,4 @@
-/* cnpt site: shared styles for every public page (/, /what-we-do, /practices, /process, /work, /team, /contact).
+/* cnpt site: shared styles for every public page (/, /practices, /process, /work, /team, /contact).
    Type is Helvetica: Helvetica Neue on Apple devices, Helvetica or Arial elsewhere. */
 :root{
   --ink:#000000; --paper:#FFFFFF; --surface:#F4F4F1; --mist:#E4E4DF;
@@ -20,7 +20,7 @@ a{color:inherit;text-decoration:none}
 nav{position:sticky;top:0;z-index:20;background:var(--ink);border-bottom:1.5px solid #1C1C1A}
 nav .wrap{height:var(--nav-h);display:flex;align-items:center;justify-content:space-between;gap:24px}
 nav .wm{width:86px;color:#fff;display:block;flex:none}
-.navlinks{display:flex;align-items:center;gap:30px;font-size:14px;font-weight:600;color:#9C9C97}
+.navlinks{display:flex;align-items:center;gap:30px;font-size:14px;font-weight:400;color:#9C9C97}
 .navlinks a:not(.btn):hover{color:#fff}
 /* Sign in, or once signed in: the person's photo and "Account" — an underlined text link, white so it reads as the one action among the section links */
 .navlinks .nav-account{display:inline-flex;align-items:center;gap:8px;color:#fff;text-decoration:underline;
@@ -169,7 +169,7 @@ h2 em{font-style:normal;color:var(--signal)}
 .member-spec{align-self:start;margin-top:24px}
 /* the frame matches the portraits' own 1350×1764 crop, so nothing is cut off */
 .member-photo{position:relative;display:flex;align-items:center;justify-content:center;aspect-ratio:1350/1764;
-  border-radius:var(--r-sm);overflow:hidden;background:#161615}
+  overflow:hidden;background:#161615}
 /* initials sit behind the photo and only show if the image file is missing */
 .member-init{font-size:clamp(40px,5vw,64px);font-weight:800;letter-spacing:-0.035em;color:#2E2E2C}
 .member-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 20%;
@@ -495,8 +495,56 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 .nav-menu[aria-expanded="true"] span:last-child{top:19px;transform:rotate(-45deg)}
 .nav-sheet{position:absolute;left:0;right:0;top:100%;background:var(--ink);border-bottom:1.5px solid #1C1C1A;padding:12px 0 28px}
 nav .nav-sheet .wrap{display:block;height:auto}
-.nav-sheet a{display:block;padding:12px 0;font-size:26px;font-weight:700;letter-spacing:-0.028em;color:#9C9C97}
+.nav-sheet a{display:flex;align-items:center;gap:14px;padding:12px 0;font-size:26px;font-weight:400;letter-spacing:-0.028em;color:#9C9C97}
 .nav-sheet a[aria-current="page"],.nav-sheet a:hover{color:#fff}
+.navlinks .btn{font-weight:inherit}
+
+/* nav icons: a section link shows its icon on hover or keyboard focus; the phone sheet always shows them.
+   The link keeps a slot for the icon, so nothing in the nav moves when it appears. */
+.nav-ic{display:block;flex:none;width:24px;height:24px}
+.nav-ic svg{display:block;width:100%;height:100%;overflow:visible;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav-ic svg *{transform-box:fill-box;transform-origin:center}
+.nav-ic [pathLength]{stroke-dasharray:1 2}
+.nav-sheet .ic-go{color:var(--signal)}
+.navlinks .nav-ic{display:none}
+@media(hover:hover) and (pointer:fine){
+  .navlinks .nav-link{position:relative;padding-left:22px;margin-left:-18px}
+  .navlinks .nav-ic{display:block;position:absolute;left:0;top:50%;width:16px;height:16px;margin-top:-8px;opacity:0;
+    transition:opacity .2s ease,transform .45s var(--ease-out)}
+  .motion .navlinks .nav-ic{transform:scale(.6)}
+  .navlinks .nav-link:is(:hover,:focus-visible) .nav-ic{opacity:1;transform:none}
+}
+@media(hover:hover) and (pointer:fine) and (max-width:1000px){
+  .navlinks .nav-link{margin-left:-8px}
+}
+/* each icon has its own entrance: the shapes pop in turn, the dashes light up around the circle,
+   the globe is drawn and then ticked, the team gathers around the person in front. In the sheet they run one link after another. */
+.nav-ic svg > :nth-child(2){--i:1} .nav-ic svg > :nth-child(3){--i:2} .nav-ic svg > :nth-child(4){--i:3}
+.nav-ic svg > :nth-child(5){--i:4} .nav-ic svg > :nth-child(6){--i:5} .nav-ic svg > :nth-child(7){--i:6} .nav-ic svg > :nth-child(8){--i:7}
+.nav-sheet a:nth-child(2){--sd:70ms} .nav-sheet a:nth-child(3){--sd:140ms} .nav-sheet a:nth-child(4){--sd:210ms} .nav-sheet a:nth-child(5){--sd:280ms}
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-practices svg > *{
+  animation:nic-pop .6s cubic-bezier(.34,1.56,.64,1) calc(var(--sd,0ms) + var(--i,0) * 80ms) backwards}
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-process svg{animation:nic-turn .9s var(--ease-out) var(--sd,0ms) backwards}
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-process path{
+  animation:nic-dash .3s var(--ease-out) calc(var(--sd,0ms) + var(--i,0) * 45ms) backwards}
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-works path:first-child{animation:nic-draw .7s var(--ease-out) var(--sd,0ms) backwards}
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-works path:last-child{
+  animation:nic-draw .35s var(--ease-out) calc(var(--sd,0ms) + 450ms) backwards}
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-team circle{
+  animation:nic-pop .5s cubic-bezier(.34,1.56,.64,1) calc(var(--sd,0ms) + var(--i,0) * 110ms) backwards}
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-team path{
+  animation:nic-draw .45s var(--ease-out) calc(var(--sd,0ms) + 80ms) backwards}
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-team g:nth-child(2){
+  animation:nic-in-left .5s var(--ease-out) calc(var(--sd,0ms) + 110ms) backwards}
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-team g:nth-child(3){
+  animation:nic-in-right .5s var(--ease-out) calc(var(--sd,0ms) + 220ms) backwards}
+.ic-team g:nth-child(2) circle,.ic-team g:nth-child(3) circle{--i:1}
+@keyframes nic-pop{from{transform:scale(0) rotate(-40deg)}}
+@keyframes nic-turn{from{transform:rotate(-110deg)}}
+@keyframes nic-dash{from{opacity:0;transform:scale(.3)}}
+@keyframes nic-draw{from{stroke-dashoffset:1.01}}
+@keyframes nic-in-left{from{opacity:0;transform:translate(-5px,3px)}}
+@keyframes nic-in-right{from{opacity:0;transform:translate(5px,3px)}}
 
 /* home: the index of pages */
 .explore{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 40px;margin-top:52px}
@@ -510,6 +558,8 @@ nav .nav-sheet .wrap{display:block;height:auto}
   color:#fff;transition:background-color .35s var(--ease-out),color .35s var(--ease-out),box-shadow .35s var(--ease-out),transform .35s var(--ease-out)}
 .ex-go svg{display:block;width:12px;height:12px}
 .ex-card-sig .ex-go{background:var(--signal-deep);box-shadow:none}
+/* five cards in two columns: Start a project closes the grid across the full width */
+.explore .ex-card-sig{grid-column:1 / -1}
 .motion [data-rv="rule"].ex-card > *{transition-delay:calc(var(--d,0ms) + 200ms + var(--i,0) * 80ms)}
 
 /* client works */
@@ -539,7 +589,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .cta-short .cta-grid{align-items:end}
 .cta-short .cta-row{margin-top:0;justify-content:flex-end}
 
-/* a label that follows the mouse: the element's action, or the section it is over */
+/* a label that follows the mouse over something clickable: what clicking does */
 .cursor-tip{position:fixed;left:0;top:0;z-index:100;pointer-events:none;will-change:transform}
 .cursor-tip span{display:inline-flex;align-items:center;height:30px;padding:0 14px;border-radius:var(--r-cap);background:#fff;color:var(--ink);
   font-size:12.5px;font-weight:700;letter-spacing:-0.004em;white-space:nowrap;box-shadow:0 6px 24px rgba(0,0,0,.28);

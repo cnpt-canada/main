@@ -5,7 +5,8 @@
     { "source": "/(.*)", "has": [{ "type": "host", "value": "www.cnpt.ca" }], "destination": "https://cnpt.ca/$1", "permanent": true },
     { "source": "/(.*)", "has": [{ "type": "host", "value": "main-phi-ashy.vercel.app" }], "destination": "https://cnpt.ca/$1", "permanent": true },
     { "source": "/(.*)", "has": [{ "type": "host", "value": "main-cnpt.vercel.app" }], "destination": "https://cnpt.ca/$1", "permanent": true },
-    { "source": "/(.*)", "has": [{ "type": "host", "value": "main-git-main-cnpt.vercel.app" }], "destination": "https://cnpt.ca/$1", "permanent": true }
+    { "source": "/(.*)", "has": [{ "type": "host", "value": "main-git-main-cnpt.vercel.app" }], "destination": "https://cnpt.ca/$1", "permanent": true },
+    { "source": "/what-we-do", "destination": "/process", "permanent": true }
   ],
   "headers": [
     {
