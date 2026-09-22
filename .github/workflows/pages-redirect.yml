@@ -1,0 +1,56 @@
+# GitHub Pages used to publish this whole repository, which put a second copy of the site at
+# cnpt-canada.github.io/main — with no API behind it, so sign-in and the forms were dead, and it
+# competed with cnpt.ca in search. The site lives on Vercel. Pages now serves one page that sends
+# people to cnpt.ca. Turning Pages off altogether (Settings → Pages) needs an organisation admin.
+name: Point GitHub Pages at cnpt.ca
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  redirect:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write the one page
+        run: |
+          mkdir -p out
+          cat > out/index.html <<'HTML'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+          <meta charset="utf-8">
+          <title>cnpt</title>
+          <link rel="canonical" href="https://cnpt.ca/">
+          <meta name="robots" content="noindex">
+          <meta http-equiv="refresh" content="0; url=https://cnpt.ca/">
+          <style>html{background:#0B0B0A;color:#fff;font:16px/1.5 Helvetica,Arial,sans-serif}
+          body{display:grid;place-items:center;min-height:100vh;margin:0}
+          a{color:#fff}</style>
+          </head>
+          <body><p>cnpt is at <a href="https://cnpt.ca/">cnpt.ca</a>.</p></body>
+          </html>
+          HTML
+          cp out/index.html out/404.html
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'out'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
