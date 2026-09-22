@@ -99,8 +99,10 @@ team as **Consultant**. Pictures are shrunk to 1600px in the browser, then kept 
 (`process`, created by `supabase/setup-storage.mjs`); the page loads them through short-lived signed links.
 
 Clients book their own meetings on `/account` → Book a meeting: weekdays 09:00–18:00 Toronto time, in half hours, 30 or 60
-minutes, up to 60 days ahead. A booked slot is held while it is waiting or confirmed, so nobody can take it twice. The cnpt
-team confirms or declines on `/admin` → Meetings, and the studio gets an email for every request.
+minutes, up to 60 days ahead. A booked slot is held while it is waiting or confirmed, so nobody can take it twice: the API
+turns away a time that is gone, and `meetings_no_overlap` in the database refuses two live meetings that cover the same
+minutes, which is what keeps two people clicking at the same instant from both getting it. The cnpt team confirms or
+declines on `/admin` → Meetings, and the studio gets an email for every request.
 
 `/account` and `/admin` share one console layout: a left navigation, data tables, and a details panel that
 opens beside the table (or over it on smaller screens). Views are addressed by hash, e.g. `/admin#members` or

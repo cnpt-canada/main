@@ -277,6 +277,9 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .note-remove{opacity:0;transition:opacity .15s}
 .note:hover .note-remove,.note-remove:focus-visible{opacity:1}
 .notes-empty{padding:14px 12px;font-size:13.5px;color:var(--muted)}
+/* a note you have just written arrives on its own instead of the thread redrawing */
+.note-new{animation:note-in .34s cubic-bezier(.2,.7,.2,1) both}
+@keyframes note-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .note-add{display:grid;gap:10px;padding:12px;border:1px solid var(--rule);border-radius:10px;background:var(--raise)}
 .note-field{min-height:66px}
 .note-add-foot{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -327,7 +330,6 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .focal-seg{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:0;overflow:hidden;
   color:#fff;font-size:12.5px;font-weight:800;
   transition:flex-basis .28s cubic-bezier(.22,.61,.36,1),background-color .28s ease}
-.focal-seg[hidden]{display:none}
 /* the number inside a block only when the block is wide enough for it; the legend always has it */
 .focal-seg{container-type:inline-size}
 @container (max-width:46px){.focal-pct{visibility:hidden}}
@@ -529,8 +531,12 @@ th[aria-sort] .th-sort .ic{opacity:1}
 @media(max-width:1279px){
   .grid .c-id,.grid .c-provider{display:none}
   .detail{position:fixed;top:0;right:0;bottom:0;z-index:50;width:min(440px,100%);max-height:none;border:0;border-left:1px solid var(--rule);
-    border-radius:0;box-shadow:-24px 0 60px rgba(0,0,0,.6)}
-  .detail-scrim:not([hidden]){display:block!important;position:fixed;inset:0;z-index:49;background:rgba(0,0,0,.6)}
+    border-radius:0;box-shadow:-24px 0 60px rgba(0,0,0,.6);
+    transform:translateX(100%);transition:transform .3s cubic-bezier(.22,.61,.36,1)}
+  .detail.is-shown{transform:none}
+  .detail-scrim:not([hidden]){display:block!important;position:fixed;inset:0;z-index:49;background:rgba(0,0,0,.6);
+    opacity:0;transition:opacity .3s ease}
+  .detail-scrim.is-shown{opacity:1}
   .detail-open{overflow:hidden}
 }
 /* tablet: the navigation becomes a drawer behind the menu button */

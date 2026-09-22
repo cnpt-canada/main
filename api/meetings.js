@@ -59,9 +59,17 @@ export default route(async (req, res) => {
   const busy = await busySlots();
   if (busy.some((m) => overlaps(startsAt, minutes, m.starts_at, m.minutes))) return fail(res, 409, 'slot_taken');
 
-  const meeting = await run(db().from('meetings')
-    .insert({ user_id: user.id, starts_at: startsAt, minutes, note: note || null })
-    .select(MEETING_COLUMNS).single());
+  let meeting;
+  try {
+    meeting = await run(db().from('meetings')
+      .insert({ user_id: user.id, starts_at: startsAt, minutes, note: note || null })
+      .select(MEETING_COLUMNS).single());
+  } catch (err) {
+    // two people asking for the same time at the same moment both get past the check above;
+    // the database keeps the first and refuses the second (see meetings_no_overlap in schema.sql)
+    if (err?.code === '23P01' || err?.code === '23505') return fail(res, 409, 'slot_taken');
+    throw err;
+  }
 
   await emailStudio({
     subject: `Meeting requested: ${user.name || user.email}`,

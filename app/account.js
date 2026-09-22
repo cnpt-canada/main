@@ -169,13 +169,15 @@ const asQuery = () => (state.viewingAs ? `?as=${encodeURIComponent(state.viewing
 // Loads the process, its thread and the meetings the first time one of those views is opened.
 async function loadProject() {
   if (state.projectLoaded) return;
-  const data = await api(`/api/process${asQuery()}`);
+  // both at once: neither needs the other, and each is its own trip to the server
+  const [data, times] = await Promise.all([
+    api(`/api/process${asQuery()}`),
+    state.viewingAs ? null : api('/api/meetings').catch(() => null)
+  ]);
   Object.assign(state, {
-    project: data.process, imageUrl: data.image_url, comments: data.comments, meetings: data.meetings, projectLoaded: true
+    project: data.process, imageUrl: data.image_url, comments: data.comments, meetings: data.meetings, projectLoaded: true,
+    busy: times?.busy ?? []
   });
-  if (!state.viewingAs) {
-    try { state.busy = (await api('/api/meetings')).busy; } catch { state.busy = []; }
-  }
 }
 
 async function addComment(text) {

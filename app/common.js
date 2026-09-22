@@ -229,7 +229,6 @@ export function focalBar(values, { onChange, detailed = false } = {}) {
     segs.forEach((s, i) => {
       s.style.flexBasis = `${v[i]}%`;
       s.style.backgroundColor = focalShade(v[i], biggest);
-      s.hidden = v[i] === 0;
       s.firstChild.textContent = `${v[i]}%`;
     });
     items.forEach((li, i) => {
@@ -442,6 +441,9 @@ export function kv(pairs) {
   return h('dl', { class: 'kv' }, pairs.filter(Boolean).map(([k, ...v]) => h('div', {}, h('dt', {}, k), h('dd', {}, v))));
 }
 
+// how long the panel takes to slide across in app.css, and no wait at all for anyone who asked for less motion
+const slideMs = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 300);
+
 // Shows or hides a details panel. On narrower screens it slides over the table with a scrim,
 // so focus moves into it, and back to `returnTo` (the row) when it closes.
 export function showPanel(panel, open, returnTo) {
@@ -449,12 +451,27 @@ export function showPanel(panel, open, returnTo) {
   const overlay = matchMedia('(max-width: 1279px)').matches;
   const wasOpen = !panel.hidden;
   if (!open && wasOpen && panel.contains(document.activeElement)) returnTo?.focus();
-  panel.hidden = !open;
+  clearTimeout(panel.slideTimer);
   panel.closest('.split').classList.toggle('has-detail', open);
   // the scrim is shared by every panel on the page, so only the panel that opens or closes touches it
-  if (open || wasOpen) {
-    scrim.hidden = !open;
-    document.body.classList.toggle('detail-open', open);
+  const withScrim = open || wasOpen;
+  if (withScrim) document.body.classList.toggle('detail-open', open);
+  const mark = (on) => {
+    panel.classList.toggle('is-shown', on);
+    if (withScrim) scrim.classList.toggle('is-shown', on);
+  };
+
+  if (open) {
+    panel.hidden = false;
+    if (withScrim) scrim.hidden = false;
+    // one frame with it still off to the right, so the browser has somewhere to move it from
+    if (overlay && slideMs()) requestAnimationFrame(() => mark(true));
+    else mark(true);
+  } else {
+    mark(false);
+    const put = () => { panel.hidden = true; if (withScrim) scrim.hidden = true; };
+    if (overlay && slideMs()) panel.slideTimer = setTimeout(put, slideMs()); // let it slide out first
+    else put();
   }
   if (overlay && open && !wasOpen) panel.querySelector('.detail-close')?.focus();
 }

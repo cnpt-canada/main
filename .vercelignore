@@ -3,4 +3,9 @@ supabase/
 SETUP.md
 README.md
 .env.example
-.github/
+
+# Masters for the web versions the pages actually load (-web.mp4 / -web.jpg). Together they are about 18 MB,
+# and nothing links to them, so they stay in the repository but out of the deployment.
+cnptherovid.mp4
+cnptmichaelpark.png
+cnptbrandonsiow.png

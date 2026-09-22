@@ -96,6 +96,26 @@ create table if not exists public.meetings (
   updated_at timestamptz not null default now()
 );
 create index if not exists meetings_user_idx on public.meetings (user_id, starts_at);
+-- Two people can ask for the same time in the same instant, and both would pass a check made in the API.
+-- Postgres refuses the second one here: no two live meetings may cover the same minutes. The end of a
+-- meeting is kept as its own column because an index cannot be built on "start + so many minutes".
+alter table public.meetings add column if not exists ends_at timestamptz;
+create or replace function public.meetings_set_end() returns trigger language plpgsql as $$
+begin
+  new.ends_at := new.starts_at + make_interval(mins => new.minutes);
+  return new;
+end $$;
+drop trigger if exists meetings_end on public.meetings;
+create trigger meetings_end before insert or update of starts_at, minutes on public.meetings
+  for each row execute function public.meetings_set_end();
+update public.meetings set ends_at = starts_at + make_interval(mins => minutes) where ends_at is null;
+alter table public.meetings alter column ends_at set not null;
+do $$ begin
+  alter table public.meetings add constraint meetings_no_overlap
+    exclude using gist (tstzrange(starts_at, ends_at) with &&)
+    where (status in ('requested', 'confirmed'));
+exception when duplicate_table or duplicate_object then null;
+end $$;
 
 -- people who put their name in the talent pool (/talent). Kept so nothing is lost if email is down.
 create table if not exists public.talent (

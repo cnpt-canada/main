@@ -6,6 +6,13 @@
   if (location.pathname === '/' && moved[location.hash]) location.replace(moved[location.hash]);
 })();
 
+/* a picture that fails to load gets out of the way and leaves its placeholder showing (the team portraits).
+   Kept here rather than in an onerror attribute so the pages need no inline script at all. */
+window.addEventListener('error', function (e) {
+  var el = e.target;
+  if (el && el.tagName === 'IMG' && el.hasAttribute('data-drop-if-missing')) el.remove();
+}, true); // capture: error events on elements do not bubble
+
 /* practices — one row open at a time */
 (function () {
   var items = Array.prototype.slice.call(document.querySelectorAll('.acc'));
@@ -222,7 +229,7 @@
   tip.appendChild(pill);
   document.body.appendChild(tip);
 
-  var mouseX = -200, mouseY = -200, x = -200, y = -200, tx = -200, ty = -200, current = '', raf = 0;
+  var mouseX = -200, mouseY = -200, x = -200, y = -200, tx = -200, ty = -200, current = '', raf = 0, last = 0, pillW = 0;
 
   function labelFor(el) {
     if (!el || !el.closest || el.closest('input, textarea, select, [data-cursor-off]')) return '';
@@ -233,27 +240,32 @@
   }
   function hide() { current = ''; tip.classList.remove('on'); }
   function place() {
-    // sit below-right of the pointer; flip left near the right edge
-    var w = pill.offsetWidth || 0;
-    tx = mouseX + 18 + w > window.innerWidth - 8 ? mouseX - 12 - w : mouseX + 18;
+    // sit below-right of the pointer; flip left near the right edge.
+    // The width is measured when the wording changes, not on every move: reading it mid-move would
+    // make the browser lay the page out again for each step of the pointer.
+    tx = mouseX + 18 + pillW > window.innerWidth - 8 ? mouseX - 12 - pillW : mouseX + 18;
     ty = Math.min(mouseY + 20, window.innerHeight - 38);
   }
-  function frame() {
-    var k = still ? 1 : 0.24;
+  function frame(now) {
+    // the same easing whatever the screen's refresh rate: 60Hz and 120Hz settle in the same time
+    var step = last ? Math.min(now - last, 64) : 16.7;
+    last = now;
+    var k = still ? 1 : 1 - Math.pow(1 - 0.24, step / 16.7);
     x += (tx - x) * k;
     y += (ty - y) * k;
     tip.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0)';
-    raf = Math.abs(tx - x) + Math.abs(ty - y) > 0.2 ? requestAnimationFrame(frame) : 0;
+    if (Math.abs(tx - x) + Math.abs(ty - y) > 0.2) raf = requestAnimationFrame(frame);
+    else { raf = 0; last = 0; }
   }
   function update(el) {
     var text = labelFor(el);
     if (text !== current) {
       current = text;
-      if (text) pill.textContent = text;
+      if (text) { pill.textContent = text; pillW = pill.offsetWidth || 0; }
       tip.classList.toggle('on', !!text);
     }
     place();
-    if (!raf) raf = requestAnimationFrame(frame);
+    if (!raf) { last = 0; raf = requestAnimationFrame(frame); }
   }
 
   document.addEventListener('pointermove', function (e) {
@@ -315,20 +327,24 @@
   window.addEventListener('load', function () { measureHero(); onScroll(); }); // the video's height is known by now
   onScroll();
 
-  // the hero video plays only while it is on screen, and not at all under reduced motion
+  // The hero film is the heaviest thing on the site, so the page ships its first frame as a picture and only
+  // fetches the film itself when it is wanted: not under reduced motion, and not on a metered or slow connection,
+  // where the still frame is what visitors get. Once it is loaded it plays only while it is on screen.
   var heroVideo = document.querySelector('.hero-video');
-  if (heroVideo) {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      heroVideo.removeAttribute('autoplay');
-      heroVideo.pause();
-    } else if ('IntersectionObserver' in window) {
-      new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-          if (!e.isIntersecting) return heroVideo.pause();
-          var played = heroVideo.play();
-          if (played && played.catch) played.catch(function () {});
-        });
-      }, { threshold: 0.05 }).observe(heroVideo);
+  if (heroVideo && heroVideo.getAttribute('data-film')) {
+    var link = navigator.connection || {};
+    var sparing = link.saveData === true || /(^|-)2g$/.test(link.effectiveType || '');
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && !sparing) {
+      heroVideo.src = heroVideo.getAttribute('data-film');
+      var roll = function () {
+        var played = heroVideo.play();
+        if (played && played.catch) played.catch(function () {});
+      };
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) { e.isIntersecting ? roll() : heroVideo.pause(); });
+        }, { threshold: 0.05 }).observe(heroVideo);
+      } else roll();
     }
   }
 
@@ -456,7 +472,7 @@
           el.setAttribute('aria-hidden', 'true');
           el.textContent = ch;
           frag.appendChild(el);
-          letters.push({ el: el, v: 1, x: 0, shown: HEAVY, shownX: 0 });
+          letters.push({ el: el, v: 1, x: 0, shown: HEAVY, shownX: 0, cx: 0, cy: 0 });
         });
         node.replaceChild(frag, child);
       });
@@ -488,28 +504,42 @@
     window.addEventListener('resize', function () {
       if (window.innerWidth === lastWidth) return;
       lastWidth = window.innerWidth;
+      fontSize = 0; // a narrower page means a smaller headline, so the reach around the pointer changes too
       lockLines();
     });
 
-    var mouseX = -1e4, mouseY = -1e4, raf = 0;
-    function frame() {
-      // letters move as their neighbours change weight, so measure every frame (one small headline, cheap)
+    var mouseX = -1e4, mouseY = -1e4, raf = 0, last = 0, fontSize = 0;
+    function frame(now) {
+      // Everything is measured first and only then written. Reading a letter's place right after changing
+      // the one before it would make the browser lay the headline out again for every letter, forty times a frame.
       var box = h1.getBoundingClientRect();
-      var fs = parseFloat(getComputedStyle(h1).fontSize) || 80;
+      if (!fontSize) fontSize = parseFloat(getComputedStyle(h1).fontSize) || 80;
       var inside = mouseX >= box.left && mouseX <= box.right && mouseY >= box.top && mouseY <= box.bottom;
-      var core = fs * 0.35, reach = fs * 1.4, moving = false;
-      letters.forEach(function (l) {
+      var i, l;
+      if (inside) {
+        for (i = 0; i < letters.length; i++) {
+          var r = letters[i].el.getBoundingClientRect();
+          letters[i].cx = r.left + r.width / 2;
+          letters[i].cy = r.top + r.height / 2;
+        }
+      }
+      // and the same easing whatever the screen's refresh rate, so it settles in about half a second either way
+      var step = last ? Math.min(now - last, 64) : 16.7;
+      last = now;
+      var k = 1 - Math.pow(1 - 0.09, step / 16.7);
+      var core = fontSize * 0.35, reach = fontSize * 1.4, moving = false;
+      for (i = 0; i < letters.length; i++) {
+        l = letters[i];
         var target = 1, extra = 0; // Bold while the mouse is outside the headline
         if (inside) {
-          var r = l.el.getBoundingClientRect();
-          var dx = r.left + r.width / 2 - mouseX, dy = r.top + r.height / 2 - mouseY;
+          var dx = l.cx - mouseX, dy = l.cy - mouseY;
           // fully heavy within the core around the pointer, easing to Regular further out
           var p = Math.max(0, 1 - Math.max(0, Math.sqrt(dx * dx + dy * dy) - core) / reach);
           target = p * p * (3 - 2 * p);
           extra = target * target * target; // only the letters closest to the pointer go past Bold
         }
-        l.v += (target - l.v) * 0.09; // about half a second to settle
-        l.x += (extra - l.x) * 0.09;
+        l.v += (target - l.v) * k;
+        l.x += (extra - l.x) * k;
         if (Math.abs(target - l.v) > 0.002 || Math.abs(extra - l.x) > 0.002) moving = true;
         else { l.v = target; l.x = extra; }
         var w = Math.round(LIGHT + (HEAVY - LIGHT) * l.v);
@@ -522,10 +552,11 @@
           l.shownX = x;
           l.el.style.textShadow = spread(x);
         }
-      });
-      raf = moving ? requestAnimationFrame(frame) : 0;
+      }
+      if (moving) raf = requestAnimationFrame(frame);
+      else { raf = 0; last = 0; }
     }
-    function kick() { if (!raf) raf = requestAnimationFrame(frame); }
+    function kick() { if (!raf) { last = 0; raf = requestAnimationFrame(frame); } }
 
     document.addEventListener('pointermove', function (e) {
       if (e.pointerType && e.pointerType !== 'mouse') return;

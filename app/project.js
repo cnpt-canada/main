@@ -17,7 +17,16 @@ export const MAX_COMMENT = 2000;
 
 /* ---------- when ---------- */
 
-const inToronto = (date, opts) => new Intl.DateTimeFormat('en-CA', { timeZone: MEETING_TZ, ...opts }).format(date);
+// Building a date formatter is slow, and the calendar asks for the same handful over and over
+// (ninety cells, repainted on every step of a drag), so each one is made once and kept.
+const FORMATS = new Map();
+function torontoFormat(opts) {
+  const key = JSON.stringify(opts);
+  let made = FORMATS.get(key);
+  if (!made) FORMATS.set(key, made = new Intl.DateTimeFormat('en-CA', { timeZone: MEETING_TZ, ...opts }));
+  return made;
+}
+const inToronto = (date, opts) => torontoFormat(opts).format(date);
 export const clockAt = (date) => inToronto(date, { hour: '2-digit', minute: '2-digit', hour12: false });
 export const dayAt = (date) => inToronto(date, { weekday: 'long', month: 'long', day: 'numeric' });
 
@@ -42,7 +51,7 @@ export function weekStart(date) {
 
 // The instant for a wall-clock time in Toronto on the day `date` falls on.
 export function slotOn(date, hour, minute) {
-  const ymd = new Intl.DateTimeFormat('en-CA', { timeZone: MEETING_TZ, year: 'numeric', month: '2-digit', day: '2-digit' })
+  const ymd = torontoFormat({ year: 'numeric', month: '2-digit', day: '2-digit' })
     .formatToParts(date).reduce((a, p) => ({ ...a, [p.type]: p.value }), {});
   const wanted = `${ymd.year}-${ymd.month}-${ymd.day}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
   // Toronto is behind UTC, so try both offsets and keep the one that reads back as the time we asked for
@@ -108,8 +117,9 @@ function commentRow(comment, { canDelete, onDelete }) {
 // `onSend(text)` should save and return the new comment; `onDelete(comment)` removes one.
 export function commentThread({ comments, me, onSend, onDelete, readOnly = false, placeholder = 'Write a note…' }) {
   const list = h('ul', { class: 'notes' });
+  const rowFor = (c) => commentRow(c, { canDelete: !readOnly && (me?.role === 'admin' || c.author?.id === me?.id), onDelete });
   const draw = () => list.replaceChildren(...(comments.length
-    ? comments.map((c) => commentRow(c, { canDelete: !readOnly && (me?.role === 'admin' || c.author?.id === me?.id), onDelete }))
+    ? comments.map(rowFor)
     : [h('li', { class: 'notes-empty' }, 'Nothing here yet. Notes you leave stay with your project.')]));
   draw();
   if (readOnly) return h('div', { class: 'thread' }, list);
@@ -130,9 +140,13 @@ export function commentThread({ comments, me, onSend, onDelete, readOnly = false
     send.disabled = true;
     const added = await onSend(text);
     if (added) {
+      const first = comments.length === 0;
       comments.push(added);
       field.value = '';
-      draw();
+      // the new note arrives on its own, rather than the whole thread being drawn again under the reader
+      const row = rowFor(added);
+      row.classList.add('note-new');
+      if (first) list.replaceChildren(row); else list.append(row);
     }
     sync();
     field.focus();
@@ -154,6 +168,7 @@ export function meetingCalendar({ busy = [], mine = [], minutes = 30, onPick, fr
   let picked = null;
   let length = minutes;
   let cells = [];
+  const byEl = new Map(); // which cell a button belongs to, for the hit test during a drag
 
   const grid = h('div', { class: 'cal-grid' });
   const title = h('p', { class: 'cal-title' });
@@ -186,22 +201,29 @@ export function meetingCalendar({ busy = [], mine = [], minutes = 30, onPick, fr
     onPick?.(picked);
   }
 
-  // Updates the cells that are already on screen; never rebuilds them.
+  // Updates the cells that are already on screen; never rebuilds them. A drag repaints on every step,
+  // so each cell remembers how it was last left and the ones that have not changed are skipped.
   function paint() {
+    const now = Date.now();
+    const pickFrom = picked ? Date.parse(picked.startsAt) : 0;
+    const pickTo = picked ? pickFrom + picked.minutes * 60000 : 0;
     for (const cell of cells) {
       const { el, at } = cell;
-      const past = at.getTime() < Date.now();
+      const time = at.getTime();
+      const past = time < now;
       const busyHere = isTaken(at, SLOT_MINUTES);
       const mineHere = isMine(at, SLOT_MINUTES);
-      const inPick = picked && at.getTime() >= Date.parse(picked.startsAt)
-        && at.getTime() < Date.parse(picked.startsAt) + picked.minutes * 60000;
+      const inPick = Boolean(picked) && time >= pickFrom && time < pickTo;
+      const label = inPick && time === pickFrom ? `${picked.minutes} min` : mineHere ? 'Yours' : '';
+      const state = `${past ? 'p' : ''}${busyHere ? 'b' : ''}${mineHere ? 'm' : ''}${inPick ? 'k' : ''}|${label}`;
+      if (state === cell.state) continue;
+      cell.state = state;
       el.disabled = past || busyHere;
       el.classList.toggle('is-taken', busyHere && !mineHere);
       el.classList.toggle('is-mine', mineHere);
-      el.classList.toggle('is-picked', Boolean(inPick));
-      el.setAttribute('aria-pressed', String(Boolean(inPick)));
-      el.setAttribute('aria-label', `${dayAt(at)}, ${clockAt(at)}${mineHere ? ', yours' : busyHere ? ', already taken' : past ? ', past' : ''}`);
-      const label = inPick && at.getTime() === Date.parse(picked.startsAt) ? `${picked.minutes} min` : mineHere ? 'Yours' : '';
+      el.classList.toggle('is-picked', inPick);
+      el.setAttribute('aria-pressed', String(inPick));
+      el.setAttribute('aria-label', `${cell.when}${mineHere ? ', yours' : busyHere ? ', already taken' : past ? ', past' : ''}`);
       el.firstChild.textContent = label;
       el.firstChild.hidden = !label;
     }
@@ -212,6 +234,7 @@ export function meetingCalendar({ busy = [], mine = [], minutes = 30, onPick, fr
     title.textContent = `${inToronto(days[0], { month: 'long', day: 'numeric' })} – ${inToronto(days[4], { month: 'long', day: 'numeric', year: 'numeric' })}`;
     back.disabled = days[0].getTime() < Date.now() - 7 * 86400000;
     cells = [];
+    byEl.clear();
     const rows = [h('div', { class: 'cal-corner', 'aria-hidden': 'true' }),
       ...days.map((d) => h('div', { class: 'cal-day' }, h('strong', {}, inToronto(d, { weekday: 'short' })), h('span', {}, inToronto(d, { day: 'numeric' }))))];
     for (let i = 0; i < SLOTS_PER_DAY; i++) {
@@ -223,7 +246,8 @@ export function meetingCalendar({ busy = [], mine = [], minutes = 30, onPick, fr
         const el = h('button', { class: 'cal-slot', type: 'button', 'data-at': at.toISOString(), 'data-day': String(column) },
           h('span', { class: 'cal-block', hidden: true }));
         rows.push(el);
-        cells.push({ el, at, column });
+        cells.push({ el, at, column, when: `${dayAt(at)}, ${clockAt(at)}`, state: null });
+        byEl.set(el, cells[cells.length - 1]);
       });
     }
     grid.replaceChildren(...rows);
@@ -231,20 +255,32 @@ export function meetingCalendar({ busy = [], mine = [], minutes = 30, onPick, fr
   }
 
   // One set of listeners on the grid, so repainting can never take them away mid-drag.
-  const cellAt = (target) => cells.find((c) => c.el === target?.closest?.('.cal-slot'));
+  const cellAt = (target) => byEl.get(target?.closest?.('.cal-slot'));
   grid.addEventListener('pointerdown', (ev) => {
     const from = cellAt(ev.target);
     if (ev.button !== 0 || !from || from.el.disabled) return;
     ev.preventDefault();
     grid.setPointerCapture(ev.pointerId);
     place(from.at, length);
-    const move = (e) => {
-      const over = cellAt(document.elementFromPoint(e.clientX, e.clientY));
+    // A pointer can report several positions between two frames. Only the latest one matters, and
+    // working it out once a frame keeps the block following the finger instead of running behind it.
+    let at = null, waiting = 0;
+    const step = () => {
+      waiting = 0;
+      const point = at;
+      if (!point) return;
+      const over = cellAt(document.elementFromPoint(point.x, point.y));
       if (!over || over.column !== from.column) return;           // stay in the day you started in
       const mins = Math.round((over.at.getTime() - from.at.getTime()) / 60000) + SLOT_MINUTES;
       place(from.at, mins >= 60 ? 60 : SLOT_MINUTES);
     };
+    const move = (e) => {
+      at = { x: e.clientX, y: e.clientY };
+      if (!waiting) waiting = requestAnimationFrame(step);
+    };
     const up = () => {
+      if (waiting) cancelAnimationFrame(waiting);
+      step(); // the pointer may have moved since the last frame; finish where it actually is
       grid.removeEventListener('pointermove', move);
       grid.removeEventListener('pointerup', up);
       grid.removeEventListener('pointercancel', up);
