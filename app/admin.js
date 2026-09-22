@@ -1,4 +1,4 @@
-// /admin — the studio console: enquiries and members. The page only shows what the API allows;
+// /admin — the workspace: enquiries and members. The page only shows what the API allows;
 // every change is checked again on the server (admin role, allowed values, owners locked).
 import {
   ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
@@ -251,7 +251,7 @@ async function load() {
 function denied() {
   $('main').replaceChildren(h('section', { class: 'view' }, h('div', { class: 'view-head' }, h('div', {},
     h('h1', {}, 'Admins only'),
-    h('p', { class: 'view-sub' }, 'This part of the studio is for the cnpt team. ', h('a', { href: '/account' }, 'Go to your account'), '.')))));
+    h('p', { class: 'view-sub' }, 'This part of the workspace is for the cnpt team. ', h('a', { href: '/account' }, 'Go to your account'), '.')))));
   shell.setView('', 'Admins only');
 }
 
@@ -285,7 +285,7 @@ if (me) {
       await load();
     } catch (err) {
       if (err.status === 403) denied();
-      else $('enquiry-table').replaceChildren(h('p', { class: 'loading' }, 'The studio data could not be loaded. Please refresh the page.'));
+      else $('enquiry-table').replaceChildren(h('p', { class: 'loading' }, 'The workspace data could not be loaded. Please refresh the page.'));
     }
   }
 }

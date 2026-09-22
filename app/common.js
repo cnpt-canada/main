@@ -110,7 +110,7 @@ export function mountShell(user, page) {
   const group = (label, ...items) => h('div', { class: 'nav-group' }, h('p', { class: 'nav-group-label' }, label), items);
 
   document.getElementById('side-nav').replaceChildren(...[
-    user.role === 'admin' && group('Studio',
+    user.role === 'admin' && group('Workspace',
       item('/admin#enquiries', 'admin:enquiries', 'Enquiries', 'inbox'),
       item('/admin#members', 'admin:members', 'Members', 'users')),
     group('Account',

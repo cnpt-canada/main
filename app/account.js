@@ -1,4 +1,4 @@
-// /account — the client's enquiries and profile, in the same console frame as the studio.
+// /account — the client's enquiries and profile, in the same workspace frame as /admin.
 import {
   ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
   api, avatar, badge, dataTable, flash, fmtDate, fmtDateTime, h, icon, keepFocus, kv, markSelected, mountShell,
@@ -8,9 +8,9 @@ import {
 const $ = (id) => document.getElementById(id);
 const VIEWS = { enquiries: 'Your enquiries', profile: 'Profile' };
 const STATUS_NOTES = {
-  new: 'Received. Someone from the studio will read it shortly.',
-  in_review: 'The studio is reading it and will reply by email.',
-  replied: 'The studio has replied by email. Check your inbox, and your spam folder just in case.',
+  new: 'Received. Someone from the cnpt team will read it shortly.',
+  in_review: 'The cnpt team is reading it and will reply by email.',
+  replied: 'The cnpt team has replied by email. Check your inbox, and your spam folder just in case.',
   closed: 'This enquiry is closed. You can send a new one any time.'
 };
 const state = { enquiries: [], sort: { key: 'created_at', dir: -1 }, open: null };
@@ -67,7 +67,7 @@ function renderProfile(user) {
       ['Signed in with', h('span', { class: 'provider' }, icon('google'), 'Google')],
       ['Member since', fmtDate(user.created_at)],
       ['Last sign-in', fmtDateTime(user.last_login)],
-      user.role === 'admin' && ['Access', 'Studio admin · ', h('a', { href: '/admin' }, 'Open the studio')]
+      user.role === 'admin' && ['Access', 'Workspace admin · ', h('a', { href: '/admin' }, 'Open the workspace')]
     ]));
 }
 
@@ -104,7 +104,7 @@ if (user) {
   shell = mountShell(user, 'account');
   $('signout').addEventListener('click', signOut);
   $('delete').addEventListener('click', async () => {
-    const ok = confirm('Delete your cnpt account? You will be signed out. Your enquiries stay with the studio.');
+    const ok = confirm('Delete your cnpt account? You will be signed out. Your enquiries stay with the cnpt team.');
     if (!ok) return;
     try {
       await api('/api/account', { method: 'DELETE' });

@@ -76,8 +76,8 @@ button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 .side-top{display:flex;align-items:center;gap:10px;height:var(--bar-h);padding:0 12px 0 20px;border-bottom:1px solid var(--rule)}
 .side-brand{display:block;color:#fff}
 .side-brand .wm{display:block;width:62px;height:auto;aspect-ratio:140/32}
-.side-tag{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:5px;background:var(--signal-deep);
-  color:#fff;font-size:11px;font-weight:800;letter-spacing:-0.01em}
+.side-tag{display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:var(--r-cap);background:var(--signal-deep);
+  color:#fff;font-size:12px;font-weight:700;line-height:1;letter-spacing:-0.02em;white-space:nowrap}
 .side-close{display:none;margin-left:auto}
 .side-nav{flex:1;display:grid;align-content:start;gap:22px;padding:18px 10px;overflow-y:auto}
 .nav-group{display:grid;gap:2px}
