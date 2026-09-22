@@ -6,7 +6,7 @@ pages still work; sign-in, the account and admin pages, and saving enquiries nee
 | What | Service | Used for |
 | --- | --- | --- |
 | Sign-in | Google OAuth client | "Continue with Google" on `/signin` (a first sign-in creates the account) |
-| Data | Supabase (Postgres) | users, enquiries, projects |
+| Data | Supabase (Postgres) | users, enquiries |
 | Email (optional) | Resend | a copy of every enquiry in your inbox |
 
 All values go in **Vercel → Project → Settings → Environment Variables**. `.env.example` lists every one.
@@ -14,7 +14,7 @@ All values go in **Vercel → Project → Settings → Environment Variables**. 
 ## 1. Supabase
 
 1. Create a project at <https://supabase.com/dashboard>.
-2. **SQL Editor → New query**, paste `supabase/schema.sql`, **Run**. It creates `users`, `enquiries` and `projects`
+2. **SQL Editor → New query**, paste `supabase/schema.sql`, **Run**. It creates `users` and `enquiries`
    and turns on row level security with no policies, so only the server can read or write them.
 3. **Project Settings → API**: copy the Project URL to `SUPABASE_URL` and the `service_role` key to
    `SUPABASE_SERVICE_ROLE_KEY`. The service-role key bypasses row level security: keep it in Vercel only.
@@ -69,5 +69,9 @@ for production.
 | Page | Who | What |
 | --- | --- | --- |
 | `/signin` | anyone | Continue with Google |
-| `/account` | signed in | projects and their stage, enquiries and their status, profile, sign out, delete account |
-| `/admin` | admins | enquiries (filter, change status, reply by email), projects (create, edit, delete), members (grant/remove admin) |
+| `/account` | signed in | your enquiries and where each one is, profile, sign out, delete account |
+| `/admin` | admins | enquiries (filter, search, sort, change status, reply by email), members (grant/remove admin) |
+
+`/account` and `/admin` share one console layout: a left navigation, data tables, and a details panel that
+opens beside the table (or over it on smaller screens). Views are addressed by hash, e.g. `/admin#members` or
+`/admin#enquiries/12`, so links and the back button work.

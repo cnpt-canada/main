@@ -32,19 +32,5 @@ create index if not exists enquiries_user_idx on public.enquiries (user_id);
 create index if not exists enquiries_email_idx on public.enquiries (email);
 create index if not exists enquiries_created_idx on public.enquiries (created_at desc);
 
--- client projects, managed on /admin and shown to the client on /account
-create table if not exists public.projects (
-  id          bigserial primary key,
-  user_id     bigint references public.users (id) on delete set null,
-  title       text not null check (char_length(title) between 1 and 120),
-  stage       text not null default 'frame' check (stage in ('frame', 'concept', 'system', 'entry')),
-  status      text not null default 'active' check (status in ('active', 'paused', 'complete')),
-  note        text check (char_length(note) <= 2000),
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
-);
-create index if not exists projects_user_idx on public.projects (user_id);
-
 alter table public.users enable row level security;
 alter table public.enquiries enable row level security;
-alter table public.projects enable row level security;

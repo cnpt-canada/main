@@ -1,179 +1,158 @@
-// /admin — enquiries, client projects and members. The page only shows what the API allows;
+// /admin — the studio console: enquiries and members. The page only shows what the API allows;
 // every change is checked again on the server (admin role, allowed values, owners locked).
 import {
-  FUNDING_STAGES, LABELS, PROJECT_STAGES,
-  api, avatar, flash, fmtDate, h, renderNav, signedInUser
+  ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
+  api, avatar, badge, dataTable, flash, fmtDate, fmtDateTime, h, icon, keepFocus, kv, markSelected, mountShell,
+  section, showPanel, signedInUser, sortRows, toggleSort
 } from '/app/common.js';
 
 const $ = (id) => document.getElementById(id);
-const TABS = ['enquiries', 'projects', 'members'];
-const state = { enquiries: [], projects: [], users: [], me: null };
+const VIEWS = { enquiries: 'Enquiries', members: 'Members' };
+const state = {
+  enquiries: [], users: [], me: null,
+  filter: { status: '', stage: '', text: '' }, sort: { key: 'created_at', dir: -1 }, open: null,
+  memberFilter: { role: '', text: '' }, memberSort: { key: 'created_at', dir: -1 }
+};
+let shell;
 
 const ERRORS = {
   owner_locked: 'Owners are set in ADMIN_EMAILS and can’t be changed here.',
   cannot_demote_self: 'You can’t remove your own admin access.',
-  invalid_title: 'Give the project a title (up to 120 characters).',
-  invalid_client: 'That client no longer exists. Reload the page.',
-  invalid_note: 'The note is too long (2,000 characters at most).',
   admin_only: 'Your admin access was removed.',
   signin_required: 'Your session ended. Sign in again.'
 };
 const errorText = (err) => ERRORS[err.message] || 'That didn’t save. Please try again.';
 
-/* ---------- small form builders ---------- */
+const time = (iso) => h('time', { datetime: iso, title: fmtDateTime(iso) }, fmtDate(iso));
+const matches = (needle, ...values) => !needle || values.some((v) => v && String(v).toLowerCase().includes(needle));
 
-function field(label, control, cls) {
-  return h('label', { class: cls ? `field ${cls}` : 'field' }, h('span', {}, label), control);
-}
-function select(name, values, labels, selected, attrs) {
-  return h('select', { class: 'select', name, ...attrs },
-    values.map((v) => h('option', { value: v, selected: v === selected }, labels ? labels[v] : v)));
-}
-function clientSelect(selectedId) {
-  return h('select', { class: 'select', name: 'user_id' },
-    h('option', { value: '' }, 'No client yet'),
-    state.users.map((u) => h('option', { value: u.id, selected: u.id === selectedId }, u.name ? `${u.name} (${u.email})` : u.email)));
-}
-function projectFields(p) {
-  return h('div', { class: 'form-grid' },
-    field('Title', h('input', { class: 'input', name: 'title', value: p.title || '', maxlength: 120, required: true, autocomplete: 'off' })),
-    field('Client', clientSelect(p.user_id || null)),
-    field('Stage', select('stage', PROJECT_STAGES, LABELS.projectStage, p.stage || 'frame')),
-    field('Status', select('status', Object.keys(LABELS.projectStatus), LABELS.projectStatus, p.status || 'active')),
-    field('Note to the client', h('textarea', { class: 'textarea', name: 'note', maxlength: 2000, rows: 3 }, p.note || ''), 'span-2'));
-}
-function readProject(form) {
-  const f = form.elements;
-  return {
-    title: f.title.value.trim(),
-    user_id: f.user_id.value ? Number(f.user_id.value) : null,
-    stage: f.stage.value,
-    status: f.status.value,
-    note: f.note.value.trim()
-  };
+function segButtons(container, options, current, onPick) {
+  keepFocus(container, () => container.replaceChildren(...options.map(([value, label, n]) => h('button', {
+    class: 'seg-btn', type: 'button', 'aria-pressed': String(current === value), onclick: () => onPick(value)
+  }, label, n != null && h('span', { class: 'n' }, n)))));
 }
 
 /* ---------- enquiries ---------- */
 
-function enquiryRow(e) {
-  const status = select('status', Object.keys(LABELS.enquiryStatus), LABELS.enquiryStatus, e.status,
-    { 'aria-label': `Status of the enquiry from ${e.email}` });
-  status.addEventListener('change', async () => {
-    const previous = e.status;
-    status.disabled = true;
-    try {
-      const { enquiry } = await api('/api/admin/enquiries', { method: 'PATCH', body: { id: e.id, status: status.value } });
-      Object.assign(e, enquiry);
-      flash(`Marked as ${LABELS.enquiryStatus[e.status].toLowerCase()}`);
-      updateCounts();
-      if ($('f-status').value) renderEnquiries(); // it may no longer match the filter
-    } catch (err) {
-      status.value = previous;
-      flash(errorText(err), true);
-    } finally {
-      status.disabled = false;
-    }
-  });
-  const reply = `mailto:${encodeURIComponent(e.email)}?subject=${encodeURIComponent('Re: your enquiry to cnpt')}`;
-  return h('li', { class: 'row' },
-    h('div', { class: 'row-meta' },
-      h('time', { datetime: e.created_at }, fmtDate(e.created_at)),
-      h('span', { class: 'chip' }, e.stage)),
-    h('div', { class: 'row-main' },
-      h('a', { class: 'row-email', href: reply }, e.email),
-      h('span', { class: 'sub' }, e.client ? `Account: ${e.client.name || e.client.email}` : 'No account'),
-      h('p', { class: 'msg' }, e.message)),
-    h('div', { class: 'row-side' }, status));
+const ENQUIRY_COLUMNS = [
+  { key: 'id', label: 'ID', cls: 'c-id', sort: (e) => e.id, cell: (e) => `#${e.id}` },
+  { key: 'created_at', label: 'Received', cls: 'c-date', sort: (e) => Date.parse(e.created_at), cell: (e) => time(e.created_at) },
+  { key: 'email', label: 'From', cls: 'c-primary', sort: (e) => e.email,
+    cell: (e) => [h('strong', {}, e.email), h('span', { class: 'sub' }, e.client ? e.client.name || 'Member' : 'Guest')] },
+  { key: 'stage', label: 'Stage', cls: 'c-stage', sort: (e) => FUNDING_STAGES.indexOf(e.stage), cell: (e) => h('span', { class: 'chip' }, e.stage) },
+  { key: 'message', label: 'Message', cls: 'c-msg', cell: (e) => h('span', { class: 'clip' }, e.message) },
+  { key: 'status', label: 'Status', cls: 'c-status', sort: (e) => ENQUIRY_STATUSES.indexOf(e.status),
+    cell: (e) => badge(e.status, LABELS.enquiryStatus[e.status]) }
+];
+
+function visibleEnquiries() {
+  const { status, stage, text } = state.filter;
+  const needle = text.trim().toLowerCase();
+  const rows = state.enquiries.filter((e) => (!status || e.status === status) && (!stage || e.stage === stage) &&
+    matches(needle, e.email, e.message, e.client?.name, `#${e.id}`));
+  return sortRows(rows, ENQUIRY_COLUMNS, state.sort);
+}
+
+function clearFilters() {
+  Object.assign(state.filter, { status: '', stage: '', text: '' });
+  $('f-stage').value = '';
+  $('f-text').value = '';
+  renderEnquiries();
 }
 
 function renderEnquiries() {
-  const stage = $('f-stage').value;
-  const status = $('f-status').value;
-  const rows = state.enquiries.filter((e) => (!stage || e.stage === stage) && (!status || e.status === status));
-  $('enquiries-meta').textContent = `${rows.length} of ${state.enquiries.length}`;
-  $('enquiry-list').replaceChildren(...(rows.length
-    ? rows.map(enquiryRow)
-    : [h('li', { class: 'empty' }, state.enquiries.length ? 'No enquiries match these filters.' : 'No enquiries yet.')]));
+  const count = (s) => state.enquiries.filter((e) => e.status === s).length;
+  segButtons($('f-status'),
+    [['', 'All', state.enquiries.length], ...ENQUIRY_STATUSES.map((s) => [s, LABELS.enquiryStatus[s], count(s)])],
+    state.filter.status, (value) => { state.filter.status = value; renderEnquiries(); });
+
+  const rows = visibleEnquiries();
+  const { status, stage, text } = state.filter;
+  $('enquiries-meta').textContent = status || stage || text.trim() ? `${rows.length} of ${state.enquiries.length}` : `${rows.length} total`;
+  keepFocus($('enquiry-table'), () => $('enquiry-table').replaceChildren(dataTable({
+    label: 'Enquiries', columns: ENQUIRY_COLUMNS, rows, sort: state.sort, selected: state.open,
+    onSort: (key) => { toggleSort(state.sort, key, key === 'email' || key === 'stage' ? 1 : -1); renderEnquiries(); },
+    onOpen: (e, replace) => go(`enquiries/${e.id}`, replace),
+    empty: state.enquiries.length
+      ? ['No enquiries match these filters. ', h('button', { class: 'link', type: 'button', onclick: clearFilters }, 'Clear filters')]
+      : 'No enquiries yet. They show up here as soon as someone sends the contact form.'
+  })));
+  shell.setCount('enquiries', count('new'));
 }
 
-/* ---------- projects ---------- */
-
-function projectEditor(p) {
-  const form = h('form', { class: 'card' },
-    projectFields(p),
-    h('div', { class: 'edit-foot' },
-      h('span', { class: 'sub' },
-        `${p.client ? `For ${p.client.name || p.client.email}` : 'No client yet'} · Updated ${fmtDate(p.updated_at)}`),
-      h('div', { class: 'actions' },
-        h('button', { class: 'btn btn-danger btn-sm', type: 'button', onclick: () => removeProject(p, form) }, 'Delete'),
-        h('button', { class: 'btn btn-white btn-sm', type: 'submit' }, 'Save changes'))));
-  form.addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const button = form.querySelector('[type="submit"]');
-    button.disabled = true;
-    try {
-      const { project } = await api('/api/admin/projects', { method: 'PATCH', body: { id: p.id, ...readProject(form) } });
-      state.projects = state.projects.map((x) => (x.id === project.id ? project : x));
-      form.replaceWith(projectEditor(project)); // only this card, so edits in other cards are kept
-      flash('Project saved');
-    } catch (err) {
-      flash(errorText(err), true);
-      button.disabled = false;
-    }
-  });
-  return form;
+function replyHref(e) {
+  const quoted = e.message.split('\n').map((line) => `> ${line}`).join('\n');
+  const body = `\n\n—\nOn ${fmtDateTime(e.created_at)}, you wrote:\n${quoted}`;
+  return `mailto:${encodeURIComponent(e.email)}?subject=${encodeURIComponent('Re: your enquiry to cnpt')}&body=${encodeURIComponent(body)}`;
 }
 
-async function removeProject(p, form) {
-  if (!confirm(`Delete “${p.title}”? The client will no longer see it.`)) return;
+async function copyEmail(email) {
   try {
-    await api(`/api/admin/projects?id=${encodeURIComponent(p.id)}`, { method: 'DELETE' });
-    state.projects = state.projects.filter((x) => x.id !== p.id);
-    form.remove();
-    if (!state.projects.length) renderProjects();
-    updateCounts();
-    flash('Project deleted');
-  } catch (err) {
-    flash(errorText(err), true);
+    await navigator.clipboard.writeText(email);
+    flash('Email copied');
+  } catch {
+    flash('Couldn’t copy. Select the address instead.', true);
   }
 }
 
-function renderProjects() {
-  $('project-list').replaceChildren(...(state.projects.length
-    ? state.projects.map(projectEditor)
-    : [h('p', { class: 'empty' }, 'No projects yet. Create one above; pick the client once they have signed in.')]));
+let saving = false;
+async function setStatus(e, status) {
+  if (saving || e.status === status) return;
+  saving = true;
+  for (const b of $('detail').querySelectorAll('.seg-btn')) b.disabled = true;
+  try {
+    const { enquiry } = await api('/api/admin/enquiries', { method: 'PATCH', body: { id: e.id, status } });
+    Object.assign(e, enquiry);
+    flash(`Marked as ${LABELS.enquiryStatus[e.status].toLowerCase()}`);
+  } catch (err) {
+    flash(errorText(err), true);
+  } finally {
+    saving = false;
+    renderEnquiries();
+    renderDetail();
+    $('detail').querySelector(`[data-status="${e.status}"]`)?.focus();
+  }
 }
 
-function setUpNewProject() {
-  const form = $('new-project');
-  $('new-project-fields').replaceChildren(projectFields({}));
-  form.addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const button = form.querySelector('[type="submit"]');
-    button.disabled = true;
-    try {
-      const { project } = await api('/api/admin/projects', { method: 'POST', body: readProject(form) });
-      const hadNone = !state.projects.length;
-      state.projects.unshift(project);
-      if (hadNone) renderProjects();
-      else $('project-list').prepend(projectEditor(project));
-      $('new-project-fields').replaceChildren(projectFields({}));
-      updateCounts();
-      flash('Project created');
-    } catch (err) {
-      flash(errorText(err), true);
-    } finally {
-      button.disabled = false;
-    }
-  });
+function renderDetail() {
+  const e = state.enquiries.find((x) => x.id === state.open);
+  if (!e) return;
+  $('detail').replaceChildren(
+    h('div', { class: 'detail-head' },
+      h('span', { class: 'detail-id' }, `Enquiry #${e.id}`),
+      h('button', { class: 'icon-btn detail-close', type: 'button', 'aria-label': 'Close details', onclick: () => go('enquiries') }, icon('x'))),
+    h('div', { class: 'detail-body' },
+      h('div', {},
+        h('h2', { class: 'detail-title' }, e.email),
+        h('p', { class: 'sub' }, e.client ? `Member · ${e.client.name || e.client.email}` : 'Guest · sent without an account'),
+        h('div', { class: 'detail-actions' },
+          h('a', { class: 'btn btn-white btn-sm', href: replyHref(e) }, icon('reply'), 'Reply by email'),
+          h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => copyEmail(e.email) }, icon('copy'), 'Copy email'))),
+      section('Status',
+        h('div', { class: 'seg seg-full', role: 'group', 'aria-label': 'Status' }, ENQUIRY_STATUSES.map((s) => h('button', {
+          class: 'seg-btn', type: 'button', 'data-status': s, 'aria-pressed': String(e.status === s), onclick: () => setStatus(e, s)
+        }, LABELS.enquiryStatus[s]))),
+        h('p', { class: 'hint' }, 'Senders with an account see this status on their account page.')),
+      section('Message', h('p', { class: 'msg' }, e.message)),
+      section('Details', kv([
+        ['Stage', h('span', { class: 'chip' }, e.stage)],
+        ['Received', fmtDateTime(e.created_at)],
+        ['Updated', fmtDateTime(e.updated_at)],
+        ['Account', e.client ? e.client.name || e.client.email : 'None'],
+        ['ID', String(e.id)]
+      ]))));
 }
 
 /* ---------- members ---------- */
 
+const roleOf = (u) => (u.owner ? ['owner', 'Owner'] : u.role === 'admin' ? ['admin', 'Admin'] : ['user', 'Member']);
+const ROLE_RANK = { owner: 0, admin: 1, user: 2 };
+const enquiriesOf = (u) => state.enquiries.filter((e) => e.user_id === u.id).length;
+
 async function setRole(u, role) {
   const who = u.name || u.email;
   const question = role === 'admin'
-    ? `Give ${who} admin access? They will see every enquiry, project and member.`
+    ? `Give ${who} admin access? They will see every enquiry and member.`
     : `Remove admin access from ${who}?`;
   if (!confirm(question)) return;
   try {
@@ -186,94 +165,127 @@ async function setRole(u, role) {
   }
 }
 
-function memberRow(u) {
-  const [kind, label] = u.owner ? ['owner', 'Owner'] : u.role === 'admin' ? ['admin', 'Admin'] : ['user', 'Member'];
-  let action;
-  if (u.owner) action = h('span', { class: 'sub' }, 'Set in ADMIN_EMAILS');
-  else if (u.id === state.me) action = h('span', { class: 'sub' }, 'You');
-  else action = h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => setRole(u, u.role === 'admin' ? 'user' : 'admin') },
+function memberAction(u) {
+  if (u.owner) return h('span', { class: 'sub' }, 'ADMIN_EMAILS');
+  if (u.id === state.me) return h('span', { class: 'sub' }, 'You');
+  return h('button', { class: 'btn btn-line btn-xs', type: 'button', onclick: () => setRole(u, u.role === 'admin' ? 'user' : 'admin') },
     u.role === 'admin' ? 'Remove admin' : 'Make admin');
-  return h('li', { class: 'row row-user' },
-    avatar(u, true),
-    h('div', { class: 'row-main' },
-      h('strong', {}, u.name || u.email),
-      h('span', { class: 'sub' }, `${u.email} · Joined ${fmtDate(u.created_at)} · Last sign-in ${fmtDate(u.last_login)}`)),
-    h('span', { class: `badge badge-${kind}` }, label),
-    action);
 }
+
+function enquiryCount(u) {
+  const n = enquiriesOf(u);
+  if (!n) return h('span', { class: 'sub' }, '0');
+  // shows this member's enquiries in the Enquiries view
+  return h('a', {
+    class: 'num-link', href: '#enquiries', 'aria-label': `${n} ${n === 1 ? 'enquiry' : 'enquiries'} from ${u.email}`,
+    onclick: () => { clearFilters(); state.filter.text = u.email; $('f-text').value = u.email; renderEnquiries(); }
+  }, String(n));
+}
+
+const MEMBER_COLUMNS = [
+  { key: 'name', label: 'Member', cls: 'c-primary', sort: (u) => (u.name || u.email).toLowerCase(),
+    cell: (u) => h('span', { class: 'who' }, avatar(u),
+      h('span', { class: 'who-text' }, h('strong', {}, u.name || u.email), h('span', { class: 'sub' }, u.email))) },
+  { key: 'provider', label: 'Provider', cls: 'c-provider', cell: () => h('span', { class: 'provider' }, icon('google'), 'Google') },
+  { key: 'role', label: 'Role', cls: 'c-role', sort: (u) => ROLE_RANK[roleOf(u)[0]], cell: (u) => badge(...roleOf(u)) },
+  { key: 'enquiries', label: 'Enquiries', cls: 'c-num', sort: enquiriesOf, cell: enquiryCount },
+  { key: 'created_at', label: 'Joined', cls: 'c-date', sort: (u) => Date.parse(u.created_at), cell: (u) => time(u.created_at) },
+  { key: 'last_login', label: 'Last sign-in', cls: 'c-date', sort: (u) => Date.parse(u.last_login), cell: (u) => time(u.last_login) },
+  { key: 'id', label: 'UID', cls: 'c-id', sort: (u) => u.id, cell: (u) => `#${u.id}` },
+  { key: 'action', srLabel: 'Actions', cls: 'c-action', cell: memberAction }
+];
 
 function renderMembers() {
-  $('members-meta').textContent = `${state.users.length} ${state.users.length === 1 ? 'member' : 'members'}`;
-  $('member-list').replaceChildren(...state.users.map(memberRow));
+  const admins = state.users.filter((u) => u.role === 'admin').length;
+  const { role, text } = state.memberFilter;
+  segButtons($('f-role'),
+    [['', 'All', state.users.length], ['admin', 'Admins', admins], ['user', 'Members', state.users.length - admins]],
+    role, (value) => { state.memberFilter.role = value; renderMembers(); });
+
+  const needle = text.trim().toLowerCase();
+  const rows = sortRows(state.users.filter((u) => (!role || u.role === role) && matches(needle, u.name, u.email)),
+    MEMBER_COLUMNS, state.memberSort);
+  $('members-meta').textContent = role || needle ? `${rows.length} of ${state.users.length}` : `${rows.length} total`;
+  keepFocus($('member-table'), () => $('member-table').replaceChildren(dataTable({
+    label: 'Members', columns: MEMBER_COLUMNS, rows, sort: state.memberSort,
+    onSort: (key) => { toggleSort(state.memberSort, key, key === 'name' || key === 'role' ? 1 : -1); renderMembers(); },
+    empty: 'No members match this search.'
+  })));
 }
 
-/* ---------- tabs ---------- */
+/* ---------- views ---------- */
 
-function updateCounts() {
-  const fresh = state.enquiries.filter((e) => e.status === 'new').length;
-  $('count-enquiries').textContent = fresh ? `${fresh} new` : String(state.enquiries.length);
-  $('count-projects').textContent = String(state.projects.length);
-  $('count-members').textContent = String(state.users.length);
-}
-
-function showTab(name, focus) {
-  for (const t of TABS) {
-    const tab = $(`tab-${t}`);
-    tab.setAttribute('aria-selected', String(t === name));
-    tab.tabIndex = t === name ? 0 : -1;
-    $(`panel-${t}`).hidden = t !== name;
+// Changes the view through the address bar, so the back button and shared links work.
+// `replace` is for moving between rows with the arrow keys, which shouldn't fill the history.
+function go(hash, replace) {
+  if (replace) {
+    history.replaceState(null, '', `#${hash}`);
+    route();
+  } else {
+    location.hash = hash;
   }
-  if (focus) $(`tab-${name}`).focus();
-  history.replaceState(null, '', `#${name}`);
 }
 
-function setUpTabs() {
-  TABS.forEach((t, i) => {
-    const tab = $(`tab-${t}`);
-    tab.addEventListener('click', () => showTab(t));
-    tab.addEventListener('keydown', (ev) => {
-      const step = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0;
-      if (step) showTab(TABS[(i + step + TABS.length) % TABS.length], true);
-    });
-  });
-  const fromHash = location.hash.slice(1);
-  showTab(TABS.includes(fromHash) ? fromHash : 'enquiries');
+function route() {
+  const [name, id] = location.hash.slice(1).split('/');
+  const view = Object.hasOwn(VIEWS, name) ? name : 'enquiries';
+  for (const v of Object.keys(VIEWS)) $(`view-${v}`).hidden = v !== view;
+  shell.setView(view, VIEWS[view]);
+
+  const previous = state.open;
+  const wanted = view === 'enquiries' ? Number(id) : null;
+  state.open = state.enquiries.some((e) => e.id === wanted) ? wanted : null;
+  markSelected($('enquiry-table'), state.open);
+  if (state.open) renderDetail();
+  showPanel($('detail'), Boolean(state.open), previous && $('enquiry-table').querySelector(`tr[data-id="${previous}"]`));
+}
+
+async function load() {
+  const [e, u] = await Promise.all([api('/api/admin/enquiries'), api('/api/admin/users')]);
+  Object.assign(state, { enquiries: e.enquiries, users: u.users, me: u.me });
+  renderEnquiries();
+  renderMembers();
+  route();
+}
+
+function denied() {
+  $('main').replaceChildren(h('section', { class: 'view' }, h('div', { class: 'view-head' }, h('div', {},
+    h('h1', {}, 'Admins only'),
+    h('p', { class: 'view-sub' }, 'This part of the studio is for the cnpt team. ', h('a', { href: '/account' }, 'Go to your account'), '.')))));
+  shell.setView('', 'Admins only');
 }
 
 /* ---------- start ---------- */
 
-function denied() {
-  $('main').replaceChildren(h('div', { class: 'wrap' },
-    h('header', { class: 'page-head' },
-      h('span', { class: 'eyebrow' }, 'admin'),
-      h('h1', {}, 'Admins only.'),
-      h('p', {}, 'This page is for the cnpt studio. ', h('a', { href: '/account' }, 'Go to your account'), '.'))));
-}
-
 const me = await signedInUser('/admin');
 if (me) {
-  renderNav(me, 'admin');
+  shell = mountShell(me, 'admin');
   if (me.role !== 'admin') {
     denied();
   } else {
-    setUpTabs();
     FUNDING_STAGES.forEach((s) => $('f-stage').append(h('option', { value: s }, s)));
-    Object.entries(LABELS.enquiryStatus).forEach(([v, label]) => $('f-status').append(h('option', { value: v }, label)));
-    $('f-stage').addEventListener('change', renderEnquiries);
-    $('f-status').addEventListener('change', renderEnquiries);
+    $('f-stage').addEventListener('change', () => { state.filter.stage = $('f-stage').value; renderEnquiries(); });
+    $('f-text').addEventListener('input', () => { state.filter.text = $('f-text').value; renderEnquiries(); });
+    $('m-text').addEventListener('input', () => { state.memberFilter.text = $('m-text').value; renderMembers(); });
+    $('detail-scrim').addEventListener('click', () => go('enquiries'));
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape' && state.open && !document.body.classList.contains('nav-open')) go('enquiries');
+    });
+    $('refresh').addEventListener('click', async () => {
+      try {
+        await load();
+        flash('Up to date');
+      } catch (err) {
+        flash(errorText(err), true);
+      }
+    });
+    window.addEventListener('hashchange', route);
+    route();
     try {
-      const [e, p, u] = await Promise.all([
-        api('/api/admin/enquiries'), api('/api/admin/projects'), api('/api/admin/users')
-      ]);
-      Object.assign(state, { enquiries: e.enquiries, projects: p.projects, users: u.users, me: u.me });
-      setUpNewProject();
-      renderEnquiries();
-      renderProjects();
-      renderMembers();
-      updateCounts();
+      await load();
     } catch (err) {
       if (err.status === 403) denied();
-      else $('enquiry-list').replaceChildren(h('li', { class: 'empty' }, 'The admin data could not be loaded. Please refresh the page.'));
+      else $('enquiry-table').replaceChildren(h('p', { class: 'loading' }, 'The studio data could not be loaded. Please refresh the page.'));
     }
   }
 }
