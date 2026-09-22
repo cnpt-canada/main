@@ -32,5 +32,22 @@ create index if not exists enquiries_user_idx on public.enquiries (user_id);
 create index if not exists enquiries_email_idx on public.enquiries (email);
 create index if not exists enquiries_created_idx on public.enquiries (created_at desc);
 
+-- a client's answers to the first-time onboarding flow (one row per account); admins add the estimate
+create table if not exists public.onboarding (
+  id             bigserial primary key,
+  user_id        bigint not null unique references public.users (id) on delete cascade,
+  step           smallint not null default 1 check (step between 1 and 4),   -- where to resume
+  stage          text check (stage in ('Pre-Seed', 'Seed Level', 'Series A', 'Series B')),
+  brief          text check (char_length(brief) <= 500),
+  enquiry_id     bigint references public.enquiries (id) on delete set null, -- the enquiry it continues or created
+  tags           text[] not null default '{}' check (cardinality(tags) <= 5),
+  consultant     text check (consultant in ('michael', 'brandon', 'kenny')),
+  estimated_cost integer check (estimated_cost between 0 and 10000000),     -- CAD, set by an admin
+  submitted_at   timestamptz,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+
 alter table public.users enable row level security;
 alter table public.enquiries enable row level security;
+alter table public.onboarding enable row level security;

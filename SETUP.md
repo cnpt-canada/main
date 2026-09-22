@@ -6,16 +6,17 @@ pages still work; sign-in, the account and admin pages, and saving enquiries nee
 | What | Service | Used for |
 | --- | --- | --- |
 | Sign-in | Google OAuth client | "Continue with Google" on `/signin` (a first sign-in creates the account) |
-| Data | Supabase (Postgres) | users, enquiries |
-| Email (optional) | Resend | a copy of every enquiry in your inbox |
+| Data | Supabase (Postgres) | users, enquiries, onboarding |
+| Email (optional) | Resend | a copy of every enquiry and finished onboarding in your inbox |
 
 All values go in **Vercel → Project → Settings → Environment Variables**. `.env.example` lists every one.
 
 ## 1. Supabase
 
 1. Create a project at <https://supabase.com/dashboard>.
-2. **SQL Editor → New query**, paste `supabase/schema.sql`, **Run**. It creates `users` and `enquiries`
-   and turns on row level security with no policies, so only the server can read or write them.
+2. **SQL Editor → New query**, paste `supabase/schema.sql`, **Run**. It creates `users`, `enquiries` and
+   `onboarding` and turns on row level security with no policies, so only the server can read or write them.
+   It is safe to run again after pulling changes: it only adds what is missing.
 3. **Project Settings → API**: copy the Project URL to `SUPABASE_URL` and the `service_role` key to
    `SUPABASE_SERVICE_ROLE_KEY`. The service-role key bypasses row level security: keep it in Vercel only.
 
@@ -69,8 +70,14 @@ for production.
 | Page | Who | What |
 | --- | --- | --- |
 | `/signin` | anyone | Continue with Google |
-| `/account` | signed in | your enquiries and where each one is, profile, sign out, delete account |
-| `/admin` | admins | enquiries (filter, search, sort, change status, reply by email), members (grant/remove admin) |
+| `/onboarding` | signed in | first-time setup: welcome, company (continues a website enquiry if there is one), fields (up to 5 tags), consultant, confirm |
+| `/account` | signed in | your project (onboarding answers and the estimate), your enquiries, profile, sign out, delete account |
+| `/admin` | admins | enquiries (filter, search, sort, change status, reply by email), onboarding (set the estimated cost, view as user), members (grant/remove admin, view as user) |
+
+New clients (not admins) are sent to `/onboarding` until they submit it; each step is saved, so they can leave and
+come back. Submitting creates an enquiry from the brief unless it continued one sent from the website. The client
+sees "Estimating…" until an admin saves an estimate on `/admin` → Onboarding. Admins can open `/onboarding?preview`
+to walk through it without saving, and "View as" (`/account?as=<id>`) shows a member's account read-only.
 
 `/account` and `/admin` share one console layout: a left navigation, data tables, and a details panel that
 opens beside the table (or over it on smaller screens). Views are addressed by hash, e.g. `/admin#members` or

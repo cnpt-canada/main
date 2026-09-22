@@ -6,6 +6,19 @@ export const LABELS = {
 export const ENQUIRY_STATUSES = Object.keys(LABELS.enquiryStatus);
 export const FUNDING_STAGES = ['Pre-Seed', 'Seed Level', 'Series A', 'Series B'];
 
+// Consultants a client can pick during onboarding. Keys match CONSULTANTS in api/_lib/rules.js.
+export const CONSULTANTS = {
+  michael: { name: 'Michael (Joongmin) Park', role: 'Startup Builder · UX Product Designer', photo: '/cnptmichaelpark-web.jpg' },
+  brandon: { name: 'Brandon Siow', role: 'Startup Builder · UX Product Designer', photo: '/cnptbrandonsiow-web.jpg' },
+  kenny: { name: 'Kenny', role: 'Consultant', photo: null }
+};
+
+// Suggested field tags for onboarding; clients can add their own (5 at most in total).
+export const FIELD_TAGS = ['AI', 'Physical device', 'Tech', 'Medical', 'Finance', 'Health', 'Climate', 'Energy', 'Mobility',
+  'Robotics', 'Education', 'Commerce', 'Consumer', 'Enterprise SaaS', 'Logistics', 'Food', 'Real estate', 'Media', 'Gaming', 'Security'];
+export const MAX_TAGS = 5;
+export const MAX_TAG = 24;
+
 // Calls one of our API routes and returns its JSON; throws with `status` and `message` (the error code) on failure.
 export async function api(path, { method = 'GET', body } = {}) {
   const res = await fetch(path, {
@@ -62,6 +75,19 @@ export function avatar(user, large) {
   return h('span', { class: cls, 'aria-hidden': 'true' }, (user.name || user.email || '?').trim().charAt(0).toUpperCase());
 }
 
+// A consultant's photo, or their initial when there's no photo yet.
+export function consultantAvatar(key, large) {
+  const c = CONSULTANTS[key];
+  const cls = large ? 'avatar avatar-lg' : 'avatar';
+  if (!c) return h('span', { class: cls, 'aria-hidden': 'true' }, '?');
+  if (c.photo) return h('img', { class: `${cls} avatar-photo`, src: c.photo, alt: '' });
+  return h('span', { class: cls, 'aria-hidden': 'true' }, c.name.charAt(0));
+}
+
+export function fmtCost(n) {
+  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
+}
+
 export function badge(kind, label) {
   return h('span', { class: `badge badge-${kind}` }, label);
 }
@@ -104,7 +130,8 @@ export async function signOut() {
 // Fills the frame both signed-in pages share: the left navigation, the person at the bottom,
 // and the menu button that opens the navigation on smaller screens.
 // Views are addressed by hash (/admin#members, /account#profile), so links and the back button just work.
-export function mountShell(user, page) {
+// `query` keeps "view as user" (?as=<id>) on the account links while an admin is looking at someone's account.
+export function mountShell(user, page, { query = '' } = {}) {
   const item = (href, key, label, iconName) => h('a', { class: 'nav-item', href, 'data-key': key },
     icon(iconName), h('span', { class: 'nav-label' }, label), h('span', { class: 'nav-count', 'data-count': key }));
   const group = (label, ...items) => h('div', { class: 'nav-group' }, h('p', { class: 'nav-group-label' }, label), items);
@@ -112,10 +139,12 @@ export function mountShell(user, page) {
   document.getElementById('side-nav').replaceChildren(...[
     user.role === 'admin' && group('Workspace',
       item('/admin#enquiries', 'admin:enquiries', 'Enquiries', 'inbox'),
+      item('/admin#onboarding', 'admin:onboarding', 'Onboarding', 'list-checks'),
       item('/admin#members', 'admin:members', 'Members', 'users')),
     group('Account',
-      item('/account#enquiries', 'account:enquiries', 'Your enquiries', 'file'),
-      item('/account#profile', 'account:profile', 'Profile', 'user')),
+      item(`/account${query}#project`, 'account:project', 'Your project', 'folder'),
+      item(`/account${query}#enquiries`, 'account:enquiries', 'Your enquiries', 'file'),
+      item(`/account${query}#profile`, 'account:profile', 'Profile', 'user')),
     h('div', { class: 'nav-group' },
       h('a', { class: 'nav-item', href: '/#contact' }, icon('plus'), h('span', { class: 'nav-label' }, 'New enquiry')),
       h('a', { class: 'nav-item', href: '/' }, icon('external'), h('span', { class: 'nav-label' }, 'cnpt.ca')))
@@ -256,9 +285,12 @@ export function showPanel(panel, open, returnTo) {
   const wasOpen = !panel.hidden;
   if (!open && wasOpen && panel.contains(document.activeElement)) returnTo?.focus();
   panel.hidden = !open;
-  scrim.hidden = !open;
   panel.closest('.split').classList.toggle('has-detail', open);
-  document.body.classList.toggle('detail-open', open);
+  // the scrim is shared by every panel on the page, so only the panel that opens or closes touches it
+  if (open || wasOpen) {
+    scrim.hidden = !open;
+    document.body.classList.toggle('detail-open', open);
+  }
   if (overlay && open && !wasOpen) panel.querySelector('.detail-close')?.focus();
 }
 

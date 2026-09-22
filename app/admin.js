@@ -1,16 +1,17 @@
-// /admin — the workspace: enquiries and members. The page only shows what the API allows;
+// /admin — the workspace: enquiries, onboarding and members. The page only shows what the API allows;
 // every change is checked again on the server (admin role, allowed values, owners locked).
 import {
-  ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
-  api, avatar, badge, dataTable, flash, fmtDate, fmtDateTime, h, icon, keepFocus, kv, markSelected, mountShell,
-  section, showPanel, signedInUser, sortRows, toggleSort
+  CONSULTANTS, ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
+  api, avatar, badge, consultantAvatar, dataTable, flash, fmtCost, fmtDate, fmtDateTime, h, icon, keepFocus, kv, markSelected,
+  mountShell, section, showPanel, signedInUser, sortRows, toggleSort
 } from '/app/common.js';
 
 const $ = (id) => document.getElementById(id);
-const VIEWS = { enquiries: 'Enquiries', members: 'Members' };
+const VIEWS = { enquiries: 'Enquiries', onboarding: 'Onboarding', members: 'Members' };
 const state = {
-  enquiries: [], users: [], me: null,
+  enquiries: [], users: [], onboarding: [], me: null,
   filter: { status: '', stage: '', text: '' }, sort: { key: 'created_at', dir: -1 }, open: null,
+  onbFilter: { status: '', text: '' }, onbSort: { key: 'updated_at', dir: -1 }, onbOpen: null,
   memberFilter: { role: '', text: '' }, memberSort: { key: 'created_at', dir: -1 }
 };
 let shell;
@@ -19,7 +20,8 @@ const ERRORS = {
   owner_locked: 'Owners are set in ADMIN_EMAILS and can’t be changed here.',
   cannot_demote_self: 'You can’t remove your own admin access.',
   admin_only: 'Your admin access was removed.',
-  signin_required: 'Your session ended. Sign in again.'
+  signin_required: 'Your session ended. Sign in again.',
+  invalid_cost: 'Enter the estimate as a whole number of dollars, up to 10,000,000.'
 };
 const errorText = (err) => ERRORS[err.message] || 'That didn’t save. Please try again.';
 
@@ -143,6 +145,118 @@ function renderDetail() {
       ]))));
 }
 
+/* ---------- onboarding ---------- */
+
+// in progress → submitted (needs an estimate) → estimated
+const progressOf = (o) => (!o.submitted_at ? 'progress' : o.estimated_cost == null ? 'needs' : 'estimated');
+const PROGRESS = { needs: ['new', 'Needs estimate'], estimated: ['replied', 'Estimated'] };
+const progressBadge = (o) => (progressOf(o) === 'progress' ? badge('closed', `Step ${o.step} of 4`) : badge(...PROGRESS[progressOf(o)]));
+const nameOf = (o) => (o.client ? o.client.name || o.client.email : `Member #${o.user_id}`);
+const tagList = (tags) => h('div', { class: 'tag-list' }, tags.map((t) => h('span', { class: 'tag-chip tag-static' }, h('span', { class: 'tag-hash' }, '#'), t)));
+
+const ONB_COLUMNS = [
+  { key: 'name', label: 'Member', cls: 'c-primary', sort: (o) => nameOf(o).toLowerCase(),
+    cell: (o) => h('span', { class: 'who' }, avatar(o.client || { email: '?' }),
+      h('span', { class: 'who-text' }, h('strong', {}, nameOf(o)), h('span', { class: 'sub' }, o.client ? o.client.email : ''))) },
+  { key: 'stage', label: 'Stage', cls: 'c-stage', sort: (o) => FUNDING_STAGES.indexOf(o.stage),
+    cell: (o) => (o.stage ? h('span', { class: 'chip' }, o.stage) : h('span', { class: 'sub' }, '—')) },
+  { key: 'tags', label: 'Fields', cls: 'c-tags', cell: (o) => h('span', { class: 'clip' }, o.tags.length ? o.tags.map((t) => `#${t}`).join('  ') : '—') },
+  { key: 'consultant', label: 'Consultant', cls: 'c-consultant', sort: (o) => o.consultant || '',
+    cell: (o) => (o.consultant
+      ? h('span', { class: 'who who-sm' }, consultantAvatar(o.consultant), CONSULTANTS[o.consultant].name.split(' ')[0])
+      : h('span', { class: 'sub' }, '—')) },
+  { key: 'progress', label: 'Status', cls: 'c-status', sort: (o) => ['needs', 'progress', 'estimated'].indexOf(progressOf(o)), cell: progressBadge },
+  { key: 'estimated_cost', label: 'Estimate', cls: 'c-cost', sort: (o) => o.estimated_cost ?? -1,
+    cell: (o) => (o.estimated_cost != null ? h('span', { class: 'cost' }, fmtCost(o.estimated_cost)) : h('span', { class: 'sub' }, '—')) },
+  { key: 'updated_at', label: 'Updated', cls: 'c-date', sort: (o) => Date.parse(o.updated_at), cell: (o) => time(o.updated_at) }
+];
+
+function renderOnboarding() {
+  const count = (p) => state.onboarding.filter((o) => progressOf(o) === p).length;
+  segButtons($('f-onb'),
+    [['', 'All', state.onboarding.length], ['needs', 'Needs estimate', count('needs')], ['estimated', 'Estimated', count('estimated')],
+      ['progress', 'In progress', count('progress')]],
+    state.onbFilter.status, (value) => { state.onbFilter.status = value; renderOnboarding(); });
+  const { status, text } = state.onbFilter;
+  const needle = text.trim().toLowerCase();
+  const rows = sortRows(state.onboarding
+    .filter((o) => (!status || progressOf(o) === status) && matches(needle, nameOf(o), o.client?.email, ...o.tags))
+    .map((o) => ({ ...o, id: o.user_id })), ONB_COLUMNS, state.onbSort);
+  $('onboarding-meta').textContent = status || needle ? `${rows.length} of ${state.onboarding.length}` : `${rows.length} total`;
+  keepFocus($('onboarding-table'), () => $('onboarding-table').replaceChildren(dataTable({
+    label: 'Onboarding', columns: ONB_COLUMNS, rows, sort: state.onbSort, selected: state.onbOpen,
+    onSort: (key) => { toggleSort(state.onbSort, key, ['name', 'stage', 'consultant', 'progress'].includes(key) ? 1 : -1); renderOnboarding(); },
+    onOpen: (o, replace) => go(`onboarding/${o.user_id}`, replace),
+    empty: state.onboarding.length ? 'Nothing matches these filters.' : 'No one has started onboarding yet. New clients see it right after they sign up.'
+  })));
+  shell.setCount('onboarding', count('needs'));
+}
+
+async function saveCost(o, cost) {
+  try {
+    const { onboarding } = await api('/api/admin/onboarding', { method: 'PATCH', body: { user_id: o.user_id, estimated_cost: cost } });
+    Object.assign(o, onboarding);
+    flash(cost == null ? 'Estimate cleared' : `Estimate saved: ${fmtCost(cost)}`);
+    renderOnboarding();
+    renderOnbDetail();
+    $('cost-input')?.focus();
+  } catch (err) {
+    flash(errorText(err), true);
+  }
+}
+
+function costEditor(o) {
+  const input = h('input', { class: 'input input-cost', id: 'cost-input', type: 'number', inputmode: 'numeric', min: '0', max: '10000000', step: '100',
+    placeholder: 'e.g. 25000', 'aria-describedby': 'cost-hint' });
+  if (o.estimated_cost != null) input.value = String(o.estimated_cost);
+  const form = h('form', { class: 'cost-form', novalidate: true },
+    h('label', { class: 'cost-field' }, h('span', { class: 'cost-prefix', 'aria-hidden': 'true' }, 'CA$'),
+      h('span', { class: 'sr-only' }, 'Estimated cost in Canadian dollars'), input),
+    h('button', { class: 'btn btn-white btn-sm', type: 'submit' }, 'Save'),
+    o.estimated_cost != null && h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => saveCost(o, null) }, 'Clear'));
+  form.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const n = Number(input.value);
+    if (input.value.trim() === '' || !Number.isInteger(n) || n < 0 || n > 10_000_000) return flash(ERRORS.invalid_cost, true);
+    saveCost(o, n);
+  });
+  return [form, h('p', { class: 'hint', id: 'cost-hint' }, o.estimated_cost != null
+    ? 'The client sees this on their project page.'
+    : 'The client sees “Estimating…” until you save a value.')];
+}
+
+function renderOnbDetail() {
+  const o = state.onboarding.find((x) => x.user_id === state.onbOpen);
+  if (!o) return;
+  const c = CONSULTANTS[o.consultant];
+  $('onb-detail').replaceChildren(
+    h('div', { class: 'detail-head' },
+      h('span', { class: 'detail-id' }, `Onboarding · UID #${o.user_id}`),
+      h('button', { class: 'icon-btn detail-close', type: 'button', 'aria-label': 'Close details', onclick: () => go('onboarding') }, icon('x'))),
+    h('div', { class: 'detail-body' },
+      h('div', {},
+        h('h2', { class: 'detail-title' }, nameOf(o)),
+        h('p', { class: 'sub' }, o.client ? o.client.email : ''),
+        h('div', { class: 'detail-actions' },
+          h('a', { class: 'btn btn-white btn-sm', href: `/account?as=${o.user_id}#project` }, icon('eye'), 'View as user'),
+          o.enquiry_id && h('a', { class: 'btn btn-line btn-sm', href: `#enquiries/${o.enquiry_id}` }, 'Open enquiry'))),
+      section('Estimated cost', costEditor(o)),
+      section('Status', progressBadge(o), h('p', { class: 'hint' }, o.submitted_at
+        ? `Submitted ${fmtDateTime(o.submitted_at)}.`
+        : `Stopped at step ${o.step} of 4. Their answers so far are below.`)),
+      section('Brief', o.stage ? h('span', { class: 'chip' }, o.stage) : null, h('p', { class: 'msg' }, o.brief || '—')),
+      section('Fields', o.tags.length ? tagList(o.tags) : h('p', { class: 'sub' }, '—')),
+      section('Consultant', c
+        ? h('div', { class: 'who' }, consultantAvatar(o.consultant), h('span', { class: 'who-text' }, h('strong', {}, c.name), h('span', { class: 'sub' }, c.role)))
+        : h('p', { class: 'sub' }, 'Not chosen yet')),
+      section('Details', kv([
+        ['Started', fmtDateTime(o.created_at)],
+        ['Updated', fmtDateTime(o.updated_at)],
+        ['Submitted', o.submitted_at ? fmtDateTime(o.submitted_at) : '—'],
+        ['Enquiry', o.enquiry_id ? `#${o.enquiry_id}` : '—']
+      ]))));
+}
+
 /* ---------- members ---------- */
 
 const roleOf = (u) => (u.owner ? ['owner', 'Owner'] : u.role === 'admin' ? ['admin', 'Admin'] : ['user', 'Member']);
@@ -166,10 +280,14 @@ async function setRole(u, role) {
 }
 
 function memberAction(u) {
-  if (u.owner) return h('span', { class: 'sub' }, 'ADMIN_EMAILS');
   if (u.id === state.me) return h('span', { class: 'sub' }, 'You');
-  return h('button', { class: 'btn btn-line btn-xs', type: 'button', onclick: () => setRole(u, u.role === 'admin' ? 'user' : 'admin') },
-    u.role === 'admin' ? 'Remove admin' : 'Make admin');
+  const viewAs = h('a', { class: 'btn btn-line btn-xs', href: `/account?as=${u.id}#project`, 'aria-label': `View as ${u.name || u.email}` },
+    icon('eye'), 'View as');
+  const role = u.owner
+    ? h('span', { class: 'sub' }, 'ADMIN_EMAILS')
+    : h('button', { class: 'btn btn-line btn-xs', type: 'button', onclick: () => setRole(u, u.role === 'admin' ? 'user' : 'admin') },
+      u.role === 'admin' ? 'Remove admin' : 'Make admin');
+  return h('span', { class: 'row-actions' }, viewAs, role);
 }
 
 function enquiryCount(u) {
@@ -238,12 +356,20 @@ function route() {
   markSelected($('enquiry-table'), state.open);
   if (state.open) renderDetail();
   showPanel($('detail'), Boolean(state.open), previous && $('enquiry-table').querySelector(`tr[data-id="${previous}"]`));
+
+  const prevOnb = state.onbOpen;
+  const wantedOnb = view === 'onboarding' ? Number(id) : null;
+  state.onbOpen = state.onboarding.some((o) => o.user_id === wantedOnb) ? wantedOnb : null;
+  markSelected($('onboarding-table'), state.onbOpen);
+  if (state.onbOpen) renderOnbDetail();
+  showPanel($('onb-detail'), Boolean(state.onbOpen), prevOnb && $('onboarding-table').querySelector(`tr[data-id="${prevOnb}"]`));
 }
 
 async function load() {
-  const [e, u] = await Promise.all([api('/api/admin/enquiries'), api('/api/admin/users')]);
-  Object.assign(state, { enquiries: e.enquiries, users: u.users, me: u.me });
+  const [e, u, o] = await Promise.all([api('/api/admin/enquiries'), api('/api/admin/users'), api('/api/admin/onboarding')]);
+  Object.assign(state, { enquiries: e.enquiries, users: u.users, onboarding: o.onboarding, me: u.me });
   renderEnquiries();
+  renderOnboarding();
   renderMembers();
   route();
 }
@@ -267,9 +393,11 @@ if (me) {
     $('f-stage').addEventListener('change', () => { state.filter.stage = $('f-stage').value; renderEnquiries(); });
     $('f-text').addEventListener('input', () => { state.filter.text = $('f-text').value; renderEnquiries(); });
     $('m-text').addEventListener('input', () => { state.memberFilter.text = $('m-text').value; renderMembers(); });
-    $('detail-scrim').addEventListener('click', () => go('enquiries'));
+    $('o-text').addEventListener('input', () => { state.onbFilter.text = $('o-text').value; renderOnboarding(); });
+    const closePanel = () => go(state.onbOpen ? 'onboarding' : 'enquiries');
+    $('detail-scrim').addEventListener('click', closePanel);
     document.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Escape' && state.open && !document.body.classList.contains('nav-open')) go('enquiries');
+      if (ev.key === 'Escape' && (state.open || state.onbOpen) && !document.body.classList.contains('nav-open')) closePanel();
     });
     $('refresh').addEventListener('click', async () => {
       try {

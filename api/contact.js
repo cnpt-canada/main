@@ -4,6 +4,7 @@
 // Email: RESEND_API_KEY, CONTACT_TO (comma-separated), optional CONTACT_FROM — see .env.example.
 import { db, hasDb, run } from './_lib/db.js';
 import { fail, json, methodNotAllowed, readBody, route } from './_lib/http.js';
+import { emailStudio } from './_lib/notify.js';
 import { EMAIL_RE, FUNDING_STAGES, MAX_MESSAGE } from './_lib/rules.js';
 import { currentUser } from './_lib/users.js';
 
@@ -34,29 +35,13 @@ export default route(async (req, res) => {
   json(res, 200, { ok: true });
 });
 
-// Emails the enquiry through Resend. Returns true when sent, false when sending failed, null when not set up.
-async function notifyStudio({ stage, email, message, account }) {
-  const key = process.env.RESEND_API_KEY;
-  const to = String(process.env.CONTACT_TO || '').split(',').map((s) => s.trim()).filter(Boolean);
-  if (!key || !to.length) return null;
-
+// Emails the enquiry to the studio. Returns true when sent, false when sending failed, null when not set up.
+function notifyStudio({ stage, email, message, account }) {
   const lines = [`Stage: ${stage}`, `Email: ${email}`];
   if (account) lines.push(`Account: ${account.name || account.email}`);
-  const sent = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: process.env.CONTACT_FROM || 'cnpt website <onboarding@resend.dev>',
-      to,
-      reply_to: email,
-      subject: `New enquiry (${stage})`,
-      text: `${lines.join('\n')}\n\n${message}\n\nSent from the contact form on the cnpt website.`
-    })
-  }).catch((err) => {
-    console.error('contact: request to Resend failed', err);
-    return null;
+  return emailStudio({
+    subject: `New enquiry (${stage})`,
+    text: `${lines.join('\n')}\n\n${message}\n\nSent from the contact form on the cnpt website.`,
+    replyTo: email
   });
-  if (sent && sent.ok) return true;
-  if (sent) console.error('contact: Resend responded', sent.status, await sent.text());
-  return false;
 }

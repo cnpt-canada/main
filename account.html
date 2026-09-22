@@ -26,17 +26,28 @@
   <div class="stage">
     <header class="bar">
       <button class="icon-btn bar-menu" id="menu" type="button" aria-label="Open navigation" aria-controls="side" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="/app/icons.svg#menu"/></svg></button>
-      <nav class="crumbs" aria-label="Breadcrumb"><span>Account</span><span class="crumb-sep" aria-hidden="true">/</span><span id="crumb-view" aria-current="page">Your enquiries</span></nav>
+      <nav class="crumbs" aria-label="Breadcrumb"><span>Account</span><span class="crumb-sep" aria-hidden="true">/</span><span id="crumb-view" aria-current="page">Your project</span></nav>
     </header>
+    <div class="as-banner" id="as-banner" role="status" hidden></div>
 
     <main class="main" id="main">
-      <section class="view" id="view-enquiries" aria-labelledby="enquiries-h">
+      <section class="view" id="view-project" aria-labelledby="project-h">
+        <div class="view-head">
+          <div>
+            <h1 id="project-h">Your project</h1>
+            <p class="view-sub">What you told us when you signed up, and where it stands.</p>
+          </div>
+        </div>
+        <div class="project" id="project"><p class="loading">Loading…</p></div>
+      </section>
+
+      <section class="view" id="view-enquiries" aria-labelledby="enquiries-h" hidden>
         <div class="view-head">
           <div>
             <h1 id="enquiries-h">Your enquiries</h1>
             <p class="view-sub">What you have sent to cnpt, and where each one is.</p>
           </div>
-          <a class="btn btn-white btn-sm" href="/#contact"><svg class="ic" aria-hidden="true"><use href="/app/icons.svg#plus"/></svg>New enquiry</a>
+          <a class="btn btn-white btn-sm" id="new-enquiry" href="/#contact"><svg class="ic" aria-hidden="true"><use href="/app/icons.svg#plus"/></svg>New enquiry</a>
         </div>
         <div class="split">
           <div class="table-card" id="enquiry-table"><p class="loading">Loading…</p></div>
@@ -56,11 +67,11 @@
             <div class="card-head"><h2 id="account-h">Account</h2></div>
             <div class="card-body" id="profile"></div>
           </section>
-          <section class="card card-row" aria-labelledby="signout-h">
+          <section class="card card-row" id="signout-card" aria-labelledby="signout-h">
             <div><h2 id="signout-h">Sign out</h2><p class="sub">Ends your session on this device.</p></div>
             <button class="btn btn-line btn-sm" id="signout" type="button">Sign out</button>
           </section>
-          <section class="card card-row card-danger" aria-labelledby="delete-h">
+          <section class="card card-row card-danger" id="delete-card" aria-labelledby="delete-h">
             <div><h2 id="delete-h">Delete account</h2><p class="sub">Removes your profile and signs you out. Your enquiries stay with the cnpt team.</p></div>
             <button class="btn btn-danger btn-sm" id="delete" type="button">Delete account</button>
           </section>
