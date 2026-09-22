@@ -69,6 +69,38 @@
         </div>
       </section>
 
+      <section class="view" id="view-process" aria-labelledby="process-h" hidden>
+        <div class="view-head">
+          <div>
+            <h1 id="process-h">Process</h1>
+            <p class="view-sub">Where each client's work is, the picture they see for it, and the notes between you.</p>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="seg" id="f-stage-p" role="group" aria-label="Filter by stage"></div>
+          <label class="search"><span class="sr-only">Search clients</span><svg class="ic" aria-hidden="true"><use href="/app/icons.svg#search"/></svg><input class="input" id="p-text" type="search" placeholder="Search name or email" autocomplete="off"></label>
+          <span class="meta" id="process-meta"></span>
+        </div>
+        <div class="split">
+          <div class="table-card" id="process-table"><p class="loading">Loading…</p></div>
+          <aside class="detail" id="process-detail" aria-label="Process details" hidden></aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-meetings" aria-labelledby="meetings-h" hidden>
+        <div class="view-head">
+          <div>
+            <h1 id="meetings-h">Meetings</h1>
+            <p class="view-sub">Times clients have booked. Confirm one and it turns green on their calendar.</p>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="seg" id="f-meet" role="group" aria-label="Filter by status"></div>
+          <span class="meta" id="meetings-meta"></span>
+        </div>
+        <div class="table-card" id="meeting-table"><p class="loading">Loading…</p></div>
+      </section>
+
       <section class="view" id="view-members" aria-labelledby="members-h" hidden>
         <div class="view-head">
           <div>

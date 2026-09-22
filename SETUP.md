@@ -14,10 +14,12 @@ All values go in **Vercel → Project → Settings → Environment Variables**. 
 ## 1. Supabase
 
 1. Create a project at <https://supabase.com/dashboard>.
-2. **SQL Editor → New query**, paste `supabase/schema.sql`, **Run**. It creates `users`, `enquiries` and
-   `onboarding` and turns on row level security with no policies, so only the server can read or write them.
-   It is safe to run again after pulling changes: it only adds what is missing.
-3. **Project Settings → API**: copy the Project URL to `SUPABASE_URL` and the `service_role` key to
+2. **SQL Editor → New query**, paste `supabase/schema.sql`, **Run**. It creates every table and turns on row level
+   security with no policies, so only the server can read or write them. It is safe to run again: it only adds what is
+   missing. Run it after pulling changes that touch the database, **before** the new code goes live.
+3. Run `node --env-file=<env file> supabase/setup-storage.mjs` once. It creates the private `process` storage bucket
+   that holds the pictures shown on Your process.
+4. **Project Settings → API**: copy the Project URL to `SUPABASE_URL` and the `service_role` key to
    `SUPABASE_SERVICE_ROLE_KEY`. The service-role key bypasses row level security: keep it in Vercel only.
 
 ## 2. Google sign-in
@@ -75,8 +77,9 @@ for production.
 | --- | --- | --- |
 | `/signin` | anyone | Continue with Google |
 | `/onboarding` | signed in | the step-by-step enquiry: company, fields (up to 5 tags), focal, consultants, confirm. New clients see it first, with a welcome screen; "New enquiry" opens it later |
-| `/account` | signed in | your enquiries (status, fields, focal, consultants, estimate), profile with your project at a glance, sign out, delete account |
-| `/admin` | admins | enquiries (filter, search, sort, status, estimate, reply by email), onboarding (who finished their first run, where others stopped, view as user), members (grant/remove admin, view as user) |
+| `/talent` | anyone | the networking pool around Toronto: pick Consultant, Designer, Engineer or Commerce & Management and write in. Sends to `TALENT_TO` with the category in the subject, and saves to `talent` |
+| `/account` | signed in | your enquiries (status, fields, focal, consultants, estimate), Your process, Book a meeting, profile with your project at a glance, sign out, delete account |
+| `/admin` | admins | enquiries (filter, search, sort, status, estimate, reply by email), onboarding (who finished their first run, where others stopped, view as user), process (stage, the picture the client sees, notes), meetings (confirm or decline), members (grant/remove admin, view as user) |
 
 New clients (not admins) are sent to `/onboarding` until they send their first enquiry through it; each step is saved,
 so they can leave and come back. Sending completes the enquiry they sent from the website (if any) or creates one, with
@@ -85,6 +88,15 @@ Product Developing and Advertising: four blocks on a bar whose edges move in ten
 (`enquiries.focus`, in that order). The client can keep adjusting it on the enquiry until it is closed. The estimate is set per enquiry on `/admin` → Enquiries (whole CAD, up to 1,000,000);
 until then the client sees "To be confirmed". Admins can open `/onboarding?preview` to walk through it without saving,
 and "View as" (`/account?as=<id>`) shows a member's account read-only.
+
+After an enquiry comes the work itself, on `/account` → Your process: the stage it is in (Frame → Concept → System → Entry),
+a picture an admin uploads for that stage, and one thread beside it. The client writes there as **Project Owner** and the cnpt
+team as **Consultant**. Pictures are shrunk to 1600px in the browser, then kept in a private Supabase Storage bucket
+(`process`, created by `supabase/setup-storage.mjs`); the page loads them through short-lived signed links.
+
+Clients book their own meetings on `/account` → Book a meeting: weekdays 09:00–18:00 Toronto time, in half hours, 30 or 60
+minutes, up to 60 days ahead. A booked slot is held while it is waiting or confirmed, so nobody can take it twice. The cnpt
+team confirms or declines on `/admin` → Meetings, and the studio gets an email for every request.
 
 `/account` and `/admin` share one console layout: a left navigation, data tables, and a details panel that
 opens beside the table (or over it on smaller screens). Views are addressed by hash, e.g. `/admin#members` or

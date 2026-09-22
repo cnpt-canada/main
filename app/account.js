@@ -1,6 +1,7 @@
 // /account — the client's enquiries (with fields, the focal split, consultants and the estimate) and profile,
 // in the same workspace frame as /admin. Profile also shows the client's project at a glance.
 // Admins can open /account?as=<id> to see a member's account exactly as they do ("view as user", read-only).
+import { commentThread, meetingCalendar, MEETING_LENGTHS, processThumbnail, slotText, stageTracker, STAGES, stageIndex } from '/app/project.js';
 import {
   DEFAULT_FOCUS, ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
   api, avatar, badge, consultantList, dataTable, estimateBlock, flash, fmtCost, fmtDate, fmtDateTime, focalBar, h, icon, keepFocus, kv,
@@ -8,14 +9,15 @@ import {
 } from '/app/common.js';
 
 const $ = (id) => document.getElementById(id);
-const VIEWS = { enquiries: 'Your enquiries', profile: 'Profile' };
+const VIEWS = { enquiries: 'Your enquiries', process: 'Your process', meeting: 'Book a meeting', profile: 'Profile' };
 const STATUS_NOTES = {
   new: 'Received. Someone from the cnpt team will read it shortly.',
   in_review: 'The cnpt team is reading it and will reply by email.',
   replied: 'The cnpt team has replied by email. Check your inbox, and your spam folder just in case.',
   closed: 'This enquiry is closed. You can send a new one any time.'
 };
-const state = { enquiries: [], sort: { key: 'created_at', dir: -1 }, open: null, viewingAs: null };
+const state = { enquiries: [], sort: { key: 'created_at', dir: -1 }, open: null, viewingAs: null,
+  me: null, project: null, comments: [], meetings: [], busy: [], imageUrl: null, projectLoaded: false, picked: null };
 let shell;
 
 const COLUMNS = [
@@ -160,6 +162,151 @@ function renderOverview() {
   $('overview').replaceChildren(...cards);
 }
 
+/* ---------- your process ---------- */
+
+const asQuery = () => (state.viewingAs ? `?as=${encodeURIComponent(state.viewingAs)}` : '');
+
+// Loads the process, its thread and the meetings the first time one of those views is opened.
+async function loadProject() {
+  if (state.projectLoaded) return;
+  const data = await api(`/api/process${asQuery()}`);
+  Object.assign(state, {
+    project: data.process, imageUrl: data.image_url, comments: data.comments, meetings: data.meetings, projectLoaded: true
+  });
+  if (!state.viewingAs) {
+    try { state.busy = (await api('/api/meetings')).busy; } catch { state.busy = []; }
+  }
+}
+
+async function addComment(text) {
+  try {
+    return (await api('/api/comments', { method: 'POST', body: { body: text } })).comment;
+  } catch {
+    flash('That note could not be saved. Please try again.', true);
+    return null;
+  }
+}
+
+async function removeComment(comment) {
+  try {
+    await api('/api/comments', { method: 'DELETE', body: { id: comment.id } });
+    state.comments = state.comments.filter((c) => c.id !== comment.id);
+    renderProcess();
+  } catch {
+    flash('That note could not be removed. Please try again.', true);
+  }
+}
+
+function renderProcess() {
+  const p = state.project;
+  const body = $('process-body');
+  const head = h('section', { class: 'card' },
+    h('div', { class: 'card-head card-head-row' },
+      h('h2', {}, p?.headline || 'Your work with cnpt'),
+      p && h('span', { class: 'sub' }, `Updated ${fmtDate(p.updated_at)}`)),
+    h('div', { class: 'card-body project-now' },
+      processThumbnail(p, state.imageUrl, { alt: p?.headline || 'The work right now' }),
+      p
+        ? stageTracker(p.stage)
+        : h('p', { class: 'sub' }, 'The cnpt team opens this once your enquiry is picked up. You will see the stage, a picture of what is being made, and notes here.')));
+  const thread = h('section', { class: 'card', 'aria-labelledby': 'notes-h' },
+    h('div', { class: 'card-head' }, h('h2', { id: 'notes-h' }, 'Notes')),
+    h('div', { class: 'card-body' }, commentThread({
+      comments: state.comments, me: state.me, onSend: addComment, onDelete: removeComment, readOnly: Boolean(state.viewingAs)
+    })));
+  body.replaceChildren(head, thread);
+}
+
+/* ---------- book a meeting ---------- */
+
+const liveMeetings = () => state.meetings.filter((m) => m.status === 'requested' || m.status === 'confirmed');
+
+function meetingRow(m) {
+  const past = Date.parse(m.starts_at) < Date.now();
+  return h('li', { class: 'booking' },
+    h('div', {},
+      h('p', { class: 'booking-when' }, slotText(m.starts_at, m.minutes)),
+      m.note ? h('p', { class: 'sub' }, m.note) : null),
+    badge(m.status === 'confirmed' ? 'replied' : m.status === 'requested' ? 'new' : 'closed',
+      m.status === 'confirmed' ? 'Confirmed' : m.status === 'requested' ? 'Waiting' : m.status === 'declined' ? 'Declined' : 'Cancelled'),
+    !state.viewingAs && !past && (m.status === 'requested' || m.status === 'confirmed')
+      ? h('button', { class: 'btn btn-line btn-xs', type: 'button', onclick: () => cancelMeeting(m) }, 'Cancel')
+      : null);
+}
+
+async function cancelMeeting(m) {
+  if (!confirm('Call off this meeting?')) return;
+  try {
+    const { meeting } = await api('/api/meetings', { method: 'PATCH', body: { id: m.id, status: 'cancelled' } });
+    Object.assign(m, meeting);
+    state.busy = state.busy.filter((b) => Date.parse(b.starts_at) !== Date.parse(m.starts_at));
+    renderMeeting();
+    flash('Meeting called off.');
+  } catch {
+    flash('That meeting could not be called off. Please try again.', true);
+  }
+}
+
+function renderMeeting() {
+  const body = $('meeting-body');
+  const mine = h('section', { class: 'card', 'aria-labelledby': 'mine-h' },
+    h('div', { class: 'card-head' }, h('h2', { id: 'mine-h' }, 'Your meetings')),
+    state.meetings.length
+      ? h('ul', { class: 'bookings' }, [...state.meetings].sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at)).map(meetingRow))
+      : h('div', { class: 'empty-note' }, h('p', {}, state.viewingAs ? 'No meetings booked.' : 'Nothing booked yet. Pick a time above.')));
+
+  if (state.viewingAs) return body.replaceChildren(mine);
+
+  // the picked block, written out under the calendar, with a note and the button that books it
+  const when = h('p', { class: 'pick-when' }, 'No time picked yet');
+  const sub = h('p', { class: 'sub' }, 'Tap a slot on the calendar.');
+  const note = h('input', { class: 'input', id: 'meeting-note', type: 'text', maxlength: '500', placeholder: 'What would you like to talk about? (optional)' });
+  const book = h('button', { class: 'btn btn-white btn-sm', type: 'submit', disabled: true }, 'Request this time', icon('arrow-right'));
+  const lengths = h('div', { class: 'seg', role: 'group', 'aria-label': 'How long' }, MEETING_LENGTHS.map((mins) => h('button', {
+    class: 'seg-btn', type: 'button', 'aria-pressed': String(mins === 30), 'data-len': mins,
+    onclick: (ev) => {
+      for (const b of lengths.children) b.setAttribute('aria-pressed', String(b === ev.currentTarget));
+      calendar.setLength(mins);
+    }
+  }, mins === 30 ? '30 min' : '1 hour')));
+
+  const calendar = meetingCalendar({
+    busy: state.busy,
+    onPick: (picked) => {
+      state.picked = picked;
+      when.textContent = slotText(picked.startsAt, picked.minutes);
+      sub.textContent = 'The cnpt team confirms it by email, usually within a working day.';
+      book.disabled = false;
+    }
+  });
+
+  const form = h('form', { class: 'pick' }, h('div', { class: 'pick-head' }, when, sub),
+    h('div', { class: 'pick-row' }, note, book));
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    if (!state.picked) return;
+    book.disabled = true;
+    try {
+      const { meeting } = await api('/api/meetings', { method: 'POST', body: { ...{ starts_at: state.picked.startsAt, minutes: state.picked.minutes }, note: note.value.trim() || undefined } });
+      state.meetings.push(meeting);
+      state.busy.push({ starts_at: meeting.starts_at, minutes: meeting.minutes });
+      state.picked = null;
+      note.value = '';
+      renderMeeting();
+      flash('Meeting requested. We will confirm by email.');
+    } catch (err) {
+      flash(err.message === 'slot_taken' ? 'Someone just took that slot. Please pick another.' : 'That time could not be booked. Please try again.', true);
+      book.disabled = false;
+    }
+  });
+
+  body.replaceChildren(
+    h('section', { class: 'card', 'aria-labelledby': 'cal-h' },
+      h('div', { class: 'card-head card-head-row' }, h('h2', { id: 'cal-h' }, 'Pick a time'), lengths),
+      h('div', { class: 'card-body' }, calendar.el, form)),
+    mine);
+}
+
 /* ---------- views ---------- */
 
 // Same address-bar routing as /admin: #enquiries, #enquiries/<id>, #profile.
@@ -177,6 +324,12 @@ function route() {
   const view = Object.hasOwn(VIEWS, name) ? name : 'enquiries';
   for (const v of Object.keys(VIEWS)) $(`view-${v}`).hidden = v !== view;
   shell.setView(view, VIEWS[view]);
+
+  if (view === 'process' || view === 'meeting') {
+    loadProject().then(() => (view === 'process' ? renderProcess() : renderMeeting()), () => {
+      $(view === 'process' ? 'process-body' : 'meeting-body').replaceChildren(h('p', { class: 'loading' }, 'This could not be loaded. Please refresh the page.'));
+    });
+  }
 
   const previous = state.open;
   const wanted = view === 'enquiries' ? Number(id) : null;
@@ -204,6 +357,7 @@ if (me) {
   const asId = me.role === 'admin' ? new URLSearchParams(location.search).get('as') : null;
   if (!asId && location.search) history.replaceState(null, '', location.pathname + location.hash);
   state.viewingAs = asId;
+  state.me = me;
   shell = mountShell(me, 'account', { query: asId ? `?as=${encodeURIComponent(asId)}` : '' });
   $('signout').addEventListener('click', signOut);
   $('delete').addEventListener('click', async () => {

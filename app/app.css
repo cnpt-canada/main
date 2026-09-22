@@ -239,6 +239,85 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .empty-note{display:grid;justify-items:start;gap:14px;padding:22px 20px}
 .empty-note p{font-size:14px;color:var(--soft)}
 
+/* ---------- the work after an enquiry: where it is, the notes beside it, the meetings ---------- */
+.project-layout{display:grid;gap:16px;align-items:start;max-width:980px}
+@media(min-width:1280px){.project-layout{grid-template-columns:minmax(0,1fr) minmax(340px,420px);max-width:none}}
+.project-now{display:grid;gap:22px}
+
+/* the picture the cnpt team shares for the stage the work is in */
+.thumb{position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:10px;background:var(--raise)}
+.thumb-img{display:block;width:100%;height:100%;object-fit:cover}
+.thumb-empty{display:grid;place-content:center;justify-items:center;gap:10px;height:100%;color:var(--faint);font-size:13px}
+.thumb-empty .ic{width:26px;height:26px}
+.thumb-stage{position:absolute;left:12px;top:12px;display:inline-flex;align-items:center;height:26px;padding:0 12px;
+  border-radius:var(--r-cap);background:rgba(10,10,9,.82);color:#fff;font-size:12px;font-weight:800}
+
+.stage-track{display:grid;list-style:none;margin:0;padding:0}
+.stage-track li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start;padding:9px 0;opacity:.5;transition:opacity .2s}
+.stage-track li.done,.stage-track li.now{opacity:1}
+.stage-dot{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--raise);
+  box-shadow:inset 0 0 0 1px var(--line);font-size:12px;font-weight:800;color:var(--muted)}
+.stage-dot .ic{width:14px;height:14px}
+.stage-track li.done .stage-dot{background:var(--line);color:#fff;box-shadow:none}
+.stage-track li.now .stage-dot{background:var(--signal-deep);color:#fff;box-shadow:none}
+.stage-text strong{display:block;font-size:14px;font-weight:800}
+.stage-text .sub{display:block;margin-top:2px}
+
+/* notes: one thread on the project, the client as Project Owner and the cnpt team as Consultant */
+.thread{display:grid;gap:14px}
+.notes{display:grid;gap:2px;list-style:none;margin:0;padding:0}
+.note{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;padding:12px;border-radius:10px}
+@media(hover:hover){.note:hover{background:var(--hover)}}
+.note-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+.note-head strong{font-size:14px;font-weight:800}
+.note-title{display:inline-flex;align-items:center;height:20px;padding:0 9px;border-radius:var(--r-cap);font-size:11px;font-weight:800}
+.note-title-team{background:var(--signal-deep);color:#fff}
+.note-title-owner{background:var(--line);color:#fff}
+.note-text{margin-top:6px;font-size:14px;line-height:1.6;color:var(--soft);white-space:pre-wrap;overflow-wrap:anywhere}
+.note-remove{opacity:0;transition:opacity .15s}
+.note:hover .note-remove,.note-remove:focus-visible{opacity:1}
+.notes-empty{padding:14px 12px;font-size:13.5px;color:var(--muted)}
+.note-add{display:grid;gap:10px;padding:12px;border:1px solid var(--rule);border-radius:10px;background:var(--raise)}
+.note-field{min-height:66px}
+.note-add-foot{display:flex;align-items:center;justify-content:space-between;gap:12px}
+
+/* the calendar: weekdays across, half hours down, a block where you tap */
+.cal{display:grid;gap:12px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cal-title{font-size:14px;font-weight:800;letter-spacing:-0.012em}
+.cal-grid{display:grid;grid-template-columns:54px repeat(5,minmax(0,1fr));gap:2px;max-height:440px;overflow:auto}
+.cal-corner,.cal-day{position:sticky;top:0;z-index:1;background:var(--panel)}
+.cal-day{display:grid;justify-items:center;gap:1px;padding:6px 0 8px}
+.cal-day strong{font-size:12px;font-weight:800}
+.cal-day span{font-size:12px;color:var(--muted)}
+.cal-time{padding-right:8px;font-size:11px;color:var(--muted);text-align:right;transform:translateY(-5px)}
+.cal-slot{position:relative;height:26px;padding:0;border:0;border-radius:4px;background:var(--raise);cursor:pointer;
+  transition:background-color .12s}
+.cal-slot:disabled{cursor:default}
+.cal-slot.is-taken{background:repeating-linear-gradient(45deg,#151514,#151514 3px,#0d0d0c 3px,#0d0d0c 7px)}
+@media(hover:hover){.cal-slot:not(:disabled):hover{background:var(--line)}}
+.cal-slot.is-picked{background:var(--signal-deep)}
+.cal-slot:focus-visible{outline:2px solid #fff;outline-offset:1px;z-index:2}
+.cal-block{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff}
+
+/* what you picked, written out under the calendar */
+.pick{display:grid;gap:14px;margin-top:18px;padding:16px;border:1px solid var(--rule);border-radius:10px;background:var(--raise)}
+.pick-when{font-size:16px;font-weight:800;letter-spacing:-0.02em}
+.pick-head .sub{display:block;margin-top:4px}
+.pick-row{display:flex;flex-wrap:wrap;gap:10px}
+.pick-row .input{flex:1 1 240px}
+.bookings{list-style:none;margin:0;padding:0}
+.booking{display:flex;align-items:center;gap:12px;padding:14px 20px;border-top:1px solid var(--rule)}
+.booking:first-child{border-top:0}
+.booking > div{flex:1 1 auto;min-width:0}
+.booking-when{font-size:13.5px;font-weight:700}
+@media(max-width:719px){
+  .cal-grid{grid-template-columns:44px repeat(5,minmax(0,1fr))}
+  .cal-slot{height:30px}
+  .note{grid-template-columns:auto minmax(0,1fr);padding:10px 2px}
+  .note-remove{display:none}
+}
+
 /* ---------- focal: the split across research, branding, product developing and advertising ---------- */
 .focal{display:grid;gap:16px}
 .focal-bar{position:relative;height:44px}

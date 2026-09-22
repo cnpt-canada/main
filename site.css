@@ -545,6 +545,10 @@ nav .nav-sheet .wrap{display:block;height:auto}
   animation:nic-draw .45s var(--ease-out) calc(var(--sd,0ms) + 80ms) backwards}
 .motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-team g:nth-child(2){
   animation:nic-in-left .5s var(--ease-out) calc(var(--sd,0ms) + 110ms) backwards}
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-talent circle{
+  animation:nic-pop .5s cubic-bezier(.34,1.56,.64,1) calc(var(--sd,0ms) + var(--i,0) * 70ms) backwards}
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-talent path{
+  animation:nic-draw .4s var(--ease-out) calc(var(--sd,0ms) + var(--i,0) * 70ms) backwards}
 .motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-team g:nth-child(3){
   animation:nic-in-right .5s var(--ease-out) calc(var(--sd,0ms) + 220ms) backwards}
 .ic-team g:nth-child(2) circle,.ic-team g:nth-child(3) circle{--i:1}
@@ -607,6 +611,13 @@ nav .nav-sheet .wrap{display:block;height:auto}
 /* short contact band at the foot of each page */
 .cta-short .cta-grid{align-items:end}
 .cta-short .cta-row{margin-top:0;justify-content:flex-end}
+
+/* talent: the pool is still being built, so the page says so */
+.status-line{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-size:13.5px;font-weight:700;color:rgba(255,255,255,.9)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.22)}
+.motion .status-dot{animation:status-pulse 2.4s ease-in-out infinite}
+@keyframes status-pulse{50%{box-shadow:0 0 0 7px rgba(255,255,255,.12)}}
+.status-line + h2{margin-top:14px}
 
 /* a label that follows the mouse over something clickable: what clicking does */
 .cursor-tip{position:fixed;left:0;top:0;z-index:100;pointer-events:none;will-change:transform}

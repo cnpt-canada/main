@@ -1,5 +1,6 @@
 // /admin — the workspace: enquiries, onboarding and members. The page only shows what the API allows;
 // every change is checked again on the server (admin role, allowed values, owners locked).
+import { commentThread, processThumbnail, readImage, slotText, STAGES, stageIndex } from '/app/project.js';
 import {
   ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
   api, avatar, badge, consultantList, dataTable, firstNames, flash, fmtCost, fmtDate, fmtDateTime, focalBar, h, icon, keepFocus, kv,
@@ -7,9 +8,10 @@ import {
 } from '/app/common.js';
 
 const $ = (id) => document.getElementById(id);
-const VIEWS = { enquiries: 'Enquiries', onboarding: 'Onboarding', members: 'Members' };
+const VIEWS = { enquiries: 'Enquiries', onboarding: 'Onboarding', process: 'Process', meetings: 'Meetings', members: 'Members' };
 const state = {
-  enquiries: [], users: [], onboarding: [], me: null,
+  enquiries: [], users: [], onboarding: [], process: [], meetings: [], comments: [], me: null,
+  processFilter: { stage: '', text: '' }, processSort: { key: 'updated_at', dir: -1 }, processOpen: null, meetFilter: { status: '' },
   filter: { status: '', stage: '', text: '' }, sort: { key: 'created_at', dir: -1 }, open: null,
   onbFilter: { status: '', text: '' }, onbSort: { key: 'updated_at', dir: -1 }, onbOpen: null,
   memberFilter: { role: '', text: '' }, memberSort: { key: 'created_at', dir: -1 }
@@ -21,7 +23,10 @@ const ERRORS = {
   cannot_demote_self: 'You can’t remove your own admin access.',
   admin_only: 'Your admin access was removed.',
   signin_required: 'Your session ended. Sign in again.',
-  invalid_cost: 'Enter the estimate as a whole number of dollars, up to 1,000,000.'
+  invalid_cost: 'Enter the estimate as a whole number of dollars, up to 1,000,000.',
+  image_too_big: 'That picture is too large. Pick one under 3MB.',
+  invalid_type: 'Pictures only: JPEG, PNG or WebP.',
+  slot_taken: 'That time is already taken.'
 };
 const errorText = (err) => ERRORS[err.message] || 'That didn’t save. Please try again.';
 
@@ -339,6 +344,167 @@ function renderMembers() {
   })));
 }
 
+/* ---------- process: where each client's work is ---------- */
+
+const clientName = (row) => (row.client ? row.client.name || row.client.email : `Member #${row.user_id}`);
+
+const PROCESS_COLUMNS = [
+  { key: 'name', label: 'Client', cls: 'c-primary', sort: (p) => clientName(p).toLowerCase(),
+    cell: (p) => h('span', { class: 'who' }, avatar(p.client || { email: '?' }),
+      h('span', { class: 'who-text' }, h('strong', {}, clientName(p)), h('span', { class: 'sub' }, p.client?.email || ''))) },
+  { key: 'stage', label: 'Stage', cls: 'c-stage', sort: (p) => stageIndex(p.stage),
+    cell: (p) => h('span', { class: 'chip' }, STAGES[stageIndex(p.stage)].label) },
+  { key: 'headline', label: 'What is happening', cls: 'c-msg',
+    cell: (p) => h('span', { class: 'clip' }, p.headline || '—') },
+  { key: 'picture', label: 'Picture', cls: 'c-num', cell: (p) => (p.image_url ? icon('check') : h('span', { class: 'sub' }, '—')) },
+  { key: 'updated_at', label: 'Updated', cls: 'c-date', sort: (p) => Date.parse(p.updated_at), cell: (p) => time(p.updated_at) }
+];
+
+function renderProcess() {
+  const rows = state.process.filter((p) => (!state.processFilter.stage || p.stage === state.processFilter.stage)
+    && matches(state.processFilter.text.trim().toLowerCase(), clientName(p), p.client?.email, p.headline));
+  segButtons($('f-stage-p'), [['', 'All', state.process.length],
+    ...STAGES.map((s) => [s.key, s.label, state.process.filter((p) => p.stage === s.key).length])],
+  state.processFilter.stage, (value) => { state.processFilter.stage = value; renderProcess(); });
+  $('process-meta').textContent = `${rows.length} of ${state.process.length}`;
+  keepFocus($('process-table'), () => $('process-table').replaceChildren(dataTable({
+    label: 'Process', columns: PROCESS_COLUMNS, rows: sortRows(rows, PROCESS_COLUMNS, state.processSort).map((p) => ({ ...p, id: p.user_id })),
+    sort: state.processSort, selected: state.processOpen,
+    onSort: (key) => { toggleSort(state.processSort, key, ['name', 'stage'].includes(key) ? 1 : -1); renderProcess(); },
+    onOpen: (p, replace) => go(`process/${p.user_id}`, replace),
+    empty: state.process.length ? 'Nothing matches this search.' : 'No client has been started yet. Open one from a client below.'
+  })));
+}
+
+async function saveProcess(p, body, { quiet } = {}) {
+  try {
+    const saved = await api('/api/admin/process', { method: body.data !== undefined ? 'PUT' : 'PATCH', body: { user_id: p.user_id, ...body } });
+    Object.assign(p, saved.process, { image_url: saved.image_url, client: p.client });
+    renderProcess();
+    renderProcessDetail();
+    if (!quiet) flash('Saved');
+  } catch (err) {
+    flash(errorText(err), true);
+  }
+}
+
+function renderProcessDetail() {
+  const p = state.process.find((x) => x.user_id === state.processOpen);
+  if (!p) return;
+  const headline = h('input', { class: 'input', id: 'headline-input', type: 'text', maxlength: '120', value: p.headline || '',
+    placeholder: 'e.g. Two directions for the dispatcher dashboard' });
+  const picture = h('input', { class: 'sr-only', id: 'picture-input', type: 'file', accept: 'image/jpeg,image/png,image/webp' });
+  picture.addEventListener('change', async () => {
+    const file = picture.files?.[0];
+    if (!file) return;
+    try {
+      flash('Preparing the picture…');
+      const { type, data } = await readImage(file);
+      await saveProcess(p, { type, data });
+      flash('Picture saved');
+    } catch {
+      flash('That picture could not be read. Try a JPEG, PNG or WebP.', true);
+    }
+    picture.value = '';
+  });
+
+  $('process-detail').replaceChildren(
+    h('div', { class: 'detail-head' },
+      h('span', { class: 'detail-id' }, `Process · UID #${p.user_id}`),
+      h('button', { class: 'icon-btn detail-close', type: 'button', 'aria-label': 'Close details', onclick: () => go('process') }, icon('x'))),
+    h('div', { class: 'detail-body' },
+      h('div', {},
+        h('h2', { class: 'detail-title' }, clientName(p)),
+        h('p', { class: 'sub' }, p.client?.email || ''),
+        h('div', { class: 'detail-actions' },
+          h('a', { class: 'btn btn-white btn-sm', href: `/account?as=${p.user_id}#process` }, icon('eye'), 'View as user'))),
+      section('Picture', processThumbnail(p, p.image_url, { alt: p.headline || '' }),
+        h('div', { class: 'detail-actions' },
+          h('label', { class: 'btn btn-line btn-sm', for: 'picture-input' }, icon('plus'), p.image_url ? 'Replace' : 'Upload'),
+          picture,
+          p.image_url && h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => saveProcess(p, { data: null }) }, 'Remove')),
+        h('p', { class: 'hint' }, 'The client sees this on Your process. Pictures are shrunk to 1600px before they are sent.')),
+      section('Stage',
+        h('div', { class: 'seg seg-full', role: 'group', 'aria-label': 'Stage' }, STAGES.map((s) => h('button', {
+          class: 'seg-btn', type: 'button', 'aria-pressed': String(p.stage === s.key), onclick: () => saveProcess(p, { stage: s.key })
+        }, s.label))),
+        h('p', { class: 'hint' }, STAGES[stageIndex(p.stage)].note)),
+      section('What is happening', headline,
+        h('div', { class: 'detail-actions' },
+          h('button', { class: 'btn btn-white btn-sm', type: 'button', onclick: () => saveProcess(p, { headline: headline.value.trim() }) }, 'Save'))),
+      section('Notes', commentThread({
+        comments: state.comments, me: state.me,
+        onSend: async (text) => {
+          try {
+            return (await api('/api/comments', { method: 'POST', body: { owner_id: p.user_id, body: text } })).comment;
+          } catch (err) {
+            flash(errorText(err), true);
+            return null;
+          }
+        },
+        onDelete: async (comment) => {
+          try {
+            await api('/api/comments', { method: 'DELETE', body: { id: comment.id } });
+            state.comments = state.comments.filter((c) => c.id !== comment.id);
+            renderProcessDetail();
+          } catch (err) {
+            flash(errorText(err), true);
+          }
+        },
+        placeholder: 'Write to the client as Consultant…'
+      })),
+      section('Details', kv([
+        ['Started', fmtDateTime(p.created_at)],
+        ['Updated', fmtDateTime(p.updated_at)],
+        ['From enquiry', p.enquiry_id ? `#${p.enquiry_id}` : '—']
+      ]))));
+}
+
+/* ---------- meetings ---------- */
+
+const MEET_LABELS = { requested: 'Waiting', confirmed: 'Confirmed', declined: 'Declined', cancelled: 'Cancelled' };
+const MEET_BADGE = { requested: 'new', confirmed: 'replied', declined: 'closed', cancelled: 'closed' };
+
+const MEETING_COLUMNS = [
+  { key: 'starts_at', label: 'When', cls: 'c-primary', sort: (m) => Date.parse(m.starts_at),
+    cell: (m) => [h('strong', {}, slotText(m.starts_at, m.minutes)), m.note ? h('span', { class: 'sub' }, m.note) : null] },
+  { key: 'client', label: 'Client', cls: 'c-msg', sort: (m) => clientName(m).toLowerCase(),
+    cell: (m) => h('span', { class: 'clip' }, clientName(m)) },
+  { key: 'minutes', label: 'Length', cls: 'c-num', sort: (m) => m.minutes, cell: (m) => `${m.minutes} min` },
+  { key: 'status', label: 'Status', cls: 'c-status', sort: (m) => m.status, cell: (m) => badge(MEET_BADGE[m.status], MEET_LABELS[m.status]) },
+  { key: 'actions', srLabel: 'Actions', cls: 'c-action', cell: (m) => (m.status === 'requested'
+    ? h('span', { class: 'row-actions' },
+      h('button', { class: 'btn btn-white btn-xs', type: 'button', onclick: (ev) => { ev.stopPropagation(); setMeeting(m, 'confirmed'); } }, 'Confirm'),
+      h('button', { class: 'btn btn-line btn-xs', type: 'button', onclick: (ev) => { ev.stopPropagation(); setMeeting(m, 'declined'); } }, 'Decline'))
+    : m.status === 'confirmed' && Date.parse(m.starts_at) > Date.now()
+      ? h('button', { class: 'btn btn-line btn-xs', type: 'button', onclick: (ev) => { ev.stopPropagation(); setMeeting(m, 'cancelled'); } }, 'Call off')
+      : h('span', { class: 'sub' }, '—')) }
+];
+
+async function setMeeting(m, status) {
+  try {
+    const { meeting } = await api('/api/admin/meetings', { method: 'PATCH', body: { id: m.id, status } });
+    Object.assign(m, meeting);
+    renderMeetings();
+    flash(status === 'confirmed' ? 'Meeting confirmed' : status === 'declined' ? 'Meeting declined' : 'Meeting called off');
+  } catch (err) {
+    flash(errorText(err), true);
+  }
+}
+
+function renderMeetings() {
+  const counts = (s) => state.meetings.filter((m) => m.status === s).length;
+  segButtons($('f-meet'), [['', 'All', state.meetings.length], ['requested', 'Waiting', counts('requested')],
+    ['confirmed', 'Confirmed', counts('confirmed')]], state.meetFilter.status,
+  (value) => { state.meetFilter.status = value; renderMeetings(); });
+  const rows = state.meetings.filter((m) => !state.meetFilter.status || m.status === state.meetFilter.status);
+  $('meetings-meta').textContent = `${rows.length} of ${state.meetings.length}`;
+  keepFocus($('meeting-table'), () => $('meeting-table').replaceChildren(dataTable({
+    label: 'Meetings', columns: MEETING_COLUMNS, rows, sort: { key: 'starts_at', dir: 1 },
+    empty: 'Nobody has booked a time yet.'
+  })));
+}
+
 /* ---------- views ---------- */
 
 // Changes the view through the address bar, so the back button and shared links work.
@@ -365,6 +531,15 @@ function route() {
   if (state.open) renderDetail();
   showPanel($('detail'), Boolean(state.open), previous && $('enquiry-table').querySelector(`tr[data-id="${previous}"]`));
 
+  const prevProcess = state.processOpen;
+  const wantedProcess = view === 'process' ? Number(id) : null;
+  state.processOpen = state.process.some((p) => p.user_id === wantedProcess) ? wantedProcess : null;
+  markSelected($('process-table'), state.processOpen);
+  if (state.processOpen) {
+    loadComments(state.processOpen).then(renderProcessDetail);
+  }
+  showPanel($('process-detail'), Boolean(state.processOpen), prevProcess && $('process-table').querySelector(`tr[data-id="${prevProcess}"]`));
+
   const prevOnb = state.onbOpen;
   const wantedOnb = view === 'onboarding' ? Number(id) : null;
   state.onbOpen = state.onboarding.some((o) => o.user_id === wantedOnb) ? wantedOnb : null;
@@ -373,11 +548,23 @@ function route() {
   showPanel($('onb-detail'), Boolean(state.onbOpen), prevOnb && $('onboarding-table').querySelector(`tr[data-id="${prevOnb}"]`));
 }
 
+// The thread for the client whose process is open, kept out of the list request so it stays small.
+async function loadComments(userId) {
+  try {
+    state.comments = (await api(`/api/process?as=${userId}`)).comments;
+  } catch {
+    state.comments = [];
+  }
+}
+
 async function load() {
-  const [e, u, o] = await Promise.all([api('/api/admin/enquiries'), api('/api/admin/users'), api('/api/admin/onboarding')]);
-  Object.assign(state, { enquiries: e.enquiries, users: u.users, onboarding: o.onboarding, me: u.me });
+  const [e, u, o, p, m] = await Promise.all([api('/api/admin/enquiries'), api('/api/admin/users'), api('/api/admin/onboarding'),
+    api('/api/admin/process'), api('/api/admin/meetings')]);
+  Object.assign(state, { enquiries: e.enquiries, users: u.users, onboarding: o.onboarding, process: p.process, meetings: m.meetings, me: u.me });
   renderEnquiries();
   renderOnboarding();
+  renderProcess();
+  renderMeetings();
   renderMembers();
   route();
 }
@@ -402,10 +589,11 @@ if (me) {
     $('f-text').addEventListener('input', () => { state.filter.text = $('f-text').value; renderEnquiries(); });
     $('m-text').addEventListener('input', () => { state.memberFilter.text = $('m-text').value; renderMembers(); });
     $('o-text').addEventListener('input', () => { state.onbFilter.text = $('o-text').value; renderOnboarding(); });
-    const closePanel = () => go(state.onbOpen ? 'onboarding' : 'enquiries');
+    $('p-text').addEventListener('input', () => { state.processFilter.text = $('p-text').value; renderProcess(); });
+    const closePanel = () => go(state.onbOpen ? 'onboarding' : state.processOpen ? 'process' : 'enquiries');
     $('detail-scrim').addEventListener('click', closePanel);
     document.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Escape' && (state.open || state.onbOpen) && !document.body.classList.contains('nav-open')) closePanel();
+      if (ev.key === 'Escape' && (state.open || state.onbOpen || state.processOpen) && !document.body.classList.contains('nav-open')) closePanel();
     });
     $('refresh').addEventListener('click', async () => {
       try {

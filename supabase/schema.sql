@@ -61,6 +61,54 @@ create table if not exists public.onboarding (
   updated_at     timestamptz not null default now()
 );
 
+-- what happens after an enquiry: where the work is, the picture the cnpt team shares for the stage it is in,
+-- and the thread beside it. One per client account.
+create table if not exists public.process (
+  id          bigserial primary key,
+  user_id     bigint not null unique references public.users (id) on delete cascade,
+  enquiry_id  bigint references public.enquiries (id) on delete set null,      -- the enquiry the work came from
+  stage       text not null default 'frame' check (stage in ('frame', 'concept', 'system', 'entry')),
+  headline    text check (char_length(headline) <= 120),                       -- what is happening right now
+  image_path  text check (char_length(image_path) <= 300),                     -- object in the process storage bucket
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+-- the thread on a client's process: the client writes as Project Owner, the cnpt team as Consultant
+create table if not exists public.comments (
+  id         bigserial primary key,
+  owner_id   bigint not null references public.users (id) on delete cascade,   -- whose process the thread belongs to
+  author_id  bigint references public.users (id) on delete set null,
+  body       text not null check (char_length(body) between 1 and 2000),
+  created_at timestamptz not null default now()
+);
+create index if not exists comments_owner_idx on public.comments (owner_id, created_at);
+
+-- meetings a client books on the calendar; the cnpt team confirms or declines
+create table if not exists public.meetings (
+  id         bigserial primary key,
+  user_id    bigint not null references public.users (id) on delete cascade,
+  starts_at  timestamptz not null,
+  minutes    smallint not null default 30 check (minutes in (30, 60)),
+  status     text not null default 'requested' check (status in ('requested', 'confirmed', 'declined', 'cancelled')),
+  note       text check (char_length(note) <= 500),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists meetings_user_idx on public.meetings (user_id, starts_at);
+
+-- people who put their name in the talent pool (/talent). Kept so nothing is lost if email is down.
+create table if not exists public.talent (
+  id         bigserial primary key,
+  category   text not null check (category in ('consultant', 'designer', 'engineer', 'commerce')),
+  name       text not null check (char_length(name) between 1 and 120),
+  email      text not null,                                                -- stored lowercase
+  links      text check (char_length(links) <= 300),                       -- portfolio, LinkedIn, GitHub…
+  message    text not null check (char_length(message) between 1 and 1000),
+  created_at timestamptz not null default now()
+);
+create index if not exists talent_created_idx on public.talent (created_at desc);
+
 -- ---------- upgrades for databases created by earlier versions ----------
 -- one consultant → several
 alter table public.onboarding add column if not exists consultants text[] not null default '{}'
@@ -102,3 +150,7 @@ end $$;
 alter table public.users enable row level security;
 alter table public.enquiries enable row level security;
 alter table public.onboarding enable row level security;
+alter table public.process enable row level security;
+alter table public.comments enable row level security;
+alter table public.meetings enable row level security;
+alter table public.talent enable row level security;
