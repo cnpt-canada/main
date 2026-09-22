@@ -355,88 +355,103 @@
   root.classList.add('motion-ready');
 })();
 
-/* hero headline: the letters near the mouse thicken, and thin back out as it moves on, as if the weight followed the pointer.
-   Helvetica has no weight axis, so eight crisp text shadows in the text colour, just around each letter, do the thickening.
-   (An outline would be simpler, but it leaves hairlines inside glyphs built from overlapping shapes, as Arial's are.)
+/* hero headline: with the mouse inside the headline's box, the headline eases from Bold to Regular and the letters
+   near the pointer stay heavy, so the weight follows the pointer; leaving eases everything back to Bold.
+   A smooth change of weight needs a font with a weight axis, and Helvetica has none, so the headline switches to
+   Arimo (Helvetica's metrics, 400–700 axis, self-hosted Latin subset) once it has loaded.
    Mouse and trackpad only, and only with motion on. */
 (function () {
   var h1 = document.querySelector('.hero h1');
   if (!h1 || !document.documentElement.classList.contains('motion')) return;
-  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches || !document.fonts || !document.fonts.load) return;
 
-  var THICK = 0.02; // how far the letter spreads at full strength, in em: any more and neighbouring letters run together
-  var AROUND = [[1, 0], [-1, 0], [0, 1], [0, -1], [0.7071, 0.7071], [-0.7071, 0.7071], [0.7071, -0.7071], [-0.7071, -0.7071]];
-  function spread(v) {
-    if (!v) return '';
-    var r = v * THICK;
-    return AROUND.map(function (o) { return (o[0] * r).toFixed(4) + 'em ' + (o[1] * r).toFixed(4) + 'em 0 currentColor'; }).join(',');
-  }
-  var letters = [];
-  h1.setAttribute('aria-label', h1.textContent.replace(/\s+/g, ' ').trim()); // read as one sentence, not letter by letter
-  (function walk(node) {
-    Array.prototype.slice.call(node.childNodes).forEach(function (child) {
-      if (child.nodeType === 1) return walk(child);
-      if (child.nodeType !== 3 || !child.textContent.trim()) return;
-      var frag = document.createDocumentFragment();
-      Array.prototype.forEach.call(child.textContent, function (ch) {
-        if (/\s/.test(ch)) return frag.appendChild(document.createTextNode(ch));
-        var el = document.createElement('span');
-        el.className = 'wt';
-        el.setAttribute('aria-hidden', 'true');
-        el.textContent = ch;
-        frag.appendChild(el);
-        letters.push({ el: el, x: 0, y: 0, v: 0, shown: 0 });
+  var LIGHT = 400, HEAVY = 700;
+  document.fonts.load(HEAVY + ' 80px "Arimo Var"').then(function (faces) { if (faces.length) start(); }, function () {});
+
+  function start() {
+    var letters = [];
+    h1.setAttribute('aria-label', h1.textContent.replace(/\s+/g, ' ').trim()); // read as one sentence, not letter by letter
+    (function walk(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+        if (child.nodeType === 1) return walk(child);
+        if (child.nodeType !== 3 || !child.textContent.trim()) return;
+        var frag = document.createDocumentFragment();
+        Array.prototype.forEach.call(child.textContent, function (ch) {
+          if (/\s/.test(ch)) return frag.appendChild(document.createTextNode(ch));
+          var el = document.createElement('span');
+          el.className = 'wt';
+          el.setAttribute('aria-hidden', 'true');
+          el.textContent = ch;
+          frag.appendChild(el);
+          letters.push({ el: el, v: 1, shown: HEAVY });
+        });
+        node.replaceChild(frag, child);
       });
-      node.replaceChild(frag, child);
-    });
-  })(h1);
+    })(h1);
+    h1.classList.add('is-var');
 
-  var mouseX = -1e4, mouseY = -1e4, box = null, fs = 80, raf = 0, stale = true;
-
-  function measure() {
-    var r = h1.getBoundingClientRect();
-    box = { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
-    fs = parseFloat(getComputedStyle(h1).fontSize) || 80;
-    letters.forEach(function (l) {
-      var b = l.el.getBoundingClientRect();
-      l.x = b.left + b.width / 2;
-      l.y = b.top + b.height / 2;
+    // Regular is narrower than Bold, so words would hop up a line while the weight changes:
+    // pin the line breaks where they fall in Bold, and pin them again whenever the width changes
+    var words = Array.prototype.slice.call(h1.querySelectorAll('.wd'));
+    function lockLines() {
+      Array.prototype.forEach.call(h1.querySelectorAll('br.wl'), function (br) { br.remove(); });
+      h1.classList.remove('lines-locked');
+      var saved = letters.map(function (l) { var w = l.el.style.fontWeight; l.el.style.fontWeight = ''; return w; });
+      var top = null;
+      words.forEach(function (wd) {
+        var t = Math.round(wd.getBoundingClientRect().top);
+        if (top !== null && t > top + 2) {
+          var br = document.createElement('br');
+          br.className = 'wl';
+          wd.parentNode.insertBefore(br, wd);
+        }
+        top = t;
+      });
+      letters.forEach(function (l, i) { l.el.style.fontWeight = saved[i]; });
+      h1.classList.add('lines-locked');
+    }
+    lockLines();
+    var lastWidth = window.innerWidth;
+    window.addEventListener('resize', function () {
+      if (window.innerWidth === lastWidth) return;
+      lastWidth = window.innerWidth;
+      lockLines();
     });
-    stale = false;
+
+    var mouseX = -1e4, mouseY = -1e4, raf = 0;
+    function frame() {
+      // letters move as their neighbours change weight, so measure every frame (one small headline, cheap)
+      var box = h1.getBoundingClientRect();
+      var fs = parseFloat(getComputedStyle(h1).fontSize) || 80;
+      var inside = mouseX >= box.left && mouseX <= box.right && mouseY >= box.top && mouseY <= box.bottom;
+      var reach = fs * 1.6, moving = false;
+      letters.forEach(function (l) {
+        var target = 1; // Bold while the mouse is outside the headline
+        if (inside) {
+          var r = l.el.getBoundingClientRect();
+          var dx = r.left + r.width / 2 - mouseX, dy = r.top + r.height / 2 - mouseY;
+          var p = Math.max(0, 1 - Math.sqrt(dx * dx + dy * dy) / reach);
+          target = p * p * (3 - 2 * p); // Regular far from the pointer, Bold under it, smooth in between
+        }
+        l.v += (target - l.v) * 0.09; // about half a second to settle
+        if (Math.abs(target - l.v) > 0.002) moving = true;
+        else l.v = target;
+        var w = Math.round(LIGHT + (HEAVY - LIGHT) * l.v);
+        if (w === l.shown) return;
+        l.shown = w;
+        l.el.style.fontWeight = w === HEAVY ? '' : w;
+      });
+      raf = moving ? requestAnimationFrame(frame) : 0;
+    }
+    function kick() { if (!raf) raf = requestAnimationFrame(frame); }
+
+    document.addEventListener('pointermove', function (e) {
+      if (e.pointerType && e.pointerType !== 'mouse') return;
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      kick();
+    }, { passive: true });
+    document.documentElement.addEventListener('mouseleave', function () { mouseX = mouseY = -1e4; kick(); });
+    window.addEventListener('scroll', kick, { passive: true }); // scrolling can carry the headline out from under the pointer
   }
-  function frame() {
-    if (stale) measure();
-    // how close the pointer is to the headline as a whole: the effect fades in as it approaches
-    var dx = Math.max(box.left - mouseX, 0, mouseX - box.right);
-    var dy = Math.max(box.top - mouseY, 0, mouseY - box.bottom);
-    var near = Math.max(0, 1 - Math.sqrt(dx * dx + dy * dy) / (fs * 1.5));
-    var reach = fs * 1.3, moving = false;
-    letters.forEach(function (l) {
-      var d = Math.sqrt((l.x - mouseX) * (l.x - mouseX) + (l.y - mouseY) * (l.y - mouseY));
-      var p = Math.max(0, 1 - d / reach);
-      p = p * p * (3 - 2 * p); // smooth falloff
-      var target = near * p; // 1: thickest, under the pointer
-      l.v += (target - l.v) * 0.16;
-      if (Math.abs(target - l.v) > 0.002) moving = true;
-      var v = Math.round(l.v * 200) / 200;
-      if (v === l.shown) return;
-      l.shown = v;
-      l.el.style.textShadow = spread(v);
-    });
-    raf = moving ? requestAnimationFrame(frame) : 0;
-  }
-  function kick() { if (!raf) raf = requestAnimationFrame(frame); }
-
-  document.addEventListener('pointermove', function (e) {
-    if (e.pointerType && e.pointerType !== 'mouse') return;
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-    kick();
-  }, { passive: true });
-  document.documentElement.addEventListener('mouseleave', function () { mouseX = mouseY = -1e4; kick(); });
-  // letters move with scrolling, resizing and the entrance animation: measure again before the next frame
-  function restale() { stale = true; kick(); }
-  window.addEventListener('scroll', restale, { passive: true });
-  window.addEventListener('resize', restale);
-  setTimeout(restale, 2600);
 })();

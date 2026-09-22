@@ -632,6 +632,10 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .works{gap:44px}
 }
 
-/* hero headline weight follows the mouse (site.js): once the words have risen, let the thickened letters spill past the word masks */
-.hero h1:not([data-rv]) .wd{overflow:visible}
-.wt{display:inline}
+/* hero headline weight follows the mouse (site.js). It needs a font with a weight axis, which Helvetica lacks:
+   Arimo has Helvetica's metrics and a 400–700 axis (SIL Open Font License, fonts/Arimo-OFL.txt).
+   The headline only switches to it where the effect runs, once the font has loaded. */
+@font-face{font-family:'Arimo Var';src:url(/fonts/arimo-latin-wght.woff2) format('woff2');font-weight:400 700;font-style:normal;font-display:swap}
+.hero h1.is-var{font-family:'Arimo Var',var(--font);font-weight:700}
+.hero h1.lines-locked{white-space:nowrap} /* site.js pins the Bold line breaks with <br>s */
+.hero h1:not([data-rv]) .wd{overflow:visible} /* once the words have risen, nothing clips a letter */
