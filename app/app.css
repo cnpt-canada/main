@@ -1,13 +1,6 @@
-/* Signed-in pages (/signin, /account, /admin). Same tokens and type as the home page; /account and /admin
+/* Signed-in pages (/signin, /onboarding, /account, /admin). Same tokens and type as the public site; /account and /admin
    use a denser console layout: left navigation, data tables, and a details panel.
-   Manrope — SIL Open Font License 1.1. Copyright 2019 The Manrope Project Authors. */
-@font-face{
-  font-family:'Manrope';
-  font-style:normal;
-  font-display:swap;
-  font-weight:200 800;
-  src:url('/fonts/manrope.woff2') format('woff2');
-}
+   Type is Helvetica: Helvetica Neue on Apple devices, Helvetica or Arial elsewhere. */
 :root{
   --ink:#000000; --paper:#FFFFFF; --mist:#E4E4DF;
   --grey:#6F6F6C; --signal:#FF004D; --signal-deep:#E60045; --signal-text:#C2003C;
@@ -15,13 +8,13 @@
   --panel:#0A0A09; --raise:#111110; --hover:#141413; --sel:#1A1A18;
   --side-w:248px; --bar-h:56px;
   --r-cap:999px; --r-card:12px; --r-field:9px;
-  --font:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --font:'Helvetica Neue',Helvetica,Arial,sans-serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
 body{min-height:100vh;background:var(--ink);color:#fff;font-family:var(--font);font-size:16px;line-height:1.6;
-  font-weight:500;letter-spacing:-0.011em;-webkit-font-smoothing:antialiased}
+  font-weight:500;letter-spacing:-0.004em;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
 button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 [hidden]{display:none!important}
@@ -35,7 +28,7 @@ button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 
 /* buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 20px;border:0;border-radius:var(--r-cap);
-  background:none;font-size:14px;font-weight:700;letter-spacing:-0.02em;white-space:nowrap;cursor:pointer;
+  background:none;font-size:14px;font-weight:700;letter-spacing:-0.012em;white-space:nowrap;cursor:pointer;
   transition:background-color .2s ease,color .2s ease,box-shadow .2s ease}
 .btn .ic{width:16px;height:16px}
 .btn-sm{height:34px;padding:0 15px;font-size:13px}
@@ -77,7 +70,7 @@ button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 .side-brand{display:block;color:#fff}
 .side-brand .wm{display:block;width:62px;height:auto;aspect-ratio:140/32}
 .side-tag{display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:var(--r-cap);background:var(--signal-deep);
-  color:#fff;font-size:12px;font-weight:700;line-height:1;letter-spacing:-0.02em;white-space:nowrap}
+  color:#fff;font-size:12px;font-weight:700;line-height:1;letter-spacing:-0.012em;white-space:nowrap}
 .side-close{display:none;margin-left:auto}
 .side-nav{flex:1;display:grid;align-content:start;gap:22px;padding:18px 10px;overflow-y:auto}
 .nav-group{display:grid;gap:2px}
@@ -112,7 +105,7 @@ button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 /* a view: heading, toolbar, content */
 .main{padding:32px 32px 72px}
 .view-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:22px}
-.view-head h1{font-size:28px;font-weight:800;letter-spacing:-0.045em;line-height:1.15}
+.view-head h1{font-size:28px;font-weight:800;letter-spacing:-0.032em;line-height:1.15}
 .view-sub{margin-top:6px;max-width:70ch;font-size:14px;color:var(--dim)}
 .view-sub a{color:#fff;text-decoration:underline;text-underline-offset:3px}
 .toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
@@ -195,7 +188,7 @@ th[aria-sort] .th-sort .ic{opacity:1}
   background:var(--panel);border-bottom:1px solid var(--rule)}
 .detail-id{font-family:var(--mono);font-size:12px;color:var(--muted)}
 .detail-body{display:grid;gap:26px;padding:22px 20px 26px}
-.detail-title{font-size:20px;font-weight:800;letter-spacing:-0.035em;line-height:1.25;overflow-wrap:anywhere}
+.detail-title{font-size:20px;font-weight:800;letter-spacing:-0.024em;line-height:1.25;overflow-wrap:anywhere}
 .detail-body .sub{display:block;margin-top:4px}
 .detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 .detail-section h3{margin-bottom:10px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
@@ -220,14 +213,14 @@ th[aria-sort] .th-sort .ic{opacity:1}
 /* settings cards (profile) */
 .cards{display:grid;gap:16px;max-width:760px}
 .card{border:1px solid var(--rule);border-radius:var(--r-card);background:var(--panel)}
-.card h2{font-size:15px;font-weight:800;letter-spacing:-0.025em}
+.card h2{font-size:15px;font-weight:800;letter-spacing:-0.016em}
 .card-head{padding:15px 20px;border-bottom:1px solid var(--rule)}
 .card-body{padding:20px}
 .card-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px 20px;padding:18px 20px}
 .card-row .sub{display:block;margin-top:3px;font-size:13px}
 .card-danger{border-color:#3A1420}
 .profile-top{display:flex;align-items:center;gap:16px;margin-bottom:20px}
-.profile-top strong{font-size:17px;font-weight:800;letter-spacing:-0.03em}
+.profile-top strong{font-size:17px;font-weight:800;letter-spacing:-0.02em}
 .card .kv > div:first-child{padding-top:10px;border-top:1px solid var(--rule)}
 
 /* ---------- shared: tags, estimate, view-as ---------- */
@@ -245,8 +238,8 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .shimmer-lg{width:220px;height:40px;border-radius:10px}
 @keyframes shimmer{from{background-position:100% 0}to{background-position:-100% 0}}
 .estimate{display:grid;gap:10px}
-.estimate-value{font-size:40px;font-weight:800;letter-spacing:-0.05em;line-height:1.1}
-.estimate-tbc{font-size:22px;font-weight:800;letter-spacing:-0.035em;line-height:1.2;animation:rise .4s cubic-bezier(.2,.7,.2,1) both}
+.estimate-value{font-size:40px;font-weight:800;letter-spacing:-0.035em;line-height:1.1}
+.estimate-tbc{font-size:22px;font-weight:800;letter-spacing:-0.024em;line-height:1.2;animation:rise .4s cubic-bezier(.2,.7,.2,1) both}
 .onb-summary .estimate-tbc{font-size:17px}
 .who-list{display:grid;gap:14px}
 .stack{display:inline-flex;flex:none}
@@ -262,7 +255,7 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .who-sm{gap:8px;font-weight:600}
 .who-sm .avatar{width:24px;height:24px;font-size:11px}
 .who-lg{gap:16px}
-.who-lg strong{font-size:17px;font-weight:800;letter-spacing:-0.03em}
+.who-lg strong{font-size:17px;font-weight:800;letter-spacing:-0.02em}
 .avatar-photo{object-position:center 20%}
 .c-tags{width:22%;max-width:0}
 .c-consultant{width:170px;max-width:170px;white-space:nowrap}
@@ -288,7 +281,7 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .brief-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .project .msg{margin-bottom:14px}
 .card-empty{display:grid;justify-items:start;gap:10px;max-width:560px;padding:28px}
-.card-empty h2{font-size:20px;font-weight:800;letter-spacing:-0.035em}
+.card-empty h2{font-size:20px;font-weight:800;letter-spacing:-0.024em}
 .card-empty .btn{margin-top:8px}
 .empty-mark{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:var(--r-cap);background:var(--sel);color:var(--signal)}
 
@@ -310,8 +303,8 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .onb-preview{padding:10px 32px;background:var(--signal-deep);color:#fff;font-size:13.5px;font-weight:700;text-align:center}
 .onb-main{max-width:760px;margin:0 auto;padding:64px 24px 96px}
 .onb-kicker{display:inline-flex;align-items:center;height:30px;padding:0 15px;border-radius:var(--r-cap);background:var(--signal-deep);
-  color:#fff;font-size:13px;font-weight:700;letter-spacing:-0.02em}
-.onb-step h1,.onb-done h1,.splash h1{margin-top:20px;font-size:clamp(32px,5vw,44px);font-weight:800;letter-spacing:-0.05em;line-height:1.05}
+  color:#fff;font-size:13px;font-weight:700;letter-spacing:-0.012em}
+.onb-step h1,.onb-done h1,.splash h1{margin-top:20px;font-size:clamp(32px,5vw,44px);font-weight:800;letter-spacing:-0.035em;line-height:1.05}
 .onb-step h1:focus,.onb-done h1:focus,.splash h1:focus{outline:none}
 .onb-lede{margin-top:12px;font-size:16px;color:var(--dim)}
 .onb-body{display:grid;gap:28px;margin-top:36px}
@@ -346,7 +339,7 @@ th[aria-sort] .th-sort .ic{opacity:1}
   box-shadow:inset 0 0 0 1px var(--rule);cursor:pointer;transition:box-shadow .15s,background-color .15s}
 .consultant input{position:absolute;opacity:0;width:1px;height:1px}
 .consultant .avatar{width:72px;height:72px;margin-bottom:12px;font-size:26px}
-.consultant strong{font-size:16px;font-weight:800;letter-spacing:-0.03em;line-height:1.25}
+.consultant strong{font-size:16px;font-weight:800;letter-spacing:-0.02em;line-height:1.25}
 .consultant-check{position:absolute;top:14px;right:14px;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
   border-radius:var(--r-cap);box-shadow:inset 0 0 0 1px var(--line);color:transparent}
 .consultant-check .ic{width:14px;height:14px}
@@ -380,7 +373,7 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .signin{display:grid;place-items:center;min-height:100vh;padding:48px 20px}
 .signin-card{width:100%;max-width:440px}
 .signin .wm{display:block;width:96px;color:#fff}
-.signin h1{margin-top:44px;font-size:clamp(34px,7vw,48px);font-weight:800;letter-spacing:-0.055em;line-height:1.02}
+.signin h1{margin-top:44px;font-size:clamp(34px,7vw,48px);font-weight:800;letter-spacing:-0.04em;line-height:1.02}
 .signin-lede{margin-top:16px;font-size:16px;color:var(--dim)}
 .btn-google{width:100%;height:54px;margin-top:36px;gap:12px;background:#fff;color:#1F1F1F;font-size:15px}
 .btn-google svg{width:20px;height:20px}

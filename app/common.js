@@ -169,7 +169,7 @@ export function mountShell(user, page, { query = '' } = {}) {
       item(`/account${query}#enquiries`, 'account:enquiries', 'Your enquiries', 'file'),
       item(`/account${query}#profile`, 'account:profile', 'Profile', 'user')),
     h('div', { class: 'nav-group' },
-      h('a', { class: 'nav-item', href: '/#contact' }, icon('plus'), h('span', { class: 'nav-label' }, 'New enquiry')),
+      h('a', { class: 'nav-item', href: '/contact' }, icon('plus'), h('span', { class: 'nav-label' }, 'New enquiry')),
       h('a', { class: 'nav-item', href: '/' }, icon('external'), h('span', { class: 'nav-label' }, 'cnpt.ca')))
   ].filter(Boolean));
 

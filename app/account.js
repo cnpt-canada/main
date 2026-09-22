@@ -64,7 +64,7 @@ function renderEnquiries() {
     label: 'Your enquiries', columns: COLUMNS, rows: sortRows(state.enquiries, COLUMNS, state.sort), sort: state.sort, selected: state.open,
     onSort: (key) => { toggleSort(state.sort, key, key === 'stage' ? 1 : -1); renderEnquiries(); },
     onOpen: (e, replace) => go(`enquiries/${e.id}`, replace),
-    empty: state.viewingAs ? 'No enquiries.' : ['You have not sent an enquiry yet. ', h('a', { href: '/#contact' }, 'Tell us about your company'), '.']
+    empty: state.viewingAs ? 'No enquiries.' : ['You have not sent an enquiry yet. ', h('a', { href: '/contact' }, 'Tell us about your company'), '.']
   })));
 }
 

@@ -57,6 +57,10 @@ for production.
 
 ## How it fits together
 
+- Public pages: `/`, `/what-we-do`, `/practices`, `/process`, `/work` (client works), `/team`, `/contact`. They share
+  `site.css`, `site.js` (motion, cursor label, phone menu, contact form) and `site-icons.svg`; old `/#section` links
+  redirect to the matching page. Type is Helvetica (Helvetica Neue on Apple devices, Arial where Helvetica isn't installed).
+
 - `/signin` → `/api/auth/google` → Google → `/api/auth/callback` → session cookie → `/account`.
 - The session cookie is HttpOnly, SameSite=Lax, Secure (`__Host-` prefixed on HTTPS) and holds only the user id.
   The role is read from the database on every request, so admin changes and account deletion apply at once.
