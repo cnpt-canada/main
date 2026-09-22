@@ -1,18 +1,20 @@
-// /onboarding — the step-by-step enquiry: company, field, consultants, confirm. A new client sees it right after
+// /onboarding — the step-by-step enquiry: company, field, focal, consultants, confirm. A new client sees it right after
 // signing up, after a welcome screen; afterwards "New enquiry" opens the same steps without the welcome.
 // Each step is saved when you continue, so leaving and coming back picks up where you stopped. Sending it
 // creates the enquiry (or completes the one sent from the website). Admins can open /onboarding?preview.
 import {
-  CONSULTANTS, FIELD_TAGS, FUNDING_STAGES, MAX_TAG, MAX_TAGS,
-  api, consultantAvatar, estimateBlock, firstNames, flash, fmtDate, h, icon, signedInUser
+  CONSULTANTS, DEFAULT_FOCUS, FIELD_TAGS, FUNDING_STAGES, MAX_TAG, MAX_TAGS,
+  api, consultantAvatar, estimateBlock, firstNames, flash, fmtDate, focalBar, h, icon, signedInUser
 } from '/app/common.js';
 
 const $ = (id) => document.getElementById(id);
 const MAX_BRIEF = 500;
 const TAG_RE = /^[\p{L}\p{N}][\p{L}\p{N} &+./-]*$/u;
-const STEPS = ['Your company', 'Your field', 'Consultants', 'Confirm'];
+const STEPS = ['Your company', 'Your field', 'Focal', 'Consultants', 'Confirm'];
+const LAST = STEPS.length;
 const ERRORS = {
   invalid_tags: 'One of the tags isn’t allowed. Use letters, numbers, spaces and & + . / -',
+  invalid_focus: 'The focal split has to add up to 100, in tens.',
   incomplete: 'Something is missing. Go back and check each step.',
   signin_required: 'Your session ended. Sign in again.'
 };
@@ -20,7 +22,7 @@ const errorText = (err) => ERRORS[err.message] || 'That didn’t save. Please tr
 
 const state = {
   user: null, preview: false, draft: null, fromDraft: false, returning: false, firstRun: true, enquiryId: null,
-  stage: '', brief: '', enquiry_id: null, tags: [], consultants: [], resume: 1
+  stage: '', brief: '', enquiry_id: null, tags: [], focus: null, consultants: [], resume: 1
 };
 
 /* ---------- saving ---------- */
@@ -35,7 +37,8 @@ function fieldsFor(step) {
     return f;
   }
   if (step === 2) return { tags: state.tags };
-  if (step === 3) return { consultants: state.consultants };
+  if (step === 3) return state.focus ? { focus: state.focus } : {};
+  if (step === 4) return { consultants: state.consultants };
   return {};
 }
 
@@ -48,15 +51,16 @@ async function save(fields) {
 function reachable() {
   if (!state.stage || !state.brief.trim()) return 1;
   if (!state.tags.length) return 2;
-  if (!state.consultants.length) return 3;
-  return 4;
+  if (!state.focus) return 3;
+  if (!state.consultants.length) return 4;
+  return LAST;
 }
 
 /* ---------- layout ---------- */
 
 function progress(current) {
   const el = $('progress');
-  el.hidden = current < 1 || current > 4;
+  el.hidden = current < 1 || current > LAST;
   el.replaceChildren(...STEPS.map((label, i) => {
     const n = i + 1;
     const cls = n < current ? 'done' : n === current ? 'now' : null;
@@ -68,7 +72,7 @@ function progress(current) {
 function stepFrame(step, title, lede, content, { next = 'Continue', canContinue = () => true, onNext } = {}) {
   const nextBtn = h('button', { class: 'btn btn-white btn-lg', type: 'submit' }, next, icon('arrow-right'));
   const form = h('form', { class: 'onb-step', 'aria-labelledby': 'step-h', novalidate: true },
-    h('span', { class: 'onb-kicker' }, `Step ${step} of 4`),
+    h('span', { class: 'onb-kicker' }, `Step ${step} of ${LAST}`),
     h('h1', { id: 'step-h', tabindex: '-1' }, title),
     h('p', { class: 'onb-lede' }, lede),
     h('div', { class: 'onb-body' }, content),
@@ -119,7 +123,7 @@ function splash() {
       h('h1', { id: 'step-h', tabindex: '-1' }, state.returning ? `Welcome back${first ? `, ${first}` : ''}.` : `Welcome to cnpt${first ? `, ${first}` : ''}.`),
       h('p', {}, state.returning
         ? 'Your answers are saved. Pick up where you left off.'
-        : 'Four short steps so we can prepare before your first call. It takes about two minutes.'),
+        : 'Five short steps so we can prepare before your first call. It takes about two minutes.'),
       h('ol', { class: 'splash-steps' }, STEPS.map((s, i) => h('li', {}, h('span', {}, i + 1), s))),
       h('button', { class: 'btn btn-white btn-lg', type: 'button', onclick: () => go(Math.min(state.resume, reachable())) },
         state.returning ? 'Continue' : 'Let’s start', icon('arrow-right'))));
@@ -209,7 +213,22 @@ function stepField() {
   return form;
 }
 
-/* ---------- 3. consultant ---------- */
+/* ---------- 3. focal ---------- */
+
+// How the work should be split across research, branding, product developing and advertising.
+function stepFocal() {
+  if (!state.focus) state.focus = [...DEFAULT_FOCUS];
+  return stepFrame(3, 'Set your focal', 'Where should our time go? Split 100 across four areas: drag the edges between the blocks, 10 at a time.', [
+    h('div', { class: 'onb-field' },
+      h('div', { class: 'onb-field-head' }, h('span', { class: 'onb-legend' }, 'Focal'), h('span', { class: 'onb-count' }, 'Always adds up to 100')),
+      focalBar(state.focus, { detailed: true, onChange: (values) => { state.focus = values; } }))
+  ], {
+    canContinue: () => Boolean(state.focus),
+    onNext: async () => { await save({ ...fieldsFor(3), step: 4 }); go(4); }
+  });
+}
+
+/* ---------- 4. consultant ---------- */
 
 function stepConsultant() {
   const cards = h('div', { class: 'consultants' }, Object.entries(CONSULTANTS).map(([key, c]) => {
@@ -223,29 +242,30 @@ function stepConsultant() {
       h('strong', {}, c.name),
       h('span', { class: 'sub' }, c.role));
   }));
-  return stepFrame(3, 'Choose your consultants', 'Pick one or more. They review your brief and lead your first call.', [
+  return stepFrame(4, 'Choose your consultants', 'Pick one or more. They review your brief and lead your first call.', [
     h('fieldset', { class: 'onb-field' }, h('legend', { class: 'sr-only' }, 'Consultants'), cards)
   ], {
     canContinue: () => state.consultants.length > 0,
-    onNext: async () => { await save({ ...fieldsFor(3), step: 4 }); go(4); }
+    onNext: async () => { await save({ ...fieldsFor(4), step: 5 }); go(5); }
   });
 }
 
-/* ---------- 4. confirm ---------- */
+/* ---------- 5. confirm ---------- */
 
 function stepConfirm() {
   const edit = (step) => h('button', { class: 'link', type: 'button', onclick: () => go(step) }, 'Edit');
   const row = (label, value, step) => h('div', {}, h('dt', {}, label), h('dd', {}, value), step ? edit(step) : h('span'));
-  return stepFrame(4, 'Check and confirm', 'This goes to the consultants you picked. You can add more detail on your first call.', [
+  return stepFrame(5, 'Check and confirm', 'This goes to the consultants you picked. You can add more detail on your first call.', [
     h('dl', { class: 'onb-summary' },
       row('Company', [h('span', { class: 'chip' }, state.stage), h('p', { class: 'msg' }, state.brief.trim())], 1),
       row('Fields', h('div', { class: 'tag-list' }, state.tags.map((t) => h('span', { class: 'tag-chip tag-static' }, h('span', { class: 'tag-hash' }, '#'), t))), 2),
+      row('Focal', focalBar(state.focus), 3),
       row(state.consultants.length > 1 ? 'Consultants' : 'Consultant', h('div', { class: 'who-list' }, state.consultants.map((k) => h('div', { class: 'who' },
-        consultantAvatar(k), h('span', { class: 'who-text' }, h('strong', {}, CONSULTANTS[k].name), h('span', { class: 'sub' }, CONSULTANTS[k].role))))), 3),
+        consultantAvatar(k), h('span', { class: 'who-text' }, h('strong', {}, CONSULTANTS[k].name), h('span', { class: 'sub' }, CONSULTANTS[k].role))))), 4),
       row('Estimated cost', estimateBlock(null, state.consultants)))
   ], {
     next: 'Confirm and finish',
-    canContinue: () => reachable() === 4,
+    canContinue: () => reachable() === LAST,
     onNext: async () => {
       if (!state.preview) state.enquiryId = (await api('/api/onboarding', { method: 'POST' })).enquiry_id;
       done();
@@ -254,7 +274,7 @@ function stepConfirm() {
 }
 
 function done() {
-  progress(5);
+  progress(LAST + 1);
   history.replaceState(null, '', location.pathname + location.search + '#done');
   $('main').replaceChildren(h('section', { class: 'onb-done', 'aria-labelledby': 'step-h' },
     h('span', { class: 'onb-done-mark' }, icon('check')),
@@ -275,11 +295,11 @@ function go(step) {
 }
 
 function show() {
-  const m = location.hash.match(/^#step-([1-4])$/);
+  const m = location.hash.match(/^#step-([1-5])$/);
   // the welcome screen is only for the first run; afterwards "New enquiry" starts at the step you reached
   const step = m ? Math.min(Number(m[1]), reachable()) : state.firstRun ? 0 : Math.min(state.resume, reachable());
   progress(step);
-  const view = [splash, stepCompany, stepField, stepConsultant, stepConfirm][step]();
+  const view = [splash, stepCompany, stepField, stepFocal, stepConsultant, stepConfirm][step]();
   $('main').replaceChildren(view);
   $('step-h').focus({ preventScroll: true });
   window.scrollTo(0, 0);
@@ -308,7 +328,7 @@ if (user) {
         if (onboarding) {
           Object.assign(state, {
             stage: onboarding.stage || '', brief: onboarding.brief || '', enquiry_id: onboarding.enquiry_id,
-            tags: onboarding.tags || [], consultants: onboarding.consultants || [], resume: onboarding.step || 1
+            tags: onboarding.tags || [], focus: onboarding.focus, consultants: onboarding.consultants || [], resume: onboarding.step || 1
           });
           state.returning = Boolean(onboarding.stage || onboarding.brief || onboarding.tags?.length);
         }
@@ -324,7 +344,7 @@ if (user) {
     // leaving mid-step keeps what's filled in
     $('exit').addEventListener('click', async (ev) => {
       ev.preventDefault();
-      const m = location.hash.match(/^#step-([1-3])$/);
+      const m = location.hash.match(/^#step-([1-4])$/);
       try { if (m) await save(fieldsFor(Number(m[1]))); } catch { /* keep what was saved before */ }
       location.href = state.firstRun ? '/' : '/account#enquiries';
     });

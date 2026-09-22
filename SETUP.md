@@ -74,13 +74,15 @@ for production.
 | Page | Who | What |
 | --- | --- | --- |
 | `/signin` | anyone | Continue with Google |
-| `/onboarding` | signed in | the step-by-step enquiry: company, fields (up to 5 tags), consultants, confirm. New clients see it first, with a welcome screen; "New enquiry" opens it later |
-| `/account` | signed in | your enquiries (status, fields, consultants, estimate), profile, sign out, delete account |
+| `/onboarding` | signed in | the step-by-step enquiry: company, fields (up to 5 tags), focal, consultants, confirm. New clients see it first, with a welcome screen; "New enquiry" opens it later |
+| `/account` | signed in | your enquiries (status, fields, focal, consultants, estimate), profile with your project at a glance, sign out, delete account |
 | `/admin` | admins | enquiries (filter, search, sort, status, estimate, reply by email), onboarding (who finished their first run, where others stopped, view as user), members (grant/remove admin, view as user) |
 
 New clients (not admins) are sent to `/onboarding` until they send their first enquiry through it; each step is saved,
 so they can leave and come back. Sending completes the enquiry they sent from the website (if any) or creates one, with
-the fields and consultants on it. The estimate is set per enquiry on `/admin` → Enquiries (whole CAD, up to 1,000,000);
+the fields, focal and consultants on it. The focal split says how the work should be divided between Research, Branding,
+Product Developing and Advertising: four blocks on a bar whose edges move in tens, always adding up to 100
+(`enquiries.focus`, in that order). The client can keep adjusting it on the enquiry until it is closed. The estimate is set per enquiry on `/admin` → Enquiries (whole CAD, up to 1,000,000);
 until then the client sees "To be confirmed". Admins can open `/onboarding?preview` to walk through it without saving,
 and "View as" (`/account?as=<id>`) shows a member's account read-only.
 

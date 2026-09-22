@@ -17,8 +17,8 @@ create table if not exists public.users (
 );
 
 -- enquiries: from the contact form on the site, or from the step-by-step flow in the workspace
--- (which adds fields and consultants). Linked to an account when the sender is signed in, or signs up
--- later with the same address. Admins add the estimate.
+-- (which adds fields, the focal split and consultants). Linked to an account when the sender is signed in,
+-- or signs up later with the same address. Admins add the estimate.
 create table if not exists public.enquiries (
   id             bigserial primary key,
   user_id        bigint references public.users (id) on delete set null,
@@ -27,6 +27,10 @@ create table if not exists public.enquiries (
   message        text not null check (char_length(message) between 1 and 500),
   status         text not null default 'new' check (status in ('new', 'in_review', 'replied', 'closed')),
   tags           text[] not null default '{}' check (cardinality(tags) <= 5),
+  -- focal: % of the work for research, branding, product developing, advertising; tens adding up to 100
+  focus          smallint[] check (focus is null or (cardinality(focus) = 4 and array_position(focus, null) is null
+                   and focus[1] + focus[2] + focus[3] + focus[4] = 100 and least(focus[1], focus[2], focus[3], focus[4]) >= 0
+                   and focus[1] % 10 = 0 and focus[2] % 10 = 0 and focus[3] % 10 = 0 and focus[4] % 10 = 0)),
   consultants    text[] not null default '{}'
                  check (consultants <@ array['michael', 'brandon', 'kenny']::text[] and cardinality(consultants) <= 3),
   estimated_cost integer check (estimated_cost between 0 and 1000000),      -- whole CAD, set by an admin
@@ -42,11 +46,14 @@ create index if not exists enquiries_created_idx on public.enquiries (created_at
 create table if not exists public.onboarding (
   id             bigserial primary key,
   user_id        bigint not null unique references public.users (id) on delete cascade,
-  step           smallint not null default 1 check (step between 1 and 4),   -- where to resume
+  step           smallint not null default 1 check (step between 1 and 5),   -- where to resume
   stage          text check (stage in ('Pre-Seed', 'Seed Level', 'Series A', 'Series B')),
   brief          text check (char_length(brief) <= 500),
   enquiry_id     bigint references public.enquiries (id) on delete set null, -- a website enquiry this draft completes
   tags           text[] not null default '{}' check (cardinality(tags) <= 5),
+  focus          smallint[] check (focus is null or (cardinality(focus) = 4 and array_position(focus, null) is null
+                   and focus[1] + focus[2] + focus[3] + focus[4] = 100 and least(focus[1], focus[2], focus[3], focus[4]) >= 0
+                   and focus[1] % 10 = 0 and focus[2] % 10 = 0 and focus[3] % 10 = 0 and focus[4] % 10 = 0)),
   consultants    text[] not null default '{}'
                  check (consultants <@ array['michael', 'brandon', 'kenny']::text[] and cardinality(consultants) <= 3),
   submitted_at   timestamptz,                                                -- first run finished
@@ -63,6 +70,15 @@ alter table public.enquiries add column if not exists tags text[] not null defau
 alter table public.enquiries add column if not exists consultants text[] not null default '{}'
   check (consultants <@ array['michael', 'brandon', 'kenny']::text[] and cardinality(consultants) <= 3);
 alter table public.enquiries add column if not exists estimated_cost integer check (estimated_cost between 0 and 1000000);
+-- the focal split, and a fifth step (focal) in the flow
+alter table public.enquiries add column if not exists focus smallint[] check (focus is null or (cardinality(focus) = 4 and array_position(focus, null) is null
+                   and focus[1] + focus[2] + focus[3] + focus[4] = 100 and least(focus[1], focus[2], focus[3], focus[4]) >= 0
+                   and focus[1] % 10 = 0 and focus[2] % 10 = 0 and focus[3] % 10 = 0 and focus[4] % 10 = 0));
+alter table public.onboarding add column if not exists focus smallint[] check (focus is null or (cardinality(focus) = 4 and array_position(focus, null) is null
+                   and focus[1] + focus[2] + focus[3] + focus[4] = 100 and least(focus[1], focus[2], focus[3], focus[4]) >= 0
+                   and focus[1] % 10 = 0 and focus[2] % 10 = 0 and focus[3] % 10 = 0 and focus[4] % 10 = 0));
+alter table public.onboarding drop constraint if exists onboarding_step_check;
+alter table public.onboarding add constraint onboarding_step_check check (step between 1 and 5);
 do $$
 begin
   if exists (select 1 from information_schema.columns

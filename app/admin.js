@@ -2,7 +2,7 @@
 // every change is checked again on the server (admin role, allowed values, owners locked).
 import {
   ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
-  api, avatar, badge, consultantList, dataTable, firstNames, flash, fmtCost, fmtDate, fmtDateTime, h, icon, keepFocus, kv,
+  api, avatar, badge, consultantList, dataTable, firstNames, flash, fmtCost, fmtDate, fmtDateTime, focalBar, h, icon, keepFocus, kv,
   markSelected, mountShell, section, showPanel, signedInUser, sortRows, tagList, toggleSort
 } from '/app/common.js';
 
@@ -140,6 +140,7 @@ function renderDetail() {
       section('Estimated cost', costEditor(e)),
       section('Message', h('p', { class: 'msg' }, e.message)),
       e.tags.length && section('Fields', tagList(e.tags)),
+      section('Focal', e.focus ? focalBar(e.focus) : h('p', { class: 'sub' }, 'Not set.')),
       e.consultants.length && section(e.consultants.length > 1 ? 'Consultants' : 'Consultant', consultantList(e.consultants)),
       section('Details', kv([
         ['Stage', h('span', { class: 'chip' }, e.stage)],
@@ -188,7 +189,8 @@ function costEditor(e) {
 /* ---------- onboarding (admin view of the first run through the enquiry flow) ---------- */
 
 const doneOf = (o) => Boolean(o.submitted_at);
-const progressBadge = (o) => (doneOf(o) ? badge('replied', 'Completed') : badge('closed', `Step ${o.step} of 4`));
+const ONB_STEPS = 5; // company, field, focal, consultants, confirm
+const progressBadge = (o) => (doneOf(o) ? badge('replied', 'Completed') : badge('closed', `Step ${o.step} of ${ONB_STEPS}`));
 const nameOf = (o) => (o.client ? o.client.name || o.client.email : `Member #${o.user_id}`);
 const enquiriesFor = (o) => state.enquiries.filter((e) => e.user_id === o.user_id);
 const draftText = (o, value) => (!doneOf(o) && value ? value : null);
@@ -203,7 +205,7 @@ const ONB_COLUMNS = [
   { key: 'name', label: 'Member', cls: 'c-primary', sort: (o) => nameOf(o).toLowerCase(),
     cell: (o) => h('span', { class: 'who' }, avatar(o.client || { email: '?' }),
       h('span', { class: 'who-text' }, h('strong', {}, nameOf(o)), h('span', { class: 'sub' }, o.client ? o.client.email : ''))) },
-  { key: 'progress', label: 'Onboarding', cls: 'c-status', sort: (o) => (doneOf(o) ? 5 : o.step), cell: progressBadge },
+  { key: 'progress', label: 'Onboarding', cls: 'c-status', sort: (o) => (doneOf(o) ? ONB_STEPS + 1 : o.step), cell: progressBadge },
   { key: 'draft', label: 'Draft in progress', cls: 'c-tags',
     cell: (o) => h('span', { class: 'clip' }, [draftText(o, o.stage), ...(o.tags || []).map((t) => `#${t}`), o.consultants.length ? firstNames(o.consultants) : null].filter(Boolean).join('  ·  ') || '—') },
   { key: 'enquiries', label: 'Enquiries', cls: 'c-num', sort: (o) => enquiriesFor(o).length,
@@ -235,7 +237,7 @@ function renderOnbDetail() {
   const o = state.onboarding.find((x) => x.user_id === state.onbOpen);
   if (!o) return;
   const theirs = enquiriesFor(o);
-  const draft = !doneOf(o) || o.stage || o.brief || o.tags.length || o.consultants.length;
+  const draft = !doneOf(o) || o.stage || o.brief || o.tags.length || o.focus || o.consultants.length;
   $('onb-detail').replaceChildren(
     h('div', { class: 'detail-head' },
       h('span', { class: 'detail-id' }, `Onboarding · UID #${o.user_id}`),
@@ -248,12 +250,13 @@ function renderOnbDetail() {
           h('a', { class: 'btn btn-white btn-sm', href: `/account?as=${o.user_id}#enquiries` }, icon('eye'), 'View as user'),
           theirs.length > 0 && h('a', { class: 'btn btn-line btn-sm', href: '#enquiries', onclick: () => showEnquiriesOf(o) }, `Their enquiries (${theirs.length})`))),
       section('Onboarding', progressBadge(o), h('p', { class: 'hint' }, doneOf(o)
-        ? `Completed ${fmtDateTime(o.submitted_at)}. Fields, consultants and the estimate live on each enquiry.`
-        : `Stopped at step ${o.step} of 4. Their answers so far are below.`)),
+        ? `Completed ${fmtDateTime(o.submitted_at)}. Fields, focal, consultants and the estimate live on each enquiry.`
+        : `Stopped at step ${o.step} of ${ONB_STEPS}. Their answers so far are below.`)),
       draft && section(doneOf(o) ? 'Next enquiry, in progress' : 'Answers so far',
         o.stage ? h('span', { class: 'chip' }, o.stage) : null,
         h('p', { class: 'msg' }, o.brief || '—'),
         o.tags.length ? tagList(o.tags) : null,
+        o.focus ? focalBar(o.focus) : null,
         o.consultants.length ? consultantList(o.consultants) : null),
       section('Details', kv([
         ['Started', fmtDateTime(o.created_at)],

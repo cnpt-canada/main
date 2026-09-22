@@ -6,7 +6,7 @@ import { fail, json, methodNotAllowed, readBody, route } from '../_lib/http.js';
 import { ENQUIRY_STATUSES, FUNDING_STAGES, MAX_COST, toId } from '../_lib/rules.js';
 import { requireAdmin, withClients } from '../_lib/users.js';
 
-const COLUMNS = 'id,user_id,stage,email,message,status,tags,consultants,estimated_cost,created_at,updated_at';
+const COLUMNS = 'id,user_id,stage,email,message,status,tags,focus,consultants,estimated_cost,created_at,updated_at';
 
 export default route(async (req, res) => {
   if (req.method !== 'GET' && req.method !== 'PATCH') return methodNotAllowed(res, ['GET', 'PATCH']);

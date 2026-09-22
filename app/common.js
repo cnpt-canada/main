@@ -122,6 +122,123 @@ export function consultantList(keys, large) {
     consultantAvatar(k, large), h('span', { class: 'who-text' }, h('strong', {}, CONSULTANTS[k].name), h('span', { class: 'sub' }, CONSULTANTS[k].role)))));
 }
 
+// Focal: how a client splits the work across four areas, in tens that add up to 100.
+// Order and keys match FOCUS_AREAS in api/_lib/rules.js; the enquiry stores the four numbers in this order.
+export const FOCAL = [
+  { key: 'research', label: 'Research', note: 'Users, market and competitors' },
+  { key: 'branding', label: 'Branding', note: 'Identity, voice and how you look' },
+  { key: 'product', label: 'Product Developing', note: 'The product itself, from concept to build' },
+  { key: 'advertising', label: 'Advertising', note: 'Launch, campaigns and reaching people' }
+];
+export const FOCAL_STEP = 10;
+export const DEFAULT_FOCUS = [30, 20, 30, 20];
+
+// The focal bar: four blocks whose widths are the split, with a legend. Given `onChange`, the three edges
+// between the blocks can be dragged, or moved with the arrow keys, in steps of 10; onChange(values, done) runs
+// at every step, with done = true once a drag or key press is finished (the moment to save).
+// `detailed` adds a line under each area in the legend.
+export function focalBar(values, { onChange, detailed = false } = {}) {
+  let v = [...values];
+  const editable = typeof onChange === 'function';
+  const segs = FOCAL.map((a, i) => h('div', { class: `focal-seg focal-${i}` }, h('span', { class: 'focal-pct' })));
+  const track = h('div', { class: 'focal-track', 'aria-hidden': 'true' }, segs);
+  const bar = h('div', { class: 'focal-bar' }, track);
+  const items = FOCAL.map((a, i) => h('li', {},
+    h('span', { class: `focal-dot focal-${i}`, 'aria-hidden': 'true' }),
+    h('span', { class: 'focal-name' }, a.label),
+    h('strong', { class: 'focal-val' }),
+    detailed ? h('span', { class: 'focal-note' }, a.note) : null));
+  const root = h('div', { class: editable ? 'focal focal-edit' : 'focal' }, bar,
+    h('ul', { class: detailed ? 'focal-legend focal-legend-detailed' : 'focal-legend', 'aria-label': 'Focal' }, items));
+
+  const edges = () => [v[0], v[0] + v[1], v[0] + v[1] + v[2]];
+  const range = (i, b = edges()) => [i ? b[i - 1] : 0, i < 2 ? b[i + 1] : 100];
+  const handles = editable ? [0, 1, 2].map((i) => {
+    const el = h('span', { class: 'focal-handle', role: 'slider', tabindex: '0',
+      'aria-label': `Edge between ${FOCAL[i].label} and ${FOCAL[i + 1].label}` });
+    el.addEventListener('keydown', (ev) => {
+      const b = edges()[i];
+      const step = { ArrowLeft: -1, ArrowDown: -1, PageDown: -1, ArrowRight: 1, ArrowUp: 1, PageUp: 1 }[ev.key];
+      const to = step ? b + step * FOCAL_STEP : ev.key === 'Home' ? 0 : ev.key === 'End' ? 100 : null;
+      if (to == null) return;
+      ev.preventDefault();
+      if (moveEdge(i, to)) onChange([...v], true);
+    });
+    el.addEventListener('pointerdown', (ev) => drag(ev, i));
+    bar.append(el);
+    return el;
+  }) : [];
+
+  // Moves edge i to `to` (snapped to 10, kept between its neighbours). Returns whether anything changed.
+  function moveEdge(i, to) {
+    const b = edges();
+    const [lo, hi] = range(i, b);
+    const next = Math.min(hi, Math.max(lo, Math.round(to / FOCAL_STEP) * FOCAL_STEP));
+    if (next === b[i]) return false;
+    b[i] = next;
+    v = [b[0], b[1] - b[0], b[2] - b[1], 100 - b[2]];
+    render();
+    onChange([...v], false);
+    return true;
+  }
+
+  function drag(ev, i) {
+    if (ev.button !== 0) return;
+    ev.preventDefault();
+    const el = handles[i];
+    el.setPointerCapture(ev.pointerId);
+    root.classList.add('is-dragging');
+    const rect = bar.getBoundingClientRect();
+    // edges on the same spot (an area at 0%): the direction of the drag decides which one moves
+    const start = edges()[i];
+    const stacked = [0, 1, 2].filter((j) => edges()[j] === start);
+    let edge = stacked.length === 1 ? i : null;
+    let moved = false;
+    const move = (e) => {
+      const at = ((e.clientX - rect.left) / rect.width) * 100;
+      if (edge == null) {
+        if (Math.abs(at - start) < FOCAL_STEP / 2) return;
+        edge = at < start ? Math.min(...stacked) : Math.max(...stacked);
+      }
+      if (moveEdge(edge, at)) moved = true;
+    };
+    const end = () => {
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', end);
+      el.removeEventListener('pointercancel', end);
+      root.classList.remove('is-dragging');
+      handles[edge ?? i].focus({ preventScroll: true });
+      if (moved) onChange([...v], true);
+    };
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
+  }
+
+  function render() {
+    const b = edges();
+    segs.forEach((s, i) => {
+      s.style.flexBasis = `${v[i]}%`;
+      s.hidden = v[i] === 0;
+      s.firstChild.textContent = `${v[i]}%`;
+    });
+    items.forEach((li, i) => {
+      li.querySelector('.focal-val').textContent = `${v[i]}%`;
+      li.classList.toggle('is-zero', v[i] === 0);
+    });
+    handles.forEach((el, i) => {
+      const [lo, hi] = range(i, b);
+      el.style.left = `${b[i]}%`;
+      el.setAttribute('aria-valuemin', String(lo));
+      el.setAttribute('aria-valuemax', String(hi));
+      el.setAttribute('aria-valuenow', String(b[i]));
+      el.setAttribute('aria-valuetext', `${FOCAL[i].label} ${v[i]}%, ${FOCAL[i + 1].label} ${v[i + 1]}%`);
+    });
+  }
+  render();
+  return root;
+}
+
 export function badge(kind, label) {
   return h('span', { class: `badge badge-${kind}` }, label);
 }

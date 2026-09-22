@@ -1,17 +1,19 @@
 // The step-by-step enquiry flow (/onboarding): the first thing a new client does, and how anyone signed in
 // sends a new enquiry afterwards.
 // GET  /api/onboarding → my draft so far; on the first run also the enquiry I sent from the website (to continue it)
-// PUT  /api/onboarding {step?, stage?, brief?, enquiry_id?, tags?, consultants?} → saves the draft
+// PUT  /api/onboarding {step?, stage?, brief?, enquiry_id?, tags?, focus?, consultants?} → saves the draft
 // POST /api/onboarding → sends it: completes the website enquiry it continues, or creates a new one, with the
-//                        fields and consultants on it. The draft is then cleared for next time.
+//                        fields, focal split and consultants on it. The draft is then cleared for next time.
 import { db, run } from './_lib/db.js';
 import { emailStudio } from './_lib/notify.js';
-import { EMPTY_DRAFT, loadOnboarding, ONBOARDING_COLUMNS, toPublicOnboarding } from './_lib/onboarding.js';
+import { EMPTY_DRAFT, LAST_STEP, loadOnboarding, ONBOARDING_COLUMNS, toPublicOnboarding } from './_lib/onboarding.js';
 import { fail, json, methodNotAllowed, readBody, route } from './_lib/http.js';
-import { cleanConsultants, cleanTags, FUNDING_STAGES, MAX_MESSAGE, toId } from './_lib/rules.js';
+import { cleanConsultants, cleanFocus, cleanTags, FOCUS_AREAS, FUNDING_STAGES, MAX_MESSAGE, toId } from './_lib/rules.js';
 import { requireUser } from './_lib/users.js';
 
 const CONSULTANT_NAMES = { michael: 'Michael (Joongmin) Park', brandon: 'Brandon Siow', kenny: 'Kenny' };
+const FOCUS_NAMES = { research: 'Research', branding: 'Branding', product: 'Product Developing', advertising: 'Advertising' };
+const focusText = (focus) => FOCUS_AREAS.map((a, i) => `${FOCUS_NAMES[a]} ${focus[i]}%`).join(' · ');
 
 // A plain enquiry from the website form (no fields yet) that the first run can pick up.
 async function websiteEnquiry(userId) {
@@ -25,7 +27,7 @@ async function websiteEnquiry(userId) {
 async function readChanges(body, user) {
   const changes = {};
   if ('step' in body) {
-    if (![1, 2, 3, 4].includes(body.step)) return { error: 'invalid_step' };
+    if (!(Number.isInteger(body.step) && body.step >= 1 && body.step <= LAST_STEP)) return { error: 'invalid_step' };
     changes.step = body.step;
   }
   if ('stage' in body) {
@@ -41,6 +43,11 @@ async function readChanges(body, user) {
     const tags = cleanTags(body.tags);
     if (!tags) return { error: 'invalid_tags' };
     changes.tags = tags;
+  }
+  if ('focus' in body) {
+    const focus = cleanFocus(body.focus);
+    if (!focus) return { error: 'invalid_focus' };
+    changes.focus = focus;
   }
   if ('consultants' in body) {
     const consultants = cleanConsultants(body.consultants);
@@ -81,9 +88,9 @@ export default route(async (req, res) => {
   }
 
   // POST: send
-  if (!row || !row.stage || !row.brief || !row.tags?.length || !row.consultants?.length) return fail(res, 400, 'incomplete');
+  if (!row || !row.stage || !row.brief || !row.tags?.length || !row.focus || !row.consultants?.length) return fail(res, 400, 'incomplete');
   const now = new Date().toISOString();
-  const fields = { stage: row.stage, message: row.brief, tags: row.tags, consultants: row.consultants };
+  const fields = { stage: row.stage, message: row.brief, tags: row.tags, focus: row.focus, consultants: row.consultants };
   const continued = row.enquiry_id && await run(db().from('enquiries')
     .update({ ...fields, updated_at: now }).eq('id', row.enquiry_id).eq('user_id', user.id).select('id').maybeSingle());
   const enquiry = continued || await run(db().from('enquiries')
@@ -99,6 +106,7 @@ export default route(async (req, res) => {
       `Client: ${user.name || '—'} <${user.email}>`,
       `Stage: ${row.stage}`,
       `Fields: ${row.tags.map((t) => `#${t}`).join(' ')}`,
+      `Focal: ${focusText(row.focus)}`,
       `Consultants: ${row.consultants.map((c) => CONSULTANT_NAMES[c]).join(', ')}`,
       '', row.brief, '',
       `Add the estimated cost on /admin → Enquiries → #${enquiry.id}.`

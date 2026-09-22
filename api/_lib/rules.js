@@ -4,6 +4,9 @@ export const FUNDING_STAGES = ['Pre-Seed', 'Seed Level', 'Series A', 'Series B']
 export const ENQUIRY_STATUSES = ['new', 'in_review', 'replied', 'closed'];
 export const ROLES = ['user', 'admin'];
 export const CONSULTANTS = ['michael', 'brandon', 'kenny'];
+// Focal: how a client splits the work, in this order, in tens that add up to 100.
+export const FOCUS_AREAS = ['research', 'branding', 'product', 'advertising'];
+export const FOCUS_STEP = 10;
 
 export const MAX_MESSAGE = 500;
 export const MAX_TAGS = 5;
@@ -28,7 +31,15 @@ export function cleanConsultants(value) {
   return [...new Set(value)];
 }
 
-// Field tags from onboarding: trimmed, single-spaced, at most MAX_TAGS, no duplicates (ignoring case).
+// A focal split: one whole number per area (FOCUS_AREAS order), each a multiple of FOCUS_STEP, adding up to 100.
+// Returns a copy, or null when it isn't one.
+export function cleanFocus(value) {
+  if (!Array.isArray(value) || value.length !== FOCUS_AREAS.length) return null;
+  if (!value.every((n) => Number.isInteger(n) && n >= 0 && n <= 100 && n % FOCUS_STEP === 0)) return null;
+  return value.reduce((a, b) => a + b, 0) === 100 ? [...value] : null;
+}
+
+// Field tags from onboarding:trimmed, single-spaced, at most MAX_TAGS, no duplicates (ignoring case).
 // Returns the cleaned list, or null when anything in it isn't allowed.
 export function cleanTags(value) {
   if (!Array.isArray(value) || value.length > MAX_TAGS) return null;

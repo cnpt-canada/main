@@ -1,9 +1,9 @@
-// /account — the client's enquiries (with fields, consultants and the estimate) and profile, in the same
-// workspace frame as /admin.
+// /account — the client's enquiries (with fields, the focal split, consultants and the estimate) and profile,
+// in the same workspace frame as /admin. Profile also shows the client's project at a glance.
 // Admins can open /account?as=<id> to see a member's account exactly as they do ("view as user", read-only).
 import {
-  ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
-  api, avatar, badge, consultantList, dataTable, estimateBlock, flash, fmtCost, fmtDate, fmtDateTime, h, icon, keepFocus, kv,
+  DEFAULT_FOCUS, ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
+  api, avatar, badge, consultantList, dataTable, estimateBlock, flash, fmtCost, fmtDate, fmtDateTime, focalBar, h, icon, keepFocus, kv,
   markSelected, mountShell, section, showPanel, signOut, signedInUser, sortRows, tagList, toggleSort
 } from '/app/common.js';
 
@@ -60,12 +60,48 @@ function renderDetail() {
       section('Estimated cost', estimateBlock(e.estimated_cost, e.consultants)),
       section('Message', h('p', { class: 'msg' }, e.message)),
       e.tags.length && section('Fields', tagList(e.tags)),
+      focalSection(e),
       e.consultants.length && section(e.consultants.length > 1 ? 'Consultants' : 'Consultant', consultantList(e.consultants)),
       section('Details', kv([
         ['Stage', h('span', { class: 'chip' }, e.stage)],
         ['Sent', fmtDateTime(e.created_at)],
         ['Reference', `#${e.id}`]
       ]))));
+}
+
+// The focal split. The client can keep adjusting it until the enquiry is closed; each change saves by itself.
+function focalSection(e) {
+  const editable = !state.viewingAs && e.status !== 'closed';
+  if (!e.focus) {
+    return section('Focal', h('p', { class: 'sub' }, editable ? 'Not set yet. Tell us how the work should be split.' : 'Not set.'),
+      editable && h('button', { class: 'btn btn-line btn-sm focal-set', type: 'button', onclick: () => saveFocus(e, DEFAULT_FOCUS, { reopen: true }) },
+        icon('plus'), 'Set focal'));
+  }
+  if (!editable) return section('Focal', focalBar(e.focus));
+  const status = h('p', { class: 'focal-status', role: 'status' }, 'Drag the edges to change it. It saves by itself.');
+  let timer;
+  return section('Focal', focalBar(e.focus, { onChange: (values, done) => {
+    if (!done) return;
+    status.textContent = 'Saving…';
+    clearTimeout(timer);
+    timer = setTimeout(() => saveFocus(e, values, { status }), 300);
+  } }), status);
+}
+
+async function saveFocus(e, focus, { status, reopen } = {}) {
+  try {
+    const { enquiry } = await api('/api/account', { method: 'PATCH', body: { id: e.id, focus } });
+    Object.assign(e, enquiry);
+    if (status) status.textContent = 'Saved.';
+    if (reopen) {
+      renderDetail();
+      $('detail').querySelector('.focal-handle')?.focus();
+    }
+    renderOverview();
+  } catch (err) {
+    if (status) status.textContent = '';
+    flash(err.message === 'closed' ? 'This enquiry is closed, so its focal can’t change.' : 'The focal split didn’t save. Please try again.', true);
+  }
 }
 
 /* ---------- profile ---------- */
@@ -80,6 +116,48 @@ function renderProfile(user) {
       ['Last sign-in', fmtDateTime(user.last_login)],
       user.role === 'admin' && !state.viewingAs && ['Access', 'Workspace admin · ', h('a', { href: '/admin' }, 'Open the workspace')]
     ]));
+}
+
+// The right-hand side of Profile: the project at a glance, from the enquiries.
+function renderOverview() {
+  const list = [...state.enquiries].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+  const card = (title, ...content) => h('section', { class: 'card' },
+    h('div', { class: 'card-head' }, h('h2', {}, title)), h('div', { class: 'card-body' }, content));
+  const cards = [];
+  if (!list.length) {
+    cards.push(h('section', { class: 'card', 'aria-labelledby': 'project-h' },
+      h('div', { class: 'card-head' }, h('h2', { id: 'project-h' }, 'My project')),
+      h('div', { class: 'empty-note' },
+        h('p', {}, state.viewingAs ? 'No enquiries yet.' : 'Nothing here yet. Send your first enquiry and your project shows up here.'),
+        !state.viewingAs && h('a', { class: 'btn btn-white btn-sm', href: '/onboarding' }, icon('plus'), 'New enquiry'))));
+  } else {
+    const latest = list[0];
+    const stat = (n, label) => h('div', { class: 'stat' }, h('strong', {}, String(n)), h('span', {}, label));
+    cards.push(h('section', { class: 'card', 'aria-labelledby': 'project-h' },
+      h('div', { class: 'card-head card-head-row' }, h('h2', { id: 'project-h' }, 'My project'), h('a', { href: '#enquiries' }, 'All enquiries')),
+      h('div', { class: 'stats' },
+        stat(list.length, list.length === 1 ? 'Enquiry' : 'Enquiries'),
+        stat(list.filter((e) => e.status === 'new' || e.status === 'in_review').length, 'In progress'),
+        stat(list.filter((e) => e.estimated_cost != null).length, 'Estimates')),
+      h('div', { class: 'latest' },
+        h('p', {}, h('span', { class: 'sub' }, `Latest · ${fmtDate(latest.created_at)}`), h('a', { class: 'clip', href: `#enquiries/${latest.id}` }, latest.message)),
+        badge(latest.status, LABELS.enquiryStatus[latest.status]))));
+    const focused = list.find((e) => e.focus);
+    cards.push(card('Focal', focused
+      ? [focalBar(focused.focus), h('p', { class: 'hint' }, `From enquiry #${focused.id} · `,
+        h('a', { href: `#enquiries/${focused.id}` }, !state.viewingAs && focused.status !== 'closed' ? 'Change it' : 'Open it'))]
+      : h('p', { class: 'sub' }, 'Not set yet. Set it on any of your enquiries.')));
+    const consultants = [...new Set(list.flatMap((e) => e.consultants))];
+    if (consultants.length) cards.push(card(consultants.length > 1 ? 'Your consultants' : 'Your consultant', consultantList(consultants)));
+    const tags = list.flatMap((e) => e.tags).filter((t, i, all) => all.findIndex((x) => x.toLowerCase() === t.toLowerCase()) === i);
+    if (tags.length) cards.push(card('Your fields', tagList(tags)));
+  }
+  if (!state.viewingAs) {
+    cards.push(h('section', { class: 'card card-row', 'aria-labelledby': 'help-h' },
+      h('div', {}, h('h2', { id: 'help-h' }, 'Questions?'), h('p', { class: 'sub' }, 'Write to the cnpt team. We reply within two working days.')),
+      h('a', { class: 'btn btn-line btn-sm', href: 'mailto:info@cnpt.ca' }, 'info@cnpt.ca')));
+  }
+  $('overview').replaceChildren(...cards);
 }
 
 /* ---------- views ---------- */
@@ -154,6 +232,7 @@ if (me) {
       if (data.viewing_as) viewAs(data.user);
       state.enquiries = data.enquiries;
       renderProfile(data.user);
+      renderOverview();
       renderEnquiries();
       route();
     }

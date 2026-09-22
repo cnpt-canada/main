@@ -221,6 +221,66 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .profile-top{display:flex;align-items:center;gap:16px;margin-bottom:20px}
 .profile-top strong{font-size:17px;font-weight:800;letter-spacing:-0.02em}
 .card .kv > div:first-child{padding-top:10px;border-top:1px solid var(--rule)}
+/* profile: account on the left, the client's project at a glance on the right */
+.profile-layout{display:grid;gap:16px;align-items:start}
+.profile-layout .cards{max-width:none}
+@media(min-width:1100px){.profile-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.card-head-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.card-head-row a{font-size:12.5px;font-weight:700;color:var(--soft);text-decoration:underline;text-underline-offset:3px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid var(--rule)}
+.stat{display:grid;gap:4px;padding:18px 20px}
+.stat + .stat{border-left:1px solid var(--rule)}
+.stat strong{font-size:28px;font-weight:800;letter-spacing:-0.03em;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12.5px;font-weight:600;color:var(--muted)}
+.latest{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px}
+.latest p{min-width:0}
+.latest .clip{display:block;font-size:13.5px;color:var(--soft)}
+.card-foot{padding:0 20px 18px}
+.empty-note{display:grid;justify-items:start;gap:14px;padding:22px 20px}
+.empty-note p{font-size:14px;color:var(--soft)}
+
+/* ---------- focal: the split across research, branding, product developing and advertising ---------- */
+.focal{display:grid;gap:16px}
+.focal-bar{position:relative;height:44px}
+.focal-track{display:flex;height:100%;overflow:hidden;border-radius:6px;background:var(--raise)}
+.focal-seg{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:0;overflow:hidden;
+  font-size:12.5px;font-weight:800;transition:flex-basis .16s ease}
+.focal-seg[hidden]{display:none}
+/* the number inside a block only when the block is wide enough for it; the legend always has it */
+.focal-seg{container-type:inline-size}
+@container (max-width:46px){.focal-pct{visibility:hidden}}
+.focal-seg + .focal-seg::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--panel)}
+.focal-0{background:#E4E4DF;color:#0A0A09}
+.focal-1{background:#8E8E8A;color:#0A0A09}
+.focal-2{background:var(--signal-deep);color:#fff}
+.focal-3{background:#3A3A37;color:#fff}
+.focal-edit .focal-bar{height:56px}
+.focal-edit .focal-seg{font-size:14px}
+/* an edge you can drag: a white bar with a wider, invisible grip around it */
+.focal-handle{position:absolute;top:-7px;bottom:-7px;z-index:1;width:16px;margin-left:-8px;display:flex;justify-content:center;
+  cursor:ew-resize;touch-action:none;outline:none;transition:left .16s ease}
+.focal-handle::before{content:"";width:6px;border-radius:3px;background:#fff;box-shadow:0 0 0 2px var(--panel),0 4px 14px rgba(0,0,0,.5);
+  transition:transform .15s ease}
+.focal-handle::after{content:"";position:absolute;inset:0 -8px}
+.focal-handle:hover::before,.focal-edit.is-dragging .focal-handle:focus::before{transform:scaleX(1.35)}
+.focal-handle:focus-visible::before{box-shadow:0 0 0 2px var(--panel),0 0 0 4px #fff}
+.focal-edit.is-dragging,.focal-edit.is-dragging *{cursor:ew-resize;user-select:none}
+.focal-edit.is-dragging .focal-seg,.focal-edit.is-dragging .focal-handle{transition:none}
+.focal-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 20px;list-style:none;margin:0;padding:0}
+.focal-legend li{display:flex;align-items:center;gap:8px;min-width:0;font-size:13px;color:var(--soft);transition:opacity .15s}
+.focal-legend li.is-zero{opacity:.45}
+.focal-dot{flex:none;width:10px;height:10px;border-radius:3px}
+.focal-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.focal-val{margin-left:auto;color:#fff;font-variant-numeric:tabular-nums}
+.focal-legend-detailed{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 20px}
+.focal-legend-detailed li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:start;align-content:start;row-gap:6px;
+  padding-top:12px;border-top:1px solid var(--rule)}
+.focal-legend-detailed .focal-dot{margin-top:4px}
+.focal-legend-detailed .focal-name{font-size:14px;font-weight:700;color:#fff;white-space:normal}
+.focal-legend-detailed .focal-val{font-size:15px}
+.focal-note{grid-column:1 / -1;font-size:12.5px;line-height:1.45;color:var(--muted)}
+.focal-status{min-height:1.4em;margin-top:10px;font-size:12.5px;color:var(--muted)}
+@media(max-width:719px){.focal-legend-detailed{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* ---------- shared: tags, estimate, view-as ---------- */
 .tag-list{display:flex;flex-wrap:wrap;gap:8px}
