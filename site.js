@@ -146,7 +146,7 @@
   });
 })();
 
-/* a rounded label beside the mouse: what clicking does (data-cursor), or which section you are in (data-cursor-section).
+/* a rounded label beside the mouse, only while it hovers something with data-cursor: what clicking does.
    Mouse and trackpad only; it is decorative, so screen readers never see it. */
 (function () {
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
@@ -163,14 +163,11 @@
   function labelFor(el) {
     if (!el || !el.closest || el.closest('input, textarea, select, [data-cursor-off]')) return '';
     var own = el.closest('[data-cursor]');
-    if (own) {
-      if (own.classList.contains('acc-row')) return own.getAttribute('aria-expanded') === 'true' ? 'Close' : 'Open';
-      return own.getAttribute('data-cursor');
-    }
-    if (el.closest('a, button, label')) return ''; // other controls already say what they do
-    var section = el.closest('[data-cursor-section]');
-    return section ? section.getAttribute('data-cursor-section') : '';
+    if (!own) return '';
+    if (own.classList.contains('acc-row')) return own.getAttribute('aria-expanded') === 'true' ? 'Close' : 'Open';
+    return own.getAttribute('data-cursor');
   }
+  function hide() { current = ''; tip.classList.remove('on'); }
   function place() {
     // sit below-right of the pointer; flip left near the right edge
     var w = pill.offsetWidth || 0;
@@ -203,11 +200,13 @@
     update(e.target);
     if (wasHidden) { x = tx; y = ty; } // appear where the pointer is instead of flying in
   }, { passive: true });
-  // scrolling moves content under a still pointer, and clicks can change a label (Open → Close)
-  function recheck() { if (mouseX > -200) update(document.elementFromPoint(mouseX, mouseY)); }
-  window.addEventListener('scroll', recheck, { passive: true });
-  document.addEventListener('click', function () { requestAnimationFrame(recheck); });
-  document.documentElement.addEventListener('mouseleave', function () { current = ''; tip.classList.remove('on'); });
+  // scrolling slides things under a still pointer without the visitor hovering them: hide until the mouse moves again
+  window.addEventListener('scroll', hide, { passive: true });
+  // a click can change the label under the pointer (Open → Close)
+  document.addEventListener('click', function () {
+    requestAnimationFrame(function () { if (current) update(document.elementFromPoint(mouseX, mouseY)); });
+  });
+  document.documentElement.addEventListener('mouseleave', hide);
 })();
 
 /* motion — scroll progress, hero parallax, entrance reveals */
