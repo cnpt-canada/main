@@ -557,6 +557,15 @@ nav .nav-sheet .wrap{display:block;height:auto}
 
 /* home: the index of pages */
 .explore{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 40px;margin-top:52px}
+/* two columns that meet exactly at the centre line, so the pointer is always over one card or the other:
+   the 40px gutter lives inside the cards (20px each side), not between them */
+@media(min-width:1001px){
+  .explore{column-gap:0}
+  .ex-card:nth-child(odd):not(.ex-card-sig){padding-right:20px}
+  .ex-card:nth-child(odd):not(.ex-card-sig)::before{right:20px}
+  .ex-card:nth-child(even){padding-left:20px}
+  .ex-card:nth-child(even)::before{left:20px}
+}
 .ex-card{position:relative;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:18px;align-items:start;padding:30px 0 36px}
 .ex-card::before{content:"";position:absolute;left:0;right:0;top:0;height:1.5px;background:#2A2A28;transform-origin:left;
   transition:transform 1.2s var(--ease-io) var(--d,0ms),background-color .5s var(--ease-out)}

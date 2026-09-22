@@ -356,7 +356,8 @@
 })();
 
 /* hero headline: with the mouse inside the headline's box, the headline eases from Bold to Regular and the letters
-   near the pointer stay heavy, so the weight follows the pointer; leaving eases everything back to Bold.
+   near the pointer stay heavy (the closest ones a little past Bold), so the weight follows the pointer;
+   leaving eases everything back to Bold.
    A smooth change of weight needs a font with a weight axis, and Helvetica has none, so the headline switches to
    Arimo (Helvetica's metrics, 400–700 axis, self-hosted Latin subset) once it has loaded.
    Mouse and trackpad only, and only with motion on. */
@@ -366,6 +367,14 @@
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches || !document.fonts || !document.fonts.load) return;
 
   var LIGHT = 400, HEAVY = 700;
+  // Arimo stops at 700, so the letters right under the pointer go further with same-colour shadows around them
+  var EXTRA = 0.022; // em the letter spreads by at full strength: any more and neighbours run together
+  var AROUND = [[1, 0], [-1, 0], [0, 1], [0, -1], [0.7071, 0.7071], [-0.7071, 0.7071], [0.7071, -0.7071], [-0.7071, -0.7071]];
+  function spread(x) {
+    if (!x) return '';
+    var r = x * EXTRA;
+    return AROUND.map(function (o) { return (o[0] * r).toFixed(4) + 'em ' + (o[1] * r).toFixed(4) + 'em 0 currentColor'; }).join(',');
+  }
   document.fonts.load(HEAVY + ' 80px "Arimo Var"').then(function (faces) { if (faces.length) start(); }, function () {});
 
   function start() {
@@ -383,7 +392,7 @@
           el.setAttribute('aria-hidden', 'true');
           el.textContent = ch;
           frag.appendChild(el);
-          letters.push({ el: el, v: 1, shown: HEAVY });
+          letters.push({ el: el, v: 1, x: 0, shown: HEAVY, shownX: 0 });
         });
         node.replaceChild(frag, child);
       });
@@ -424,22 +433,31 @@
       var box = h1.getBoundingClientRect();
       var fs = parseFloat(getComputedStyle(h1).fontSize) || 80;
       var inside = mouseX >= box.left && mouseX <= box.right && mouseY >= box.top && mouseY <= box.bottom;
-      var reach = fs * 1.6, moving = false;
+      var core = fs * 0.35, reach = fs * 1.4, moving = false;
       letters.forEach(function (l) {
-        var target = 1; // Bold while the mouse is outside the headline
+        var target = 1, extra = 0; // Bold while the mouse is outside the headline
         if (inside) {
           var r = l.el.getBoundingClientRect();
           var dx = r.left + r.width / 2 - mouseX, dy = r.top + r.height / 2 - mouseY;
-          var p = Math.max(0, 1 - Math.sqrt(dx * dx + dy * dy) / reach);
-          target = p * p * (3 - 2 * p); // Regular far from the pointer, Bold under it, smooth in between
+          // fully heavy within the core around the pointer, easing to Regular further out
+          var p = Math.max(0, 1 - Math.max(0, Math.sqrt(dx * dx + dy * dy) - core) / reach);
+          target = p * p * (3 - 2 * p);
+          extra = target * target * target; // only the letters closest to the pointer go past Bold
         }
         l.v += (target - l.v) * 0.09; // about half a second to settle
-        if (Math.abs(target - l.v) > 0.002) moving = true;
-        else l.v = target;
+        l.x += (extra - l.x) * 0.09;
+        if (Math.abs(target - l.v) > 0.002 || Math.abs(extra - l.x) > 0.002) moving = true;
+        else { l.v = target; l.x = extra; }
         var w = Math.round(LIGHT + (HEAVY - LIGHT) * l.v);
-        if (w === l.shown) return;
-        l.shown = w;
-        l.el.style.fontWeight = w === HEAVY ? '' : w;
+        if (w !== l.shown) {
+          l.shown = w;
+          l.el.style.fontWeight = w === HEAVY ? '' : w;
+        }
+        var x = Math.round(l.x * 100) / 100;
+        if (x !== l.shownX) {
+          l.shownX = x;
+          l.el.style.textShadow = spread(x);
+        }
       });
       raf = moving ? requestAnimationFrame(frame) : 0;
     }
