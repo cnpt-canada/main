@@ -89,7 +89,7 @@
   });
 })();
 
-/* signed-in visitors: the nav shows their photo and "Account", and the contact form knows their email */
+/* signed-in visitors: the nav shows their photo and "My Project", and the contact form knows their email */
 (function () {
   var link = document.querySelector('.nav-account');
   if (!link || !window.fetch) return;
@@ -99,7 +99,7 @@
       var user = data && data.user;
       if (!user) return;
       link.href = '/account';
-      link.textContent = 'Account';
+      link.textContent = 'My Project';
       if (user.picture && /^https:\/\//.test(user.picture)) {
         var img = document.createElement('img');
         img.src = user.picture;
@@ -129,7 +129,7 @@
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && !sheet.hidden) { setOpen(false); button.focus(); }
   });
-  window.matchMedia('(min-width: 761px)').addEventListener('change', function (e) { if (e.matches) setOpen(false); });
+  window.matchMedia('(min-width: 901px)').addEventListener('change', function (e) { if (e.matches) setOpen(false); });
 })();
 
 /* client works — filter the cards by practice */
@@ -217,7 +217,18 @@
   var hero = document.querySelector('.hero');
   var heroWrap = hero && hero.querySelector('.wrap');
   var ticking = false;
+  var wrapTop = 0, wrapH = 0;
 
+  // the headline block sits under the video, so it stays fully lit while it is on screen
+  // and only fades (drifting slightly) once most of it has gone up under the nav
+  function measureHero() {
+    if (!heroWrap) return;
+    var saved = heroWrap.style.transform;
+    heroWrap.style.transform = '';
+    wrapTop = heroWrap.getBoundingClientRect().top + window.pageYOffset;
+    wrapH = heroWrap.offsetHeight;
+    heroWrap.style.transform = saved;
+  }
   function onScroll() {
     if (ticking) return;
     ticking = true;
@@ -226,15 +237,18 @@
       var y = window.pageYOffset;
       var max = root.scrollHeight - window.innerHeight;
       nav.style.setProperty('--progress', max > 0 ? Math.min(y / max, 1).toFixed(4) : 0);
-      if (motion && hero) {
-        var h = hero.offsetHeight, t = Math.min(y, h);
-        heroWrap.style.transform = t ? 'translate3d(0,' + (t * 0.2).toFixed(1) + 'px,0)' : '';
-        heroWrap.style.opacity = t ? Math.max(0, 1 - t / (h * 0.85)).toFixed(3) : '';
+      if (motion && hero && wrapH) {
+        var gone = (y + nav.offsetHeight - wrapTop) / wrapH; // 0: its top is at the nav, 1: all of it has passed under
+        var t = Math.min(Math.max((gone - 0.45) / 0.55, 0), 1);
+        heroWrap.style.transform = t ? 'translate3d(0,' + (t * 48).toFixed(1) + 'px,0)' : '';
+        heroWrap.style.opacity = t ? (1 - t).toFixed(3) : '';
       }
     });
   }
+  measureHero();
   window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', onScroll);
+  window.addEventListener('resize', function () { measureHero(); onScroll(); });
+  window.addEventListener('load', function () { measureHero(); onScroll(); }); // the video's height is known by now
   onScroll();
 
   // the hero video plays only while it is on screen, and not at all under reduced motion
@@ -339,4 +353,90 @@
     io.observe(watch);
   });
   root.classList.add('motion-ready');
+})();
+
+/* hero headline: the letters near the mouse thicken, and thin back out as it moves on, as if the weight followed the pointer.
+   Helvetica has no weight axis, so eight crisp text shadows in the text colour, just around each letter, do the thickening.
+   (An outline would be simpler, but it leaves hairlines inside glyphs built from overlapping shapes, as Arial's are.)
+   Mouse and trackpad only, and only with motion on. */
+(function () {
+  var h1 = document.querySelector('.hero h1');
+  if (!h1 || !document.documentElement.classList.contains('motion')) return;
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+  var THICK = 0.02; // how far the letter spreads at full strength, in em: any more and neighbouring letters run together
+  var AROUND = [[1, 0], [-1, 0], [0, 1], [0, -1], [0.7071, 0.7071], [-0.7071, 0.7071], [0.7071, -0.7071], [-0.7071, -0.7071]];
+  function spread(v) {
+    if (!v) return '';
+    var r = v * THICK;
+    return AROUND.map(function (o) { return (o[0] * r).toFixed(4) + 'em ' + (o[1] * r).toFixed(4) + 'em 0 currentColor'; }).join(',');
+  }
+  var letters = [];
+  h1.setAttribute('aria-label', h1.textContent.replace(/\s+/g, ' ').trim()); // read as one sentence, not letter by letter
+  (function walk(node) {
+    Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+      if (child.nodeType === 1) return walk(child);
+      if (child.nodeType !== 3 || !child.textContent.trim()) return;
+      var frag = document.createDocumentFragment();
+      Array.prototype.forEach.call(child.textContent, function (ch) {
+        if (/\s/.test(ch)) return frag.appendChild(document.createTextNode(ch));
+        var el = document.createElement('span');
+        el.className = 'wt';
+        el.setAttribute('aria-hidden', 'true');
+        el.textContent = ch;
+        frag.appendChild(el);
+        letters.push({ el: el, x: 0, y: 0, v: 0, shown: 0 });
+      });
+      node.replaceChild(frag, child);
+    });
+  })(h1);
+
+  var mouseX = -1e4, mouseY = -1e4, box = null, fs = 80, raf = 0, stale = true;
+
+  function measure() {
+    var r = h1.getBoundingClientRect();
+    box = { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+    fs = parseFloat(getComputedStyle(h1).fontSize) || 80;
+    letters.forEach(function (l) {
+      var b = l.el.getBoundingClientRect();
+      l.x = b.left + b.width / 2;
+      l.y = b.top + b.height / 2;
+    });
+    stale = false;
+  }
+  function frame() {
+    if (stale) measure();
+    // how close the pointer is to the headline as a whole: the effect fades in as it approaches
+    var dx = Math.max(box.left - mouseX, 0, mouseX - box.right);
+    var dy = Math.max(box.top - mouseY, 0, mouseY - box.bottom);
+    var near = Math.max(0, 1 - Math.sqrt(dx * dx + dy * dy) / (fs * 1.5));
+    var reach = fs * 1.3, moving = false;
+    letters.forEach(function (l) {
+      var d = Math.sqrt((l.x - mouseX) * (l.x - mouseX) + (l.y - mouseY) * (l.y - mouseY));
+      var p = Math.max(0, 1 - d / reach);
+      p = p * p * (3 - 2 * p); // smooth falloff
+      var target = near * p; // 1: thickest, under the pointer
+      l.v += (target - l.v) * 0.16;
+      if (Math.abs(target - l.v) > 0.002) moving = true;
+      var v = Math.round(l.v * 200) / 200;
+      if (v === l.shown) return;
+      l.shown = v;
+      l.el.style.textShadow = spread(v);
+    });
+    raf = moving ? requestAnimationFrame(frame) : 0;
+  }
+  function kick() { if (!raf) raf = requestAnimationFrame(frame); }
+
+  document.addEventListener('pointermove', function (e) {
+    if (e.pointerType && e.pointerType !== 'mouse') return;
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    kick();
+  }, { passive: true });
+  document.documentElement.addEventListener('mouseleave', function () { mouseX = mouseY = -1e4; kick(); });
+  // letters move with scrolling, resizing and the entrance animation: measure again before the next frame
+  function restale() { stale = true; kick(); }
+  window.addEventListener('scroll', restale, { passive: true });
+  window.addEventListener('resize', restale);
+  setTimeout(restale, 2600);
 })();

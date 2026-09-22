@@ -18,14 +18,18 @@ a{color:inherit;text-decoration:none}
 
 /* nav */
 nav{position:sticky;top:0;z-index:20;background:var(--ink);border-bottom:1.5px solid #1C1C1A}
-nav .wrap{height:var(--nav-h);display:flex;align-items:center;justify-content:space-between;gap:24px}
+/* three columns: the wordmark, the section links centred on the page, then Sign in and the button */
+nav .wrap{height:var(--nav-h);display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:24px}
+.nav-home{grid-column:1;justify-self:start}
 nav .wm{width:86px;color:#fff;display:block;flex:none}
-.navlinks{display:flex;align-items:center;gap:30px;font-size:14px;font-weight:400;color:#9C9C97}
+.navlinks,.nav-actions{display:flex;align-items:center;gap:30px;font-size:14px;font-weight:400;color:#9C9C97}
+.navlinks{grid-column:2}
+.nav-actions{grid-column:3;justify-self:end}
 .navlinks a:not(.btn):hover{color:#fff}
-/* Sign in, or once signed in: the person's photo and "Account" — an underlined text link, white so it reads as the one action among the section links */
-.navlinks .nav-account{display:inline-flex;align-items:center;gap:8px;color:#fff;text-decoration:underline;
+/* Sign in, or once signed in: the person's photo and "My Project" — an underlined text link, white so it reads as the one action beside the button */
+.nav-account{display:inline-flex;align-items:center;gap:8px;color:#fff;text-decoration:underline;
   text-decoration-thickness:1.5px;text-underline-offset:5px;transition:text-decoration-color .25s ease}
-.navlinks .nav-account:hover{text-decoration-color:var(--signal)}
+.nav-account:hover{text-decoration-color:var(--signal)}
 .nav-account img{display:block;width:24px;height:24px;border-radius:50%;object-fit:cover}
 .btn{display:inline-flex;align-items:center;height:40px;padding:0 22px;border-radius:var(--r-cap);
   font-size:14px;font-weight:700;letter-spacing:-0.012em;flex:none}
@@ -265,12 +269,13 @@ footer .tag{font-size:14px;color:#7C7C78;margin-top:22px;max-width:34ch;line-hei
 .motion:not(.motion-ready) *,.motion:not(.motion-ready) *::before{transition:none!important}
 .sec{overflow-x:clip}
 
-.motion nav .wm,.motion .navlinks > *{animation:nav-in .9s var(--ease-out) backwards}
+.motion nav .wm,.motion .navlinks > *,.motion .nav-actions > *{animation:nav-in .9s var(--ease-out) backwards}
 .motion .navlinks > :nth-child(1){animation-delay:.08s}
 .motion .navlinks > :nth-child(2){animation-delay:.14s}
 .motion .navlinks > :nth-child(3){animation-delay:.2s}
 .motion .navlinks > :nth-child(4){animation-delay:.26s}
-.motion .navlinks > :nth-child(5){animation-delay:.32s}
+.motion .nav-actions > :nth-child(1){animation-delay:.32s}
+.motion .nav-actions > :nth-child(2){animation-delay:.38s}
 @keyframes nav-in{from{opacity:0;transform:translateY(-12px)}}
 nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;background:var(--signal);
   transform:scaleX(var(--progress,0));transform-origin:left;pointer-events:none}
@@ -311,7 +316,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 .btn:active{transform:scale(.97)}
 .btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
 .cta .btn-white{--btn-fill:var(--ink)}
-.navlinks a,.fcol a{transition:color .25s ease}
+.navlinks a,.nav-actions a:not(.btn),.fcol a{transition:color .25s ease}
 .acc-mark svg,.acc-name{transition:transform .6s var(--ease-out)}
 .acc-seg{transition:box-shadow .3s ease}
 .acc-out span{opacity:0;transform:translateY(8px);transition:opacity .2s ease,transform .2s ease}
@@ -388,7 +393,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   .hero-foot{margin-top:56px}
   .sec-head{margin-bottom:36px}
   .acc-list,.track,.focus{margin-top:40px}
-  .navlinks{gap:20px}
+  .navlinks,.nav-actions{gap:20px}
   .acc-row{grid-template-columns:1fr auto;gap:18px 16px;padding:26px 0}
   .acc-mark{grid-column:1 / -1;height:40px}
   .mk-ai{width:61px;height:40px} .mk-ux{width:64px;height:30px} .mk-df{width:65px;height:40px}
@@ -427,8 +432,8 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   :root{--nav-h:62px;--sec-pad:64px}
   .wrap{padding:0 20px}
   nav .wm{width:74px}
-  .navlinks{gap:16px}
-  .navlinks .btn{height:36px;padding:0 16px;font-size:13px}
+  .nav-actions{gap:16px}
+  .nav-actions .btn{height:36px;padding:0 16px;font-size:13px}
   .hero{padding:0 0 48px}
   .hero-video{aspect-ratio:16/9;margin-bottom:28px}
   .hero p{margin-top:22px}
@@ -463,9 +468,10 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   .cta-row{margin-top:32px}
   .fbottom{margin-top:40px}
 }
-/* the section links give way before the two buttons run out of room */
-@media(max-width:760px){
-  .navlinks a:not(.btn):not(.nav-account){display:none}
+/* the section links move into the menu before the centred row runs into Sign in / My Project and the button */
+@media(max-width:900px){
+  .navlinks{display:none}
+  nav .wrap{display:flex;justify-content:space-between}
 }
 @media(max-width:480px){
   .hero-cta .btn,.cta-row .btn{flex:1 1 100%;justify-content:center}
@@ -497,24 +503,27 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 nav .nav-sheet .wrap{display:block;height:auto}
 .nav-sheet a{display:flex;align-items:center;gap:14px;padding:12px 0;font-size:26px;font-weight:400;letter-spacing:-0.028em;color:#9C9C97}
 .nav-sheet a[aria-current="page"],.nav-sheet a:hover{color:#fff}
-.navlinks .btn{font-weight:inherit}
+.nav-actions .btn{font-weight:inherit}
 
-/* nav icons: a section link shows its icon on hover or keyboard focus; the phone sheet always shows them.
+/* nav icons: a section link shows its icon on hover or keyboard focus, and the page you are on keeps its icon lit
+   (playing its motion once as the page opens). The phone sheet always shows them.
    The link keeps a slot for the icon, so nothing in the nav moves when it appears. */
 .nav-ic{display:block;flex:none;width:24px;height:24px}
 .nav-ic svg{display:block;width:100%;height:100%;overflow:visible;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .nav-ic svg *{transform-box:fill-box;transform-origin:center}
 .nav-ic [pathLength]{stroke-dasharray:1 2}
 .nav-sheet .ic-go{color:var(--signal)}
-.navlinks .nav-ic{display:none}
-@media(hover:hover) and (pointer:fine){
-  .navlinks .nav-link{position:relative;padding-left:22px;margin-left:-18px}
-  .navlinks .nav-ic{display:block;position:absolute;left:0;top:50%;width:16px;height:16px;margin-top:-8px;opacity:0;
-    transition:opacity .2s ease,transform .45s var(--ease-out)}
-  .motion .navlinks .nav-ic{transform:scale(.6)}
-  .navlinks .nav-link:is(:hover,:focus-visible) .nav-ic{opacity:1;transform:none}
+.navlinks .nav-link{position:relative;padding-left:22px;margin-left:-18px}
+.navlinks .nav-link:first-child{margin-left:-22px} /* the row centres on the words; the first icon sits just outside it */
+.navlinks .nav-ic{position:absolute;left:0;top:50%;width:16px;height:16px;margin-top:-8px;opacity:0;
+  transition:opacity .2s ease,transform .45s var(--ease-out)}
+.motion .navlinks .nav-ic{transform:scale(.6)}
+.navlinks .nav-link[aria-current="page"]{--sd:450ms} /* after the nav has slid in */
+.navlinks .nav-link:is([aria-current="page"],:focus-visible) .nav-ic{opacity:1;transform:none}
+@media(hover:hover){
+  .navlinks .nav-link:hover .nav-ic{opacity:1;transform:none}
 }
-@media(hover:hover) and (pointer:fine) and (max-width:1000px){
+@media(max-width:1000px){
   .navlinks .nav-link{margin-left:-8px}
 }
 /* each icon has its own entrance: the shapes pop in turn, the dashes light up around the circle,
@@ -522,21 +531,21 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .nav-ic svg > :nth-child(2){--i:1} .nav-ic svg > :nth-child(3){--i:2} .nav-ic svg > :nth-child(4){--i:3}
 .nav-ic svg > :nth-child(5){--i:4} .nav-ic svg > :nth-child(6){--i:5} .nav-ic svg > :nth-child(7){--i:6} .nav-ic svg > :nth-child(8){--i:7}
 .nav-sheet a:nth-child(2){--sd:70ms} .nav-sheet a:nth-child(3){--sd:140ms} .nav-sheet a:nth-child(4){--sd:210ms} .nav-sheet a:nth-child(5){--sd:280ms}
-.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-practices svg > *{
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-practices svg > *{
   animation:nic-pop .6s cubic-bezier(.34,1.56,.64,1) calc(var(--sd,0ms) + var(--i,0) * 80ms) backwards}
-.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-process svg{animation:nic-turn .9s var(--ease-out) var(--sd,0ms) backwards}
-.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-process path{
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-process svg{animation:nic-turn .9s var(--ease-out) var(--sd,0ms) backwards}
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-process path{
   animation:nic-dash .3s var(--ease-out) calc(var(--sd,0ms) + var(--i,0) * 45ms) backwards}
-.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-works path:first-child{animation:nic-draw .7s var(--ease-out) var(--sd,0ms) backwards}
-.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-works path:last-child{
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-works path:first-child{animation:nic-draw .7s var(--ease-out) var(--sd,0ms) backwards}
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-works path:last-child{
   animation:nic-draw .35s var(--ease-out) calc(var(--sd,0ms) + 450ms) backwards}
-.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-team circle{
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-team circle{
   animation:nic-pop .5s cubic-bezier(.34,1.56,.64,1) calc(var(--sd,0ms) + var(--i,0) * 110ms) backwards}
-.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-team path{
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-team path{
   animation:nic-draw .45s var(--ease-out) calc(var(--sd,0ms) + 80ms) backwards}
-.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-team g:nth-child(2){
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-team g:nth-child(2){
   animation:nic-in-left .5s var(--ease-out) calc(var(--sd,0ms) + 110ms) backwards}
-.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.nav-sheet a) .ic-team g:nth-child(3){
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-team g:nth-child(3){
   animation:nic-in-right .5s var(--ease-out) calc(var(--sd,0ms) + 220ms) backwards}
 .ic-team g:nth-child(2) circle,.ic-team g:nth-child(3) circle{--i:1}
 @keyframes nic-pop{from{transform:scale(0) rotate(-40deg)}}
@@ -610,7 +619,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .explore,.works{grid-template-columns:1fr}
   .cta-short .cta-row{justify-content:flex-start}
 }
-@media(max-width:760px){
+@media(max-width:900px){
   .nav-menu{display:inline-flex}
 }
 @media(max-width:620px){
@@ -622,3 +631,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .ex-card{grid-template-columns:32px minmax(0,1fr) auto;gap:12px;padding:24px 0 28px}
   .works{gap:44px}
 }
+
+/* hero headline weight follows the mouse (site.js): once the words have risen, let the thickened letters spill past the word masks */
+.hero h1:not([data-rv]) .wd{overflow:visible}
+.wt{display:inline}
