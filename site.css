@@ -587,10 +587,11 @@ nav .nav-sheet .wrap{display:block;height:auto}
   transition:background-color .25s ease,color .25s ease,box-shadow .25s ease}
 .wf-btn[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:none}
 .wf-btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
-.works{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:56px 40px;margin-top:44px}
+/* one case study per row, full width, running down the page; covers have square corners */
+.works{display:grid;grid-template-columns:minmax(0,1fr);gap:72px;margin-top:44px}
 .work{display:grid;align-content:start;gap:20px}
 .work[hidden]{display:none}
-.work-cover{position:relative;display:flex;align-items:flex-end;justify-content:space-between;aspect-ratio:4/3;padding:26px;border-radius:var(--r-sm);
+.work-cover{position:relative;display:flex;align-items:flex-end;justify-content:space-between;aspect-ratio:16/9;padding:26px;
   overflow:hidden;background:#111110}
 .work-cover svg{display:block;height:64px;width:auto;color:#2A2A28;transition:color .5s var(--ease-out),transform .8s var(--ease-out)}
 .work-cover .work-no{position:absolute;top:22px;left:26px;font-size:13px;font-weight:700;color:var(--signal)}
@@ -639,6 +640,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .nav-menu[aria-expanded="true"] span:first-child,.nav-menu[aria-expanded="true"] span:last-child{top:17.25px}
   .ex-card{grid-template-columns:32px minmax(0,1fr) auto;gap:12px;padding:24px 0 28px}
   .works{gap:44px}
+  .work-cover{aspect-ratio:4/3} /* a wide band is too thin on a phone */
 }
 
 /* hero headline weight follows the mouse (site.js). It needs a font with a weight axis, which Helvetica lacks:
