@@ -111,6 +111,17 @@ export function estimateBlock(cost, consultants) {
   return el;
 }
 
+// Field hashtags, read-only.
+export function tagList(tags) {
+  return h('div', { class: 'tag-list' }, tags.map((t) => h('span', { class: 'tag-chip tag-static' }, h('span', { class: 'tag-hash' }, '#'), t)));
+}
+
+// Consultants picked for an enquiry: photo, name, role.
+export function consultantList(keys, large) {
+  return h('div', { class: 'who-list' }, keys.filter((k) => CONSULTANTS[k]).map((k) => h('div', { class: large ? 'who who-lg' : 'who' },
+    consultantAvatar(k, large), h('span', { class: 'who-text' }, h('strong', {}, CONSULTANTS[k].name), h('span', { class: 'sub' }, CONSULTANTS[k].role)))));
+}
+
 export function badge(kind, label) {
   return h('span', { class: `badge badge-${kind}` }, label);
 }
@@ -165,11 +176,10 @@ export function mountShell(user, page, { query = '' } = {}) {
       item('/admin#onboarding', 'admin:onboarding', 'Onboarding', 'list-checks'),
       item('/admin#members', 'admin:members', 'Members', 'users')),
     group('Account',
-      item(`/account${query}#project`, 'account:project', 'Your project', 'folder'),
       item(`/account${query}#enquiries`, 'account:enquiries', 'Your enquiries', 'file'),
       item(`/account${query}#profile`, 'account:profile', 'Profile', 'user')),
     h('div', { class: 'nav-group' },
-      h('a', { class: 'nav-item', href: '/contact' }, icon('plus'), h('span', { class: 'nav-label' }, 'New enquiry')),
+      h('a', { class: 'nav-item', href: '/onboarding' }, icon('plus'), h('span', { class: 'nav-label' }, 'New enquiry')),
       h('a', { class: 'nav-item', href: '/' }, icon('external'), h('span', { class: 'nav-label' }, 'cnpt.ca')))
   ].filter(Boolean));
 

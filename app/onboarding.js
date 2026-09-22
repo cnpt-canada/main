@@ -1,6 +1,7 @@
-// /onboarding — the first thing a new client sees after signing up: a welcome screen, then four steps
-// (company, field, consultants, confirm). Each step is saved when you continue, so leaving and coming
-// back picks up where you stopped. Admins can open /onboarding?preview to see it without saving anything.
+// /onboarding — the step-by-step enquiry: company, field, consultants, confirm. A new client sees it right after
+// signing up, after a welcome screen; afterwards "New enquiry" opens the same steps without the welcome.
+// Each step is saved when you continue, so leaving and coming back picks up where you stopped. Sending it
+// creates the enquiry (or completes the one sent from the website). Admins can open /onboarding?preview.
 import {
   CONSULTANTS, FIELD_TAGS, FUNDING_STAGES, MAX_TAG, MAX_TAGS,
   api, consultantAvatar, estimateBlock, firstNames, flash, fmtDate, h, icon, signedInUser
@@ -18,7 +19,7 @@ const ERRORS = {
 const errorText = (err) => ERRORS[err.message] || 'That didn’t save. Please try again.';
 
 const state = {
-  user: null, preview: false, draft: null, fromDraft: false, returning: false,
+  user: null, preview: false, draft: null, fromDraft: false, returning: false, firstRun: true, enquiryId: null,
   stage: '', brief: '', enquiry_id: null, tags: [], consultants: [], resume: 1
 };
 
@@ -72,7 +73,10 @@ function stepFrame(step, title, lede, content, { next = 'Continue', canContinue 
     h('p', { class: 'onb-lede' }, lede),
     h('div', { class: 'onb-body' }, content),
     h('div', { class: 'onb-actions' },
-      h('button', { class: 'btn btn-line btn-lg', type: 'button', onclick: () => go(step - 1) }, icon('arrow-left'), 'Back'),
+      h('button', { class: 'btn btn-line btn-lg', type: 'button', onclick: () => {
+        // after the first run there is no welcome screen to go back to
+        if (step === 1 && !state.firstRun) location.href = '/account#enquiries'; else go(step - 1);
+      } }, icon('arrow-left'), 'Back'),
       nextBtn));
   const sync = () => { nextBtn.disabled = !canContinue(); };
   form.addEventListener('input', sync);
@@ -84,7 +88,6 @@ function stepFrame(step, title, lede, content, { next = 'Continue', canContinue 
     try {
       await onNext();
     } catch (err) {
-      if (err.message === 'already_submitted') return location.replace('/account#project');
       flash(errorText(err), true);
       nextBtn.disabled = false;
     }
@@ -244,7 +247,7 @@ function stepConfirm() {
     next: 'Confirm and finish',
     canContinue: () => reachable() === 4,
     onNext: async () => {
-      if (!state.preview) await api('/api/onboarding', { method: 'POST' });
+      if (!state.preview) state.enquiryId = (await api('/api/onboarding', { method: 'POST' })).enquiry_id;
       done();
     }
   });
@@ -255,11 +258,12 @@ function done() {
   history.replaceState(null, '', location.pathname + location.search + '#done');
   $('main').replaceChildren(h('section', { class: 'onb-done', 'aria-labelledby': 'step-h' },
     h('span', { class: 'onb-done-mark' }, icon('check')),
-    h('h1', { id: 'step-h', tabindex: '-1' }, 'You’re all set.'),
-    h('p', {}, `${firstNames(state.consultants) || 'Your consultant'} will review your brief and confirm an estimate in your workspace.`),
+    h('h1', { id: 'step-h', tabindex: '-1' }, state.firstRun ? 'You’re all set.' : 'Enquiry sent.'),
+    h('p', {}, `${firstNames(state.consultants) || 'Your consultant'} will review your brief and confirm an estimate on your enquiry.`),
     state.preview
       ? h('a', { class: 'btn btn-white btn-lg', href: '/admin#onboarding' }, 'Back to the workspace')
-      : h('a', { class: 'btn btn-white btn-lg', href: '/account#project' }, 'Go to your workspace', icon('arrow-right'))));
+      : h('a', { class: 'btn btn-white btn-lg', href: `/account#enquiries${state.enquiryId ? `/${state.enquiryId}` : ''}` },
+        state.firstRun ? 'Go to your workspace' : 'See your enquiry', icon('arrow-right'))));
   $('step-h').focus();
 }
 
@@ -272,7 +276,8 @@ function go(step) {
 
 function show() {
   const m = location.hash.match(/^#step-([1-4])$/);
-  const step = m ? Math.min(Number(m[1]), reachable()) : 0;
+  // the welcome screen is only for the first run; afterwards "New enquiry" starts at the step you reached
+  const step = m ? Math.min(Number(m[1]), reachable()) : state.firstRun ? 0 : Math.min(state.resume, reachable());
   progress(step);
   const view = [splash, stepCompany, stepField, stepConsultant, stepConfirm][step]();
   $('main').replaceChildren(view);
@@ -294,10 +299,12 @@ if (user) {
   } else {
     try {
       const { onboarding, draft } = await api('/api/onboarding');
-      if (onboarding?.submitted_at) {
-        ready = false;
-        location.replace('/account#project');
-      } else {
+      state.firstRun = !onboarding?.submitted_at;
+      if (!state.firstRun) {
+        document.title = 'New enquiry — cnpt';
+        $('exit').href = '/account#enquiries';
+      }
+      {
         if (onboarding) {
           Object.assign(state, {
             stage: onboarding.stage || '', brief: onboarding.brief || '', enquiry_id: onboarding.enquiry_id,
@@ -312,18 +319,18 @@ if (user) {
       }
     } catch {
       ready = false;
-      $('main').replaceChildren(h('p', { class: 'loading' }, 'Your onboarding could not be loaded. Please refresh the page.'));
+      $('main').replaceChildren(h('p', { class: 'loading' }, 'This could not be loaded. Please refresh the page.'));
     }
     // leaving mid-step keeps what's filled in
     $('exit').addEventListener('click', async (ev) => {
       ev.preventDefault();
       const m = location.hash.match(/^#step-([1-3])$/);
       try { if (m) await save(fieldsFor(Number(m[1]))); } catch { /* keep what was saved before */ }
-      location.href = '/';
+      location.href = state.firstRun ? '/' : '/account#enquiries';
     });
   }
   if (ready) {
-    // always open on the welcome screen; Continue jumps to the step you reached
+    // open on the welcome screen (first run) or the step you reached; the address bar follows
     if (location.hash) history.replaceState(null, '', location.pathname + location.search);
     window.addEventListener('hashchange', show);
     show();

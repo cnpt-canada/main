@@ -1,20 +1,21 @@
-// /account — the client's project (from onboarding), enquiries and profile, in the same workspace frame as /admin.
+// /account — the client's enquiries (with fields, consultants and the estimate) and profile, in the same
+// workspace frame as /admin.
 // Admins can open /account?as=<id> to see a member's account exactly as they do ("view as user", read-only).
 import {
-  CONSULTANTS, ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
-  api, avatar, badge, consultantAvatar, dataTable, estimateBlock, flash, fmtDate, fmtDateTime, h, icon, keepFocus, kv,
-  markSelected, mountShell, section, showPanel, signOut, signedInUser, sortRows, toggleSort
+  ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
+  api, avatar, badge, consultantList, dataTable, estimateBlock, flash, fmtCost, fmtDate, fmtDateTime, h, icon, keepFocus, kv,
+  markSelected, mountShell, section, showPanel, signOut, signedInUser, sortRows, tagList, toggleSort
 } from '/app/common.js';
 
 const $ = (id) => document.getElementById(id);
-const VIEWS = { project: 'Your project', enquiries: 'Your enquiries', profile: 'Profile' };
+const VIEWS = { enquiries: 'Your enquiries', profile: 'Profile' };
 const STATUS_NOTES = {
   new: 'Received. Someone from the cnpt team will read it shortly.',
   in_review: 'The cnpt team is reading it and will reply by email.',
   replied: 'The cnpt team has replied by email. Check your inbox, and your spam folder just in case.',
   closed: 'This enquiry is closed. You can send a new one any time.'
 };
-const state = { enquiries: [], onboarding: null, sort: { key: 'created_at', dir: -1 }, open: null, viewingAs: null };
+const state = { enquiries: [], sort: { key: 'created_at', dir: -1 }, open: null, viewingAs: null };
 let shell;
 
 const COLUMNS = [
@@ -22,40 +23,11 @@ const COLUMNS = [
     cell: (e) => h('time', { datetime: e.created_at, title: fmtDateTime(e.created_at) }, fmtDate(e.created_at)) },
   { key: 'stage', label: 'Stage', cls: 'c-stage', sort: (e) => FUNDING_STAGES.indexOf(e.stage), cell: (e) => h('span', { class: 'chip' }, e.stage) },
   { key: 'message', label: 'Message', cls: 'c-msg', cell: (e) => h('span', { class: 'clip' }, e.message) },
+  { key: 'estimated_cost', label: 'Estimate', cls: 'c-cost', sort: (e) => e.estimated_cost ?? -1,
+    cell: (e) => (e.estimated_cost != null ? h('span', { class: 'cost' }, fmtCost(e.estimated_cost)) : h('span', { class: 'sub' }, 'To be confirmed')) },
   { key: 'status', label: 'Status', cls: 'c-status', sort: (e) => ENQUIRY_STATUSES.indexOf(e.status),
     cell: (e) => badge(e.status, LABELS.enquiryStatus[e.status]) }
 ];
-
-/* ---------- project ---------- */
-
-const tagList = (tags) => h('div', { class: 'tag-list' }, tags.map((t) => h('span', { class: 'tag-chip tag-static' }, h('span', { class: 'tag-hash' }, '#'), t)));
-const card = (cls, title, ...body) => h('section', { class: `card ${cls || ''}` }, h('div', { class: 'card-head' }, h('h2', {}, title)), h('div', { class: 'card-body' }, body));
-
-function renderProject() {
-  const o = state.onboarding;
-  const el = $('project');
-  if (!o || !o.submitted_at) {
-    const started = o && (o.stage || o.brief || o.tags.length);
-    const text = state.viewingAs
-      ? (started ? `Onboarding in progress: they stopped at step ${o.step} of 4.` : 'This member hasn’t started onboarding yet.')
-      : 'Tell us about your company, your field and who you’d like to work with. It takes about two minutes.';
-    el.replaceChildren(h('div', { class: 'card card-empty' },
-      h('span', { class: 'empty-mark' }, icon('folder')),
-      h('h2', {}, state.viewingAs ? 'No project yet' : 'Set up your project'),
-      h('p', { class: 'sub' }, text),
-      !state.viewingAs && h('a', { class: 'btn btn-white btn-sm', href: '/onboarding' }, started ? 'Continue onboarding' : 'Start onboarding', icon('arrow-right'))));
-    return;
-  }
-  el.replaceChildren(
-    card('card-estimate', 'Estimated cost', estimateBlock(o.estimated_cost, o.consultants)),
-    card('', o.consultants.length > 1 ? 'Your consultants' : 'Your consultant', h('div', { class: 'who-list' }, o.consultants.map((k) => h('div', { class: 'who who-lg' },
-      consultantAvatar(k, true), h('span', { class: 'who-text' }, h('strong', {}, CONSULTANTS[k]?.name || '—'), h('span', { class: 'sub' }, CONSULTANTS[k]?.role || '')))))),
-    card('card-wide', 'Your brief',
-      h('div', { class: 'brief-head' }, h('span', { class: 'chip' }, o.stage), h('span', { class: 'sub' }, `Submitted ${fmtDate(o.submitted_at)}`)),
-      h('p', { class: 'msg' }, o.brief),
-      o.enquiry_id && h('a', { class: 'text-link', href: `#enquiries/${o.enquiry_id}` }, 'See it in your enquiries', icon('arrow-right'))),
-    card('card-wide', 'Your fields', tagList(o.tags)));
-}
 
 /* ---------- enquiries ---------- */
 
@@ -64,7 +36,7 @@ function renderEnquiries() {
     label: 'Your enquiries', columns: COLUMNS, rows: sortRows(state.enquiries, COLUMNS, state.sort), sort: state.sort, selected: state.open,
     onSort: (key) => { toggleSort(state.sort, key, key === 'stage' ? 1 : -1); renderEnquiries(); },
     onOpen: (e, replace) => go(`enquiries/${e.id}`, replace),
-    empty: state.viewingAs ? 'No enquiries.' : ['You have not sent an enquiry yet. ', h('a', { href: '/contact' }, 'Tell us about your company'), '.']
+    empty: state.viewingAs ? 'No enquiries.' : ['You have not sent an enquiry yet. ', h('a', { href: '/onboarding' }, 'Tell us about your company'), '.']
   })));
 }
 
@@ -85,7 +57,10 @@ function renderDetail() {
           class: i < at ? 'done' : i === at ? 'now' : null, 'aria-current': i === at ? 'step' : null
         }, LABELS.enquiryStatus[s]))),
         h('p', { class: 'hint' }, STATUS_NOTES[e.status])),
+      section('Estimated cost', estimateBlock(e.estimated_cost, e.consultants)),
       section('Message', h('p', { class: 'msg' }, e.message)),
+      e.tags.length && section('Fields', tagList(e.tags)),
+      e.consultants.length && section(e.consultants.length > 1 ? 'Consultants' : 'Consultant', consultantList(e.consultants)),
       section('Details', kv([
         ['Stage', h('span', { class: 'chip' }, e.stage)],
         ['Sent', fmtDateTime(e.created_at)],
@@ -109,7 +84,7 @@ function renderProfile(user) {
 
 /* ---------- views ---------- */
 
-// Same address-bar routing as /admin: #project, #enquiries, #enquiries/<id>, #profile.
+// Same address-bar routing as /admin: #enquiries, #enquiries/<id>, #profile.
 function go(hash, replace) {
   if (replace) {
     history.replaceState(null, '', `#${hash}`);
@@ -121,7 +96,7 @@ function go(hash, replace) {
 
 function route() {
   const [name, id] = location.hash.slice(1).split('/');
-  const view = Object.hasOwn(VIEWS, name) ? name : 'project';
+  const view = Object.hasOwn(VIEWS, name) ? name : 'enquiries';
   for (const v of Object.keys(VIEWS)) $(`view-${v}`).hidden = v !== view;
   shell.setView(view, VIEWS[view]);
 
@@ -178,15 +153,12 @@ if (me) {
     } else {
       if (data.viewing_as) viewAs(data.user);
       state.enquiries = data.enquiries;
-      state.onboarding = data.onboarding;
       renderProfile(data.user);
-      renderProject();
       renderEnquiries();
       route();
     }
   } catch (err) {
     const text = err.status === 404 ? 'That member doesn’t exist.' : 'This account could not be loaded. Please refresh the page.';
-    $('project').replaceChildren(h('p', { class: 'loading' }, text));
     $('enquiry-table').replaceChildren(h('p', { class: 'loading' }, text));
   }
 }

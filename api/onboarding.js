@@ -1,20 +1,24 @@
-// GET  /api/onboarding → my onboarding so far, plus the latest enquiry I sent (to continue from it)
-// PUT  /api/onboarding {step?, stage?, brief?, enquiry_id?, tags?, consultants?} → saves progress
-// POST /api/onboarding → submits it. If it didn't continue an enquiry, one is created from the brief,
-//                        so the studio sees it in Enquiries. Submitted answers can't be changed here.
+// The step-by-step enquiry flow (/onboarding): the first thing a new client does, and how anyone signed in
+// sends a new enquiry afterwards.
+// GET  /api/onboarding → my draft so far; on the first run also the enquiry I sent from the website (to continue it)
+// PUT  /api/onboarding {step?, stage?, brief?, enquiry_id?, tags?, consultants?} → saves the draft
+// POST /api/onboarding → sends it: completes the website enquiry it continues, or creates a new one, with the
+//                        fields and consultants on it. The draft is then cleared for next time.
 import { db, run } from './_lib/db.js';
 import { emailStudio } from './_lib/notify.js';
-import { loadOnboarding, ONBOARDING_COLUMNS, toPublicOnboarding } from './_lib/onboarding.js';
+import { EMPTY_DRAFT, loadOnboarding, ONBOARDING_COLUMNS, toPublicOnboarding } from './_lib/onboarding.js';
 import { fail, json, methodNotAllowed, readBody, route } from './_lib/http.js';
 import { cleanConsultants, cleanTags, FUNDING_STAGES, MAX_MESSAGE, toId } from './_lib/rules.js';
 import { requireUser } from './_lib/users.js';
 
 const CONSULTANT_NAMES = { michael: 'Michael (Joongmin) Park', brandon: 'Brandon Siow', kenny: 'Kenny' };
 
-async function latestEnquiry(userId) {
-  const rows = await run(db().from('enquiries').select('id,stage,message,created_at')
+// A plain enquiry from the website form (no fields yet) that the first run can pick up.
+async function websiteEnquiry(userId) {
+  const rows = await run(db().from('enquiries').select('id,stage,message,created_at,consultants')
     .eq('user_id', userId).order('created_at', { ascending: false }).limit(1));
-  return rows[0] || null;
+  const e = rows[0];
+  return e && !e.consultants?.length ? { id: e.id, stage: e.stage, message: e.message, created_at: e.created_at } : null;
 }
 
 // Checks the fields that were sent and returns them ready to save, or an error code.
@@ -62,9 +66,9 @@ export default route(async (req, res) => {
   const row = await loadOnboarding(user.id);
 
   if (req.method === 'GET') {
-    return json(res, 200, { ok: true, onboarding: toPublicOnboarding(row), draft: await latestEnquiry(user.id) });
+    const firstRun = !row?.submitted_at;
+    return json(res, 200, { ok: true, onboarding: toPublicOnboarding(row), draft: firstRun ? await websiteEnquiry(user.id) : null });
   }
-  if (row && row.submitted_at) return fail(res, 409, 'already_submitted');
 
   if (req.method === 'PUT') {
     const { changes, error } = await readChanges(readBody(req), user);
@@ -76,30 +80,30 @@ export default route(async (req, res) => {
     return json(res, 200, { ok: true, onboarding: toPublicOnboarding(saved) });
   }
 
-  // POST: submit
+  // POST: send
   if (!row || !row.stage || !row.brief || !row.tags?.length || !row.consultants?.length) return fail(res, 400, 'incomplete');
-  let enquiryId = row.enquiry_id;
-  if (!enquiryId) {
-    const enquiry = await run(db().from('enquiries')
-      .insert({ user_id: user.id, email: user.email, stage: row.stage, message: row.brief }).select('id').single());
-    enquiryId = enquiry.id;
-  }
   const now = new Date().toISOString();
+  const fields = { stage: row.stage, message: row.brief, tags: row.tags, consultants: row.consultants };
+  const continued = row.enquiry_id && await run(db().from('enquiries')
+    .update({ ...fields, updated_at: now }).eq('id', row.enquiry_id).eq('user_id', user.id).select('id').maybeSingle());
+  const enquiry = continued || await run(db().from('enquiries')
+    .insert({ user_id: user.id, email: user.email, ...fields }).select('id').single());
+  const firstRun = !row.submitted_at;
   const saved = await run(db().from('onboarding')
-    .update({ enquiry_id: enquiryId, step: 4, submitted_at: now, updated_at: now })
+    .update({ ...EMPTY_DRAFT, submitted_at: row.submitted_at || now, updated_at: now })
     .eq('id', row.id).select(ONBOARDING_COLUMNS).single());
 
   await emailStudio({
-    subject: `Onboarding finished: ${user.name || user.email} (${row.stage})`,
+    subject: `${firstRun ? 'Onboarding finished' : 'New enquiry'}: ${user.name || user.email} (${row.stage})`,
     text: [
       `Client: ${user.name || '—'} <${user.email}>`,
       `Stage: ${row.stage}`,
       `Fields: ${row.tags.map((t) => `#${t}`).join(' ')}`,
       `Consultants: ${row.consultants.map((c) => CONSULTANT_NAMES[c]).join(', ')}`,
       '', row.brief, '',
-      'Add the estimated cost on /admin → Onboarding.'
+      `Add the estimated cost on /admin → Enquiries → #${enquiry.id}.`
     ].join('\n'),
     replyTo: user.email
   });
-  json(res, 200, { ok: true, onboarding: toPublicOnboarding(saved) });
+  json(res, 200, { ok: true, onboarding: toPublicOnboarding(saved), enquiry_id: enquiry.id, first_run: firstRun });
 });

@@ -1,14 +1,15 @@
-// The first-time onboarding record: one row per client, saved step by step, then submitted.
+// The step-by-step enquiry flow: one row per account holding the draft being filled in (saved at every
+// step, cleared once it is sent) and when the account finished its first run (its onboarding).
 import { db, run } from './db.js';
 
-export const ONBOARDING_COLUMNS =
-  'id,user_id,step,stage,brief,enquiry_id,tags,consultants,estimated_cost,submitted_at,created_at,updated_at';
+export const ONBOARDING_COLUMNS = 'id,user_id,step,stage,brief,enquiry_id,tags,consultants,submitted_at,created_at,updated_at';
+export const EMPTY_DRAFT = { step: 1, stage: null, brief: null, enquiry_id: null, tags: [], consultants: [] };
 
 export function loadOnboarding(userId) {
   return run(db().from('onboarding').select(ONBOARDING_COLUMNS).eq('user_id', userId).maybeSingle());
 }
 
-// What the browser sees. The estimate stays null until an admin sets it.
+// What the browser sees.
 export function toPublicOnboarding(row) {
   if (!row) return null;
   return {
@@ -19,7 +20,6 @@ export function toPublicOnboarding(row) {
     enquiry_id: row.enquiry_id,
     tags: row.tags || [],
     consultants: row.consultants || [],
-    estimated_cost: row.estimated_cost,
     submitted_at: row.submitted_at,
     created_at: row.created_at,
     updated_at: row.updated_at

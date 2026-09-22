@@ -8,7 +8,7 @@ export const CONSULTANTS = ['michael', 'brandon', 'kenny'];
 export const MAX_MESSAGE = 500;
 export const MAX_TAGS = 5;
 export const MAX_TAG = 24;
-export const MAX_COST = 10_000_000;
+export const MAX_COST = 1_000_000;
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TAG_RE = /^[\p{L}\p{N}][\p{L}\p{N} &+./-]*$/u;
 

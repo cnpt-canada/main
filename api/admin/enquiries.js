@@ -1,11 +1,12 @@
 // GET   /api/admin/enquiries?stage=&status= → enquiries, newest first, with the linked account if any
-// PATCH /api/admin/enquiries {id, status}   → moves an enquiry through new → in review → replied → closed
+// PATCH /api/admin/enquiries {id, status?, estimated_cost?} → moves an enquiry through new → in review → replied
+//                                                       → closed, and/or sets its estimate (whole CAD; null clears it)
 import { db, run } from '../_lib/db.js';
 import { fail, json, methodNotAllowed, readBody, route } from '../_lib/http.js';
-import { ENQUIRY_STATUSES, FUNDING_STAGES, toId } from '../_lib/rules.js';
+import { ENQUIRY_STATUSES, FUNDING_STAGES, MAX_COST, toId } from '../_lib/rules.js';
 import { requireAdmin, withClients } from '../_lib/users.js';
 
-const COLUMNS = 'id,user_id,stage,email,message,status,created_at,updated_at';
+const COLUMNS = 'id,user_id,stage,email,message,status,tags,consultants,estimated_cost,created_at,updated_at';
 
 export default route(async (req, res) => {
   if (req.method !== 'GET' && req.method !== 'PATCH') return methodNotAllowed(res, ['GET', 'PATCH']);
@@ -22,9 +23,19 @@ export default route(async (req, res) => {
   const body = readBody(req);
   const id = toId(body.id);
   if (!id) return fail(res, 400, 'invalid_id');
-  if (!ENQUIRY_STATUSES.includes(body.status)) return fail(res, 400, 'invalid_status');
+  const changes = {};
+  if ('status' in body) {
+    if (!ENQUIRY_STATUSES.includes(body.status)) return fail(res, 400, 'invalid_status');
+    changes.status = body.status;
+  }
+  if ('estimated_cost' in body) {
+    const cost = body.estimated_cost;
+    if (cost !== null && !(Number.isInteger(cost) && cost >= 0 && cost <= MAX_COST)) return fail(res, 400, 'invalid_cost');
+    changes.estimated_cost = cost;
+  }
+  if (!Object.keys(changes).length) return fail(res, 400, 'invalid_status');
   const row = await run(db().from('enquiries')
-    .update({ status: body.status, updated_at: new Date().toISOString() })
+    .update({ ...changes, updated_at: new Date().toISOString() })
     .eq('id', id).select(COLUMNS).maybeSingle());
   if (!row) return fail(res, 404, 'not_found');
   json(res, 200, { ok: true, enquiry: (await withClients([row]))[0] });

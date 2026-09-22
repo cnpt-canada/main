@@ -30,7 +30,7 @@ export default route(async (req, res) => {
   }
 
   const [enquiries, onboarding] = await Promise.all([
-    run(db().from('enquiries').select('id,stage,message,status,created_at')
+    run(db().from('enquiries').select('id,stage,message,status,tags,consultants,estimated_cost,created_at')
       .eq('user_id', who.id).order('created_at', { ascending: false })),
     loadOnboarding(who.id)
   ]);

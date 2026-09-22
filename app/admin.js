@@ -1,9 +1,9 @@
 // /admin — the workspace: enquiries, onboarding and members. The page only shows what the API allows;
 // every change is checked again on the server (admin role, allowed values, owners locked).
 import {
-  CONSULTANTS, ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
-  api, avatar, badge, consultantAvatar, dataTable, firstNames, flash, fmtCost, fmtDate, fmtDateTime, h, icon, keepFocus, kv, markSelected,
-  mountShell, section, showPanel, signedInUser, sortRows, toggleSort
+  ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
+  api, avatar, badge, consultantList, dataTable, firstNames, flash, fmtCost, fmtDate, fmtDateTime, h, icon, keepFocus, kv,
+  markSelected, mountShell, section, showPanel, signedInUser, sortRows, tagList, toggleSort
 } from '/app/common.js';
 
 const $ = (id) => document.getElementById(id);
@@ -21,7 +21,7 @@ const ERRORS = {
   cannot_demote_self: 'You can’t remove your own admin access.',
   admin_only: 'Your admin access was removed.',
   signin_required: 'Your session ended. Sign in again.',
-  invalid_cost: 'Enter the estimate as a whole number of dollars, up to 10,000,000.'
+  invalid_cost: 'Enter the estimate as a whole number of dollars, up to 1,000,000.'
 };
 const errorText = (err) => ERRORS[err.message] || 'That didn’t save. Please try again.';
 
@@ -43,6 +43,8 @@ const ENQUIRY_COLUMNS = [
     cell: (e) => [h('strong', {}, e.email), h('span', { class: 'sub' }, e.client ? e.client.name || 'Member' : 'Guest')] },
   { key: 'stage', label: 'Stage', cls: 'c-stage', sort: (e) => FUNDING_STAGES.indexOf(e.stage), cell: (e) => h('span', { class: 'chip' }, e.stage) },
   { key: 'message', label: 'Message', cls: 'c-msg', cell: (e) => h('span', { class: 'clip' }, e.message) },
+  { key: 'estimated_cost', label: 'Estimate', cls: 'c-cost', sort: (e) => e.estimated_cost ?? -1,
+    cell: (e) => (e.estimated_cost != null ? h('span', { class: 'cost' }, fmtCost(e.estimated_cost)) : h('span', { class: 'sub' }, '—')) },
   { key: 'status', label: 'Status', cls: 'c-status', sort: (e) => ENQUIRY_STATUSES.indexOf(e.status),
     cell: (e) => badge(e.status, LABELS.enquiryStatus[e.status]) }
 ];
@@ -135,7 +137,10 @@ function renderDetail() {
           class: 'seg-btn', type: 'button', 'data-status': s, 'aria-pressed': String(e.status === s), onclick: () => setStatus(e, s)
         }, LABELS.enquiryStatus[s]))),
         h('p', { class: 'hint' }, 'Senders with an account see this status on their account page.')),
+      section('Estimated cost', costEditor(e)),
       section('Message', h('p', { class: 'msg' }, e.message)),
+      e.tags.length && section('Fields', tagList(e.tags)),
+      e.consultants.length && section(e.consultants.length > 1 ? 'Consultants' : 'Consultant', consultantList(e.consultants)),
       section('Details', kv([
         ['Stage', h('span', { class: 'chip' }, e.stage)],
         ['Received', fmtDateTime(e.created_at)],
@@ -145,89 +150,92 @@ function renderDetail() {
       ]))));
 }
 
-/* ---------- onboarding ---------- */
+/* ---------- estimates ---------- */
 
-// in progress → submitted (needs an estimate) → estimated
-const progressOf = (o) => (!o.submitted_at ? 'progress' : o.estimated_cost == null ? 'needs' : 'estimated');
-const PROGRESS = { needs: ['new', 'Needs estimate'], estimated: ['replied', 'Estimated'] };
-const progressBadge = (o) => (progressOf(o) === 'progress' ? badge('closed', `Step ${o.step} of 4`) : badge(...PROGRESS[progressOf(o)]));
-const nameOf = (o) => (o.client ? o.client.name || o.client.email : `Member #${o.user_id}`);
-const tagList = (tags) => h('div', { class: 'tag-list' }, tags.map((t) => h('span', { class: 'tag-chip tag-static' }, h('span', { class: 'tag-hash' }, '#'), t)));
-
-const ONB_COLUMNS = [
-  { key: 'name', label: 'Member', cls: 'c-primary', sort: (o) => nameOf(o).toLowerCase(),
-    cell: (o) => h('span', { class: 'who' }, avatar(o.client || { email: '?' }),
-      h('span', { class: 'who-text' }, h('strong', {}, nameOf(o)), h('span', { class: 'sub' }, o.client ? o.client.email : ''))) },
-  { key: 'stage', label: 'Stage', cls: 'c-stage', sort: (o) => FUNDING_STAGES.indexOf(o.stage),
-    cell: (o) => (o.stage ? h('span', { class: 'chip' }, o.stage) : h('span', { class: 'sub' }, '—')) },
-  { key: 'tags', label: 'Fields', cls: 'c-tags', cell: (o) => h('span', { class: 'clip' }, o.tags.length ? o.tags.map((t) => `#${t}`).join('  ') : '—') },
-  { key: 'consultants', label: 'Consultants', cls: 'c-consultant', sort: (o) => o.consultants.join(','),
-    cell: (o) => (o.consultants.length
-      ? h('span', { class: 'who who-sm' }, h('span', { class: 'stack' }, o.consultants.map((k) => consultantAvatar(k))), h('span', { class: 'clip' }, firstNames(o.consultants)))
-      : h('span', { class: 'sub' }, '—')) },
-  { key: 'progress', label: 'Status', cls: 'c-status', sort: (o) => ['needs', 'progress', 'estimated'].indexOf(progressOf(o)), cell: progressBadge },
-  { key: 'estimated_cost', label: 'Estimate', cls: 'c-cost', sort: (o) => o.estimated_cost ?? -1,
-    cell: (o) => (o.estimated_cost != null ? h('span', { class: 'cost' }, fmtCost(o.estimated_cost)) : h('span', { class: 'sub' }, '—')) },
-  { key: 'updated_at', label: 'Updated', cls: 'c-date', sort: (o) => Date.parse(o.updated_at), cell: (o) => time(o.updated_at) }
-];
-
-function renderOnboarding() {
-  const count = (p) => state.onboarding.filter((o) => progressOf(o) === p).length;
-  segButtons($('f-onb'),
-    [['', 'All', state.onboarding.length], ['needs', 'Needs estimate', count('needs')], ['estimated', 'Estimated', count('estimated')],
-      ['progress', 'In progress', count('progress')]],
-    state.onbFilter.status, (value) => { state.onbFilter.status = value; renderOnboarding(); });
-  const { status, text } = state.onbFilter;
-  const needle = text.trim().toLowerCase();
-  const rows = sortRows(state.onboarding
-    .filter((o) => (!status || progressOf(o) === status) && matches(needle, nameOf(o), o.client?.email, ...o.tags))
-    .map((o) => ({ ...o, id: o.user_id })), ONB_COLUMNS, state.onbSort);
-  $('onboarding-meta').textContent = status || needle ? `${rows.length} of ${state.onboarding.length}` : `${rows.length} total`;
-  keepFocus($('onboarding-table'), () => $('onboarding-table').replaceChildren(dataTable({
-    label: 'Onboarding', columns: ONB_COLUMNS, rows, sort: state.onbSort, selected: state.onbOpen,
-    onSort: (key) => { toggleSort(state.onbSort, key, ['name', 'stage', 'consultants', 'progress'].includes(key) ? 1 : -1); renderOnboarding(); },
-    onOpen: (o, replace) => go(`onboarding/${o.user_id}`, replace),
-    empty: state.onboarding.length ? 'Nothing matches these filters.' : 'No one has started onboarding yet. New clients see it right after they sign up.'
-  })));
-  shell.setCount('onboarding', count('needs'));
-}
-
-async function saveCost(o, cost) {
+async function saveCost(e, cost) {
   try {
-    const { onboarding } = await api('/api/admin/onboarding', { method: 'PATCH', body: { user_id: o.user_id, estimated_cost: cost } });
-    Object.assign(o, onboarding);
+    const { enquiry } = await api('/api/admin/enquiries', { method: 'PATCH', body: { id: e.id, estimated_cost: cost } });
+    Object.assign(e, enquiry);
     flash(cost == null ? 'Estimate cleared' : `Estimate saved: ${fmtCost(cost)}`);
-    renderOnboarding();
-    renderOnbDetail();
+    renderEnquiries();
+    renderDetail();
     $('cost-input')?.focus();
   } catch (err) {
     flash(errorText(err), true);
   }
 }
 
-function costEditor(o) {
-  const input = h('input', { class: 'input input-cost', id: 'cost-input', type: 'number', inputmode: 'numeric', min: '0', max: '10000000', step: '100',
-    placeholder: 'e.g. 25000', 'aria-describedby': 'cost-hint' });
-  if (o.estimated_cost != null) input.value = String(o.estimated_cost);
+function costEditor(e) {
+  const input = h('input', { class: 'input input-cost', id: 'cost-input', type: 'number', inputmode: 'numeric', min: '0', max: '1000000', step: '50',
+    placeholder: 'e.g. 2500', 'aria-describedby': 'cost-hint' });
+  if (e.estimated_cost != null) input.value = String(e.estimated_cost);
   const form = h('form', { class: 'cost-form', novalidate: true },
     h('label', { class: 'cost-field' }, h('span', { class: 'cost-prefix', 'aria-hidden': 'true' }, '$'),
       h('span', { class: 'sr-only' }, 'Estimated cost in Canadian dollars'), input, h('span', { class: 'cost-suffix', 'aria-hidden': 'true' }, 'CAD')),
     h('button', { class: 'btn btn-white btn-sm', type: 'submit' }, 'Save'),
-    o.estimated_cost != null && h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => saveCost(o, null) }, 'Clear'));
+    e.estimated_cost != null && h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => saveCost(e, null) }, 'Clear'));
   form.addEventListener('submit', (ev) => {
     ev.preventDefault();
     const n = Number(input.value);
-    if (input.value.trim() === '' || !Number.isInteger(n) || n < 0 || n > 10_000_000) return flash(ERRORS.invalid_cost, true);
-    saveCost(o, n);
+    if (input.value.trim() === '' || !Number.isInteger(n) || n < 0 || n > 1_000_000) return flash(ERRORS.invalid_cost, true);
+    saveCost(e, n);
   });
-  return [form, h('p', { class: 'hint', id: 'cost-hint' }, o.estimated_cost != null
-    ? 'The client sees this on their project page.'
-    : 'Until you save a value, the client sees “To be confirmed”.')];
+  return [form, h('p', { class: 'hint', id: 'cost-hint' }, e.user_id
+    ? (e.estimated_cost != null ? 'The client sees this on their enquiry.' : 'Until you save a value, the client sees “To be confirmed”.')
+    : 'For your records: this enquiry has no account, so nobody else sees it.')];
+}
+
+/* ---------- onboarding (admin view of the first run through the enquiry flow) ---------- */
+
+const doneOf = (o) => Boolean(o.submitted_at);
+const progressBadge = (o) => (doneOf(o) ? badge('replied', 'Completed') : badge('closed', `Step ${o.step} of 4`));
+const nameOf = (o) => (o.client ? o.client.name || o.client.email : `Member #${o.user_id}`);
+const enquiriesFor = (o) => state.enquiries.filter((e) => e.user_id === o.user_id);
+const draftText = (o, value) => (!doneOf(o) && value ? value : null);
+
+function showEnquiriesOf(o) {
+  clearFilters();
+  if (o.client) { state.filter.text = o.client.email; $('f-text').value = o.client.email; }
+  renderEnquiries();
+}
+
+const ONB_COLUMNS = [
+  { key: 'name', label: 'Member', cls: 'c-primary', sort: (o) => nameOf(o).toLowerCase(),
+    cell: (o) => h('span', { class: 'who' }, avatar(o.client || { email: '?' }),
+      h('span', { class: 'who-text' }, h('strong', {}, nameOf(o)), h('span', { class: 'sub' }, o.client ? o.client.email : ''))) },
+  { key: 'progress', label: 'Onboarding', cls: 'c-status', sort: (o) => (doneOf(o) ? 5 : o.step), cell: progressBadge },
+  { key: 'draft', label: 'Draft in progress', cls: 'c-tags',
+    cell: (o) => h('span', { class: 'clip' }, [draftText(o, o.stage), ...(o.tags || []).map((t) => `#${t}`), o.consultants.length ? firstNames(o.consultants) : null].filter(Boolean).join('  ·  ') || '—') },
+  { key: 'enquiries', label: 'Enquiries', cls: 'c-num', sort: (o) => enquiriesFor(o).length,
+    cell: (o) => { const n = enquiriesFor(o).length; return n ? h('a', { class: 'num-link', href: '#enquiries', onclick: () => showEnquiriesOf(o), 'aria-label': `${n} enquiries from ${nameOf(o)}` }, String(n)) : h('span', { class: 'sub' }, '0'); } },
+  { key: 'submitted_at', label: 'Completed', cls: 'c-date', sort: (o) => (o.submitted_at ? Date.parse(o.submitted_at) : 0), cell: (o) => (o.submitted_at ? time(o.submitted_at) : h('span', { class: 'sub' }, '—')) },
+  { key: 'updated_at', label: 'Updated', cls: 'c-date', sort: (o) => Date.parse(o.updated_at), cell: (o) => time(o.updated_at) }
+];
+
+function renderOnboarding() {
+  const done = state.onboarding.filter(doneOf).length;
+  segButtons($('f-onb'),
+    [['', 'All', state.onboarding.length], ['done', 'Completed', done], ['progress', 'In progress', state.onboarding.length - done]],
+    state.onbFilter.status, (value) => { state.onbFilter.status = value; renderOnboarding(); });
+  const { status, text } = state.onbFilter;
+  const needle = text.trim().toLowerCase();
+  const rows = sortRows(state.onboarding
+    .filter((o) => (!status || (status === 'done') === doneOf(o)) && matches(needle, nameOf(o), o.client?.email, ...o.tags))
+    .map((o) => ({ ...o, id: o.user_id })), ONB_COLUMNS, state.onbSort);
+  $('onboarding-meta').textContent = status || needle ? `${rows.length} of ${state.onboarding.length}` : `${rows.length} total`;
+  keepFocus($('onboarding-table'), () => $('onboarding-table').replaceChildren(dataTable({
+    label: 'Onboarding', columns: ONB_COLUMNS, rows, sort: state.onbSort, selected: state.onbOpen,
+    onSort: (key) => { toggleSort(state.onbSort, key, ['name', 'progress'].includes(key) ? 1 : -1); renderOnboarding(); },
+    onOpen: (o, replace) => go(`onboarding/${o.user_id}`, replace),
+    empty: state.onboarding.length ? 'Nothing matches these filters.' : 'No one has started yet. New clients go through it right after they sign up.'
+  })));
 }
 
 function renderOnbDetail() {
   const o = state.onboarding.find((x) => x.user_id === state.onbOpen);
   if (!o) return;
+  const theirs = enquiriesFor(o);
+  const draft = !doneOf(o) || o.stage || o.brief || o.tags.length || o.consultants.length;
   $('onb-detail').replaceChildren(
     h('div', { class: 'detail-head' },
       h('span', { class: 'detail-id' }, `Onboarding · UID #${o.user_id}`),
@@ -237,23 +245,20 @@ function renderOnbDetail() {
         h('h2', { class: 'detail-title' }, nameOf(o)),
         h('p', { class: 'sub' }, o.client ? o.client.email : ''),
         h('div', { class: 'detail-actions' },
-          h('a', { class: 'btn btn-white btn-sm', href: `/account?as=${o.user_id}#project` }, icon('eye'), 'View as user'),
-          o.enquiry_id && h('a', { class: 'btn btn-line btn-sm', href: `#enquiries/${o.enquiry_id}` }, 'Open enquiry'))),
-      section('Estimated cost', costEditor(o)),
-      section('Status', progressBadge(o), h('p', { class: 'hint' }, o.submitted_at
-        ? `Submitted ${fmtDateTime(o.submitted_at)}.`
+          h('a', { class: 'btn btn-white btn-sm', href: `/account?as=${o.user_id}#enquiries` }, icon('eye'), 'View as user'),
+          theirs.length > 0 && h('a', { class: 'btn btn-line btn-sm', href: '#enquiries', onclick: () => showEnquiriesOf(o) }, `Their enquiries (${theirs.length})`))),
+      section('Onboarding', progressBadge(o), h('p', { class: 'hint' }, doneOf(o)
+        ? `Completed ${fmtDateTime(o.submitted_at)}. Fields, consultants and the estimate live on each enquiry.`
         : `Stopped at step ${o.step} of 4. Their answers so far are below.`)),
-      section('Brief', o.stage ? h('span', { class: 'chip' }, o.stage) : null, h('p', { class: 'msg' }, o.brief || '—')),
-      section('Fields', o.tags.length ? tagList(o.tags) : h('p', { class: 'sub' }, '—')),
-      section(o.consultants.length > 1 ? 'Consultants' : 'Consultant', o.consultants.length
-        ? h('div', { class: 'who-list' }, o.consultants.map((k) => h('div', { class: 'who' }, consultantAvatar(k),
-          h('span', { class: 'who-text' }, h('strong', {}, CONSULTANTS[k].name), h('span', { class: 'sub' }, CONSULTANTS[k].role)))))
-        : h('p', { class: 'sub' }, 'Not chosen yet')),
+      draft && section(doneOf(o) ? 'Next enquiry, in progress' : 'Answers so far',
+        o.stage ? h('span', { class: 'chip' }, o.stage) : null,
+        h('p', { class: 'msg' }, o.brief || '—'),
+        o.tags.length ? tagList(o.tags) : null,
+        o.consultants.length ? consultantList(o.consultants) : null),
       section('Details', kv([
         ['Started', fmtDateTime(o.created_at)],
         ['Updated', fmtDateTime(o.updated_at)],
-        ['Submitted', o.submitted_at ? fmtDateTime(o.submitted_at) : '—'],
-        ['Enquiry', o.enquiry_id ? `#${o.enquiry_id}` : '—']
+        ['Completed', o.submitted_at ? fmtDateTime(o.submitted_at) : '—']
       ]))));
 }
 
