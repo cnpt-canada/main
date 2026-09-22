@@ -131,6 +131,14 @@ export const FOCAL = [
   { key: 'advertising', label: 'Advertising', note: 'Launch, campaigns and reaching people' }
 ];
 export const FOCAL_STEP = 10;
+// every area is the brand colour; how much of it a block gets says how big its share is
+const FOCAL_RGB = '230 0 69';
+const FOCAL_FADE = [0.3, 1];
+export function focalShade(value, biggest) {
+  if (!value) return 'transparent';
+  const strength = FOCAL_FADE[0] + (FOCAL_FADE[1] - FOCAL_FADE[0]) * (value / Math.max(biggest, FOCAL_STEP));
+  return `rgb(${FOCAL_RGB} / ${strength.toFixed(3)})`;
+}
 export const DEFAULT_FOCUS = [30, 20, 30, 20];
 
 // The focal bar: four blocks whose widths are the split, with a legend. Given `onChange`, the three edges
@@ -217,13 +225,16 @@ export function focalBar(values, { onChange, detailed = false } = {}) {
 
   function render() {
     const b = edges();
+    const biggest = Math.max(...v);
     segs.forEach((s, i) => {
       s.style.flexBasis = `${v[i]}%`;
+      s.style.backgroundColor = focalShade(v[i], biggest);
       s.hidden = v[i] === 0;
       s.firstChild.textContent = `${v[i]}%`;
     });
     items.forEach((li, i) => {
       li.querySelector('.focal-val').textContent = `${v[i]}%`;
+      li.querySelector('.focal-dot').style.backgroundColor = focalShade(v[i] || FOCAL_STEP, biggest);
       li.classList.toggle('is-zero', v[i] === 0);
     });
     handles.forEach((el, i) => {

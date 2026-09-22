@@ -1,8 +1,8 @@
 // GET /api/auth/google?next=/account
 // Sends the browser to Google's account chooser. Signing in for the first time creates the
 // account, so this is also the sign-up path.
-import { methodNotAllowed, publicUrl, redirect, route, safePath } from '../_lib/http.js';
-import { createOAuthState } from '../_lib/session.js';
+import { methodNotAllowed, publicUrl, redirect, route, safePath } from '../http.js';
+import { createOAuthState } from '../session.js';
 
 export default route(async (req, res) => {
   if (req.method !== 'GET') return methodNotAllowed(res, ['GET']);

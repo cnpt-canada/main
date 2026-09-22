@@ -70,6 +70,10 @@ for production.
   paths on this site.
 - Every write checks the request's `Origin`; admin routes check the admin role; all input is validated against
   the same lists the database enforces (`api/_lib/rules.js`, `supabase/schema.sql`).
+- Vercel deploys one function per file under `api/`, and the plan allows twelve. Sign-in and the admin API each
+  sit behind a single file (`api/auth/[action].js`, `api/admin/[section].js`) that hands the request to the matching
+  module in `api/_lib/`. Anything under `api/_lib/` is never deployed as a function, so new endpoints can go there
+  and be added to one of those two files instead of adding another function.
 - `vercel.json` sets security headers site-wide; `/signin`, `/account` and `/admin` add a strict CSP with no
   inline scripts.
 

@@ -1,10 +1,10 @@
 // GET   /api/admin/enquiries?stage=&status= → enquiries, newest first, with the linked account if any
 // PATCH /api/admin/enquiries {id, status?, estimated_cost?} → moves an enquiry through new → in review → replied
 //                                                       → closed, and/or sets its estimate (whole CAD; null clears it)
-import { db, run } from '../_lib/db.js';
-import { fail, json, methodNotAllowed, readBody, route } from '../_lib/http.js';
-import { ENQUIRY_STATUSES, FUNDING_STAGES, MAX_COST, toId } from '../_lib/rules.js';
-import { requireAdmin, withClients } from '../_lib/users.js';
+import { db, run } from '../db.js';
+import { fail, json, methodNotAllowed, readBody, route } from '../http.js';
+import { ENQUIRY_STATUSES, FUNDING_STAGES, MAX_COST, toId } from '../rules.js';
+import { requireAdmin, withClients } from '../users.js';
 
 const COLUMNS = 'id,user_id,stage,email,message,status,tags,focus,consultants,estimated_cost,created_at,updated_at';
 

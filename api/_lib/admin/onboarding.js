@@ -1,9 +1,9 @@
 // GET /api/admin/onboarding → every account's run through the step-by-step flow, most recently updated first:
 // finished (submitted_at) or where they stopped, with the draft answers so far. Estimates live on the enquiries.
-import { db, run } from '../_lib/db.js';
-import { json, methodNotAllowed, route } from '../_lib/http.js';
-import { ONBOARDING_COLUMNS, toPublicOnboarding } from '../_lib/onboarding.js';
-import { requireAdmin, withClients } from '../_lib/users.js';
+import { db, run } from '../db.js';
+import { json, methodNotAllowed, route } from '../http.js';
+import { ONBOARDING_COLUMNS, toPublicOnboarding } from '../onboarding.js';
+import { requireAdmin, withClients } from '../users.js';
 
 export default route(async (req, res) => {
   if (req.method !== 'GET') return methodNotAllowed(res, ['GET']);

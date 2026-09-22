@@ -1,10 +1,10 @@
 // GET   /api/admin/users           → everyone who has signed in, newest first
 // PATCH /api/admin/users {id, role} → grants or removes admin access
 // Owners (ADMIN_EMAILS) can't be changed, and admins can't remove their own access.
-import { db, run } from '../_lib/db.js';
-import { fail, json, methodNotAllowed, readBody, route } from '../_lib/http.js';
-import { ROLES, toId } from '../_lib/rules.js';
-import { USER_COLUMNS, isOwner, requireAdmin, toPublicUser } from '../_lib/users.js';
+import { db, run } from '../db.js';
+import { fail, json, methodNotAllowed, readBody, route } from '../http.js';
+import { ROLES, toId } from '../rules.js';
+import { USER_COLUMNS, isOwner, requireAdmin, toPublicUser } from '../users.js';
 
 export default route(async (req, res) => {
   if (req.method !== 'GET' && req.method !== 'PATCH') return methodNotAllowed(res, ['GET', 'PATCH']);

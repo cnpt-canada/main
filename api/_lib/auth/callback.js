@@ -3,9 +3,9 @@
 // creates or updates the account, attaches earlier enquiries sent from the same address, and starts
 // the session. Every failure goes back to /signin with a reason the page can explain.
 import { decodeJwt } from 'jose';
-import { db, run } from '../_lib/db.js';
-import { methodNotAllowed, publicUrl, redirect, route, safePath } from '../_lib/http.js';
-import { consumeOAuthState, startSession } from '../_lib/session.js';
+import { db, run } from '../db.js';
+import { methodNotAllowed, publicUrl, redirect, route, safePath } from '../http.js';
+import { consumeOAuthState, startSession } from '../session.js';
 
 const GOOGLE_ISSUERS = ['https://accounts.google.com', 'accounts.google.com'];
 

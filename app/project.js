@@ -143,89 +143,139 @@ export function commentThread({ comments, me, onSend, onDelete, readOnly = false
 /* ---------- calendar ---------- */
 
 const SLOT_MINUTES = 30;
-const slotsPerDay = ((CLOSE_HOUR - OPEN_HOUR) * 60) / SLOT_MINUTES;
+const SLOTS_PER_DAY = ((CLOSE_HOUR - OPEN_HOUR) * 60) / SLOT_MINUTES;
 
-// Mon–Fri, 09:00–18:00 in half hours: tap a slot to place a block, drag down to make it an hour.
-// `onPick({ startsAt, minutes })` runs whenever the block moves; `busy` greys out what is already booked.
-export function meetingCalendar({ busy = [], minutes = 30, onPick, from = new Date() }) {
-  let start = weekStart(from);
+// Mon–Fri, 09:00–18:00 in half hours. Tap a slot to place the meeting, drag down the same day to make it an
+// hour. The week is built once and repainted in place, so a drag never loses the cell under the pointer.
+// `busy` greys out what is gone, `mine` marks the times this person already booked.
+// `onPick({ startsAt, minutes })` runs whenever the block moves.
+export function meetingCalendar({ busy = [], mine = [], minutes = 30, onPick, from = new Date() }) {
+  let weekFrom = weekStart(from);
   let picked = null;
   let length = minutes;
+  let cells = [];
 
   const grid = h('div', { class: 'cal-grid' });
   const title = h('p', { class: 'cal-title' });
   const back = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Previous week' }, icon('arrow-left'));
   const forward = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Next week' }, icon('arrow-right'));
-  back.addEventListener('click', () => { start = new Date(start.getTime() - 7 * 86400000); draw(); });
-  forward.addEventListener('click', () => { start = new Date(start.getTime() + 7 * 86400000); draw(); });
+  back.addEventListener('click', () => { weekFrom = new Date(weekFrom.getTime() - 7 * 86400000); build(); });
+  forward.addEventListener('click', () => { weekFrom = new Date(weekFrom.getTime() + 7 * 86400000); build(); });
 
-  const taken = (at, mins) => busy.some((m) =>
-    at.getTime() < Date.parse(m.starts_at) + m.minutes * 60000 && Date.parse(m.starts_at) < at.getTime() + mins * 60000);
+  const overlaps = (aFrom, aMins, bFrom, bMins) =>
+    aFrom < bFrom + bMins * 60000 && bFrom < aFrom + aMins * 60000;
+  const takenBy = (list, at, mins) => list.some((m) => overlaps(at.getTime(), mins, Date.parse(m.starts_at), m.minutes));
+  const isTaken = (at, mins) => takenBy(busy, at, mins);
+  const isMine = (at, mins) => takenBy(mine, at, mins);
+
+  // Can a meeting of `mins` start here? It has to be free, ahead of now, and finish before the day closes.
+  function canPlace(at, mins) {
+    if (at.getTime() < Date.now() || isTaken(at, mins)) return false;
+    const closes = slotOn(at, CLOSE_HOUR, 0);
+    return at.getTime() + mins * 60000 <= closes.getTime();
+  }
 
   function place(at, mins) {
-    if (taken(at, mins) || at.getTime() < Date.now()) return;
-    const endsBy = (Number(clockAt(at).slice(0, 2)) * 60) + Number(clockAt(at).slice(3)) + mins;
-    if (endsBy > CLOSE_HOUR * 60) return;
-    picked = { startsAt: at.toISOString(), minutes: mins };
-    length = mins;
-    draw();
+    const want = MEETING_LENGTHS.includes(mins) ? mins : SLOT_MINUTES;
+    const fits = canPlace(at, want) ? want : canPlace(at, SLOT_MINUTES) ? SLOT_MINUTES : null;
+    if (fits === null) return;
+    if (picked && Date.parse(picked.startsAt) === at.getTime() && picked.minutes === fits) return;
+    picked = { startsAt: at.toISOString(), minutes: fits };
+    length = fits;
+    paint();
     onPick?.(picked);
   }
 
-  function draw() {
-    const days = [0, 1, 2, 3, 4].map((d) => new Date(start.getTime() + d * 86400000));
+  // Updates the cells that are already on screen; never rebuilds them.
+  function paint() {
+    for (const cell of cells) {
+      const { el, at } = cell;
+      const past = at.getTime() < Date.now();
+      const busyHere = isTaken(at, SLOT_MINUTES);
+      const mineHere = isMine(at, SLOT_MINUTES);
+      const inPick = picked && at.getTime() >= Date.parse(picked.startsAt)
+        && at.getTime() < Date.parse(picked.startsAt) + picked.minutes * 60000;
+      el.disabled = past || busyHere;
+      el.classList.toggle('is-taken', busyHere && !mineHere);
+      el.classList.toggle('is-mine', mineHere);
+      el.classList.toggle('is-picked', Boolean(inPick));
+      el.setAttribute('aria-pressed', String(Boolean(inPick)));
+      el.setAttribute('aria-label', `${dayAt(at)}, ${clockAt(at)}${mineHere ? ', yours' : busyHere ? ', already taken' : past ? ', past' : ''}`);
+      const label = inPick && at.getTime() === Date.parse(picked.startsAt) ? `${picked.minutes} min` : mineHere ? 'Yours' : '';
+      el.firstChild.textContent = label;
+      el.firstChild.hidden = !label;
+    }
+  }
+
+  function build() {
+    const days = [0, 1, 2, 3, 4].map((d) => new Date(weekFrom.getTime() + d * 86400000));
     title.textContent = `${inToronto(days[0], { month: 'long', day: 'numeric' })} – ${inToronto(days[4], { month: 'long', day: 'numeric', year: 'numeric' })}`;
     back.disabled = days[0].getTime() < Date.now() - 7 * 86400000;
+    cells = [];
     const rows = [h('div', { class: 'cal-corner', 'aria-hidden': 'true' }),
       ...days.map((d) => h('div', { class: 'cal-day' }, h('strong', {}, inToronto(d, { weekday: 'short' })), h('span', {}, inToronto(d, { day: 'numeric' }))))];
-    for (let i = 0; i < slotsPerDay; i++) {
+    for (let i = 0; i < SLOTS_PER_DAY; i++) {
       const hour = OPEN_HOUR + Math.floor(i / 2);
       const minute = i % 2 ? 30 : 0;
       rows.push(h('div', { class: minute ? 'cal-time cal-time-half' : 'cal-time' }, minute ? '' : `${String(hour).padStart(2, '0')}:00`));
-      for (const day of days) {
+      days.forEach((day, column) => {
         const at = slotOn(day, hour, minute);
-        const gone = at.getTime() < Date.now();
-        const busyHere = taken(at, SLOT_MINUTES);
-        const inPick = picked && at.getTime() >= Date.parse(picked.startsAt) && at.getTime() < Date.parse(picked.startsAt) + picked.minutes * 60000;
-        const cell = h('button', {
-          class: `cal-slot${busyHere ? ' is-taken' : ''}${inPick ? ' is-picked' : ''}`, type: 'button',
-          disabled: gone || busyHere, 'data-at': at.toISOString(), 'aria-pressed': String(Boolean(inPick)),
-          'aria-label': `${dayAt(at)}, ${clockAt(at)}${busyHere ? ', already taken' : gone ? ', past' : ''}`
-        }, inPick && at.getTime() === Date.parse(picked.startsAt) ? h('span', { class: 'cal-block' }, `${picked.minutes} min`) : null);
-        cell.addEventListener('pointerdown', (ev) => {
-          if (ev.button !== 0 || cell.disabled) return;
-          ev.preventDefault();
-          cell.setPointerCapture(ev.pointerId);
-          place(at, length);
-          const move = (e) => {
-            const over = document.elementFromPoint(e.clientX, e.clientY);
-            const to = over?.closest('.cal-slot')?.dataset.at;
-            if (!to) return;
-            const mins = Math.round((Date.parse(to) - at.getTime()) / 60000) + SLOT_MINUTES;
-            place(at, MEETING_LENGTHS.includes(mins) ? mins : mins > 60 ? 60 : 30);
-          };
-          const up = () => { cell.removeEventListener('pointermove', move); cell.removeEventListener('pointerup', up); };
-          cell.addEventListener('pointermove', move);
-          cell.addEventListener('pointerup', up);
-        });
-        cell.addEventListener('keydown', (ev) => {
-          if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); place(at, length); }
-        });
-        rows.push(cell);
-      }
+        const el = h('button', { class: 'cal-slot', type: 'button', 'data-at': at.toISOString(), 'data-day': String(column) },
+          h('span', { class: 'cal-block', hidden: true }));
+        rows.push(el);
+        cells.push({ el, at, column });
+      });
     }
     grid.replaceChildren(...rows);
+    paint();
   }
-  draw();
+
+  // One set of listeners on the grid, so repainting can never take them away mid-drag.
+  const cellAt = (target) => cells.find((c) => c.el === target?.closest?.('.cal-slot'));
+  grid.addEventListener('pointerdown', (ev) => {
+    const from = cellAt(ev.target);
+    if (ev.button !== 0 || !from || from.el.disabled) return;
+    ev.preventDefault();
+    grid.setPointerCapture(ev.pointerId);
+    place(from.at, length);
+    const move = (e) => {
+      const over = cellAt(document.elementFromPoint(e.clientX, e.clientY));
+      if (!over || over.column !== from.column) return;           // stay in the day you started in
+      const mins = Math.round((over.at.getTime() - from.at.getTime()) / 60000) + SLOT_MINUTES;
+      place(from.at, mins >= 60 ? 60 : SLOT_MINUTES);
+    };
+    const up = () => {
+      grid.removeEventListener('pointermove', move);
+      grid.removeEventListener('pointerup', up);
+      grid.removeEventListener('pointercancel', up);
+    };
+    grid.addEventListener('pointermove', move);
+    grid.addEventListener('pointerup', up);
+    grid.addEventListener('pointercancel', up);
+  });
+  grid.addEventListener('keydown', (ev) => {
+    const cell = cellAt(ev.target);
+    if (!cell || (ev.key !== 'Enter' && ev.key !== ' ')) return;
+    ev.preventDefault();
+    place(cell.at, length);
+  });
+  build();
 
   return {
     el: h('div', { class: 'cal' },
       h('div', { class: 'cal-head' }, back, title, forward),
       grid,
       h('p', { class: 'hint' }, 'Tap a time to place your meeting, or drag down to make it an hour. Weekdays, 09:00–18:00 Toronto time.')),
-    setLength(mins) { length = mins; if (picked) place(new Date(picked.startsAt), mins); },
-    clear() { picked = null; draw(); },
-    refresh(next) { busy = next; draw(); }
+    setLength(mins) {
+      length = mins;
+      if (picked) place(new Date(picked.startsAt), mins);
+    },
+    clear() { picked = null; paint(); },
+    refresh({ busy: nextBusy = busy, mine: nextMine = mine } = {}) {
+      busy = nextBusy;
+      mine = nextMine;
+      paint();
+    }
   };
 }
 

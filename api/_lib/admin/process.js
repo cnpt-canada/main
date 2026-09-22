@@ -1,12 +1,12 @@
 // GET   /api/admin/process                                   → every client's process, most recently moved first
 // PATCH /api/admin/process {user_id, stage?, headline?}       → moves the work along, or says what is happening now
 // PUT   /api/admin/process {user_id, type, data}              → the picture for this stage (base64), data: null removes it
-import { db, run } from '../_lib/db.js';
-import { fail, json, methodNotAllowed, readBody, route } from '../_lib/http.js';
-import { loadProcess, PROCESS_COLUMNS } from '../_lib/process.js';
-import { IMAGE_TYPES, MAX_HEADLINE, MAX_IMAGE_BYTES, PROCESS_STAGES, toId } from '../_lib/rules.js';
-import { imageLink, removeImage, saveImage } from '../_lib/storage.js';
-import { requireAdmin, withClients } from '../_lib/users.js';
+import { db, run } from '../db.js';
+import { fail, json, methodNotAllowed, readBody, route } from '../http.js';
+import { loadProcess, PROCESS_COLUMNS } from '../process.js';
+import { IMAGE_TYPES, MAX_HEADLINE, MAX_IMAGE_BYTES, PROCESS_STAGES, toId } from '../rules.js';
+import { imageLink, removeImage, saveImage } from '../storage.js';
+import { requireAdmin, withClients } from '../users.js';
 
 // Makes sure the client has a process row, so an admin can start one from the first edit.
 async function ensureProcess(userId) {

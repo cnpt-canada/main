@@ -272,6 +272,7 @@ function renderMeeting() {
 
   const calendar = meetingCalendar({
     busy: state.busy,
+    mine: liveMeetings(),
     onPick: (picked) => {
       state.picked = picked;
       when.textContent = slotText(picked.startsAt, picked.minutes);

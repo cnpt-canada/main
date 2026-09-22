@@ -1,10 +1,10 @@
 // GET   /api/admin/meetings                  → every meeting, soonest first, with the client who booked it
 // PATCH /api/admin/meetings {id, status}     → confirm, decline or call off a meeting
-import { db, run } from '../_lib/db.js';
-import { fail, json, methodNotAllowed, readBody, route } from '../_lib/http.js';
-import { MEETING_COLUMNS } from '../_lib/process.js';
-import { MEETING_STATUSES, toId } from '../_lib/rules.js';
-import { requireAdmin, withClients } from '../_lib/users.js';
+import { db, run } from '../db.js';
+import { fail, json, methodNotAllowed, readBody, route } from '../http.js';
+import { MEETING_COLUMNS } from '../process.js';
+import { MEETING_STATUSES, toId } from '../rules.js';
+import { requireAdmin, withClients } from '../users.js';
 
 export default route(async (req, res) => {
   if (!['GET', 'PATCH'].includes(req.method)) return methodNotAllowed(res, ['GET', 'PATCH']);
