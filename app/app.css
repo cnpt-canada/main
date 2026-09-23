@@ -69,8 +69,9 @@ button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 .side-top{display:flex;align-items:center;gap:10px;height:var(--bar-h);padding:0 12px 0 20px;border-bottom:1px solid var(--rule)}
 .side-brand{display:block;color:#fff}
 .side-brand .wm{display:block;width:62px;height:auto;aspect-ratio:140/32}
-.side-tag{display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:var(--r-cap);background:var(--signal-deep);
-  color:#fff;font-size:12px;font-weight:700;line-height:1;letter-spacing:-0.012em;white-space:nowrap}
+/* just the word beside the mark: no pill, no weight */
+.side-tag{display:inline-flex;align-items:center;height:22px;color:var(--soft);font-size:13px;font-weight:400;
+  line-height:1;letter-spacing:-0.012em;white-space:nowrap}
 .side-close{display:none;margin-left:auto}
 .side-nav{flex:1;display:grid;align-content:start;gap:22px;padding:18px 10px;overflow-y:auto}
 .nav-group{display:grid;gap:2px}
@@ -160,8 +161,11 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .grid .empty-cell a{color:#fff;text-decoration:underline;text-underline-offset:3px}
 .c-id{width:72px;font-family:var(--mono);font-size:12px;color:var(--muted)}
 .c-date{width:128px;white-space:nowrap;color:#A3A39E}
+.c-primary{min-width:180px}
 .c-primary strong{display:block;max-width:30ch;overflow:hidden;font-weight:700;color:#fff;text-overflow:ellipsis;white-space:nowrap}
-.c-primary .sub{display:block}
+.c-primary .sub{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* the name keeps its room when the panel is open; the message gives way instead */
+.c-primary .who-text{min-width:0}
 .c-stage{width:112px}
 .c-status{width:116px}
 .c-msg{width:40%;max-width:0}
@@ -191,6 +195,25 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .detail-body .sub{display:block;margin-top:4px}
 .detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 .detail-section h3{margin-bottom:10px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+/* two buttons beside a view's heading */
+.view-head-actions{display:flex;flex-wrap:wrap;gap:8px}
+/* the last thing in a panel: what cannot be taken back */
+.danger-zone{padding-top:20px;border-top:1px solid #3A1420}
+.danger-zone .hint{margin:0 0 12px}
+/* editing an enquiry in place */
+.edit-form{display:grid;gap:26px}
+.edit-form .select,.edit-form .input{width:100%}
+.edit-foot{display:flex;justify-content:flex-end;margin-top:8px}
+.edit-focal{display:grid;gap:12px}
+.edit-focal .link{justify-self:start}
+.edit-who{display:flex;flex-wrap:wrap;gap:8px}
+.who-chip{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px 0 6px;border:0;border-radius:var(--r-cap);
+  background:none;box-shadow:inset 0 0 0 1px var(--line);color:var(--soft);font-size:13.5px;font-weight:700;cursor:pointer;
+  transition:background-color .15s,color .15s,box-shadow .15s}
+.who-chip .avatar{width:28px;height:28px;font-size:12px}
+.who-chip[aria-pressed="true"]{background:var(--signal-deep);box-shadow:none;color:#fff}
+@media(hover:hover){.who-chip:not([aria-pressed="true"]):hover{box-shadow:inset 0 0 0 1px #fff;color:#fff}}
+.edit-actions{display:flex;flex-wrap:wrap;gap:8px;padding-top:4px}
 .msg{font-size:14.5px;line-height:1.65;color:var(--soft);white-space:pre-wrap;overflow-wrap:anywhere}
 .hint{margin-top:10px;font-size:12.5px;color:var(--muted)}
 .kv > div{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:baseline;padding:10px 0;border-top:1px solid var(--rule)}
@@ -545,6 +568,7 @@ th[aria-sort] .th-sort .ic{opacity:1}
 @media(min-width:1280px){
   .split.has-detail{grid-template-columns:minmax(0,1fr) 400px}
   .has-detail .grid .c-id,.has-detail .grid .c-stage,.has-detail .grid .c-tags{display:none}
+  .has-detail .grid .c-primary .avatar{display:none}   /* the room goes to the name */
 }
 /* narrower: the details panel slides over the table */
 @media(max-width:1279px){

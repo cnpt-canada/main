@@ -83,7 +83,7 @@ for production.
 | `/onboarding` | signed in | the step-by-step enquiry: company, fields (up to 5 tags), focal, consultants, confirm. New clients see it first, with a welcome screen; "New enquiry" opens it later |
 | `/talent` | anyone | the networking pool around Toronto: pick Consultant, Designer, Engineer or Commerce & Management and write in. Sends to `TALENT_TO` with the category in the subject, and saves to `talent` |
 | `/account` | signed in | your enquiries (status, fields, focal, consultants, estimate), Your process, Book a meeting, profile with your project at a glance, sign out, delete account |
-| `/admin` | admins | enquiries (filter, search, sort, status, estimate, reply by email), onboarding (who finished their first run, where others stopped, view as user), process (stage, the picture the client sees, notes), meetings (confirm or decline), members (grant/remove admin) |
+| `/admin` | admins | enquiries — one list holding both what has been sent and what people are still writing (filter, search, sort, status, estimate, reply by email, edit or delete, view as user), process (stage, the picture the client sees, notes), meetings (confirm or decline), members (grant/remove admin) |
 
 New clients (not admins) are sent to `/onboarding` until they send their first enquiry through it; each step is saved,
 so they can leave and come back. Sending completes the enquiry they sent from the website (if any) or creates one, with
@@ -92,7 +92,13 @@ Product Developing and Advertising: four blocks on a bar whose edges move in ten
 (`enquiries.focus`, in that order). The client can keep adjusting it on the enquiry until it is closed. The estimate is set per enquiry on `/admin` → Enquiries (whole CAD, up to 1,000,000);
 until then the client sees "To be confirmed". Admins can open `/onboarding?preview` to walk through it without saving,
 and "View as" (`/account?as=<id>`) shows a member's account read-only. An admin picks who to view as from the
-**View as a member** card on their own Profile, or from a member's onboarding record.
+**View as a member** card on their own Profile, or straight from the enquiry or draft they are reading.
+
+`/admin` → Enquiries is one list: an enquiry that has been sent is a row, and so is a run through the onboarding
+flow that nobody has finished, marked "Step 3 of 5". A draft's address carries a `d` (`#enquiries/d12`) so the two
+kinds never collide. An admin can edit an enquiry in place — sender, stage, message, fields, focal, consultants —
+and delete it, which removes it from the client's account too. Throwing away a draft sends that person back to the
+start of the flow and leaves the enquiries they have already sent alone. Both ask before they do it.
 
 After an enquiry comes the work itself, on `/account` → Your process: the stage it is in (Frame → Concept → System → Entry),
 a picture an admin uploads for that stage, and one thread beside it. The client writes there as **Project Owner** and the cnpt

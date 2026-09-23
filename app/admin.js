@@ -1,19 +1,19 @@
-// /admin — the workspace: enquiries, onboarding and members. The page only shows what the API allows;
+// /admin — the workspace: enquiries (with the drafts still being written), process, meetings and members.
+// The page only shows what the API allows;
 // every change is checked again on the server (admin role, allowed values, owners locked).
 import { commentThread, processThumbnail, readImage, slotText, STAGES, stageIndex } from '/app/project.js';
 import {
-  ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
-  api, avatar, badge, consultantList, dataTable, firstNames, flash, fmtCost, fmtDate, fmtDateTime, focalBar, h, icon, keepFocus, kv,
-  markSelected, mountShell, section, showPanel, signedInUser, sortRows, tagList, toggleSort
+  CONSULTANTS, DEFAULT_FOCUS, ENQUIRY_STATUSES, FIELD_TAGS, FUNDING_STAGES, LABELS, MAX_MESSAGE, MAX_TAGS,
+  api, avatar, badge, consultantAvatar, consultantList, dataTable, firstNames, flash, fmtCost, fmtDate, fmtDateTime, focalBar,
+  h, icon, keepFocus, kv, markSelected, mountShell, section, showPanel, signedInUser, sortRows, tagList, toggleSort
 } from '/app/common.js';
 
 const $ = (id) => document.getElementById(id);
-const VIEWS = { enquiries: 'Enquiries', onboarding: 'Onboarding', process: 'Process', meetings: 'Meetings', members: 'Members' };
+const VIEWS = { enquiries: 'Enquiries', process: 'Process', meetings: 'Meetings', members: 'Members' };
 const state = {
   enquiries: [], users: [], onboarding: [], process: [], meetings: [], comments: [], me: null,
   processFilter: { stage: '', text: '' }, processSort: { key: 'updated_at', dir: -1 }, processOpen: null, meetFilter: { status: '' },
-  filter: { status: '', stage: '', text: '' }, sort: { key: 'created_at', dir: -1 }, open: null,
-  onbFilter: { status: '', text: '' }, onbSort: { key: 'updated_at', dir: -1 }, onbOpen: null,
+  filter: { status: '', stage: '', text: '' }, sort: { key: 'at', dir: -1 }, open: null,
   memberFilter: { role: '', text: '' }, memberSort: { key: 'created_at', dir: -1 }
 };
 let shell;
@@ -39,54 +39,97 @@ function segButtons(container, options, current, onPick) {
   }, label, n != null && h('span', { class: 'n' }, n)))));
 }
 
-/* ---------- enquiries ---------- */
+/* ---------- the inbox: enquiries, and the drafts still being written ---------- */
 
-const ENQUIRY_COLUMNS = [
-  { key: 'id', label: 'ID', cls: 'c-id', sort: (e) => e.id, cell: (e) => `#${e.id}` },
-  { key: 'created_at', label: 'Received', cls: 'c-date', sort: (e) => Date.parse(e.created_at), cell: (e) => time(e.created_at) },
-  { key: 'email', label: 'From', cls: 'c-primary', sort: (e) => e.email,
-    cell: (e) => [h('strong', {}, e.email), h('span', { class: 'sub' }, e.client ? e.client.name || 'Member' : 'Guest')] },
-  { key: 'stage', label: 'Stage', cls: 'c-stage', sort: (e) => FUNDING_STAGES.indexOf(e.stage), cell: (e) => h('span', { class: 'chip' }, e.stage) },
-  { key: 'message', label: 'Message', cls: 'c-msg', cell: (e) => h('span', { class: 'clip' }, e.message) },
-  { key: 'estimated_cost', label: 'Estimate', cls: 'c-cost', sort: (e) => e.estimated_cost ?? -1,
-    cell: (e) => (e.estimated_cost != null ? h('span', { class: 'cost' }, fmtCost(e.estimated_cost)) : h('span', { class: 'sub' }, '—')) },
-  { key: 'status', label: 'Status', cls: 'c-status', sort: (e) => ENQUIRY_STATUSES.indexOf(e.status),
-    cell: (e) => badge(e.status, LABELS.enquiryStatus[e.status]) }
+// A row is either an enquiry or someone's unfinished run through the onboarding flow: both are the same
+// thing at different moments, so they share one list. A draft's id carries a "d" so the two never collide
+// in the address bar, and every id is a string so the table can match the open one.
+const ONB_STEPS = 5; // company, field, focal, consultants, confirm
+const doneOf = (o) => Boolean(o.submitted_at);
+const nameOf = (o) => (o.client ? o.client.name || o.client.email : `Member #${o.user_id}`);
+const enquiriesFor = (o) => state.enquiries.filter((e) => e.user_id === o.user_id);
+const draftId = (o) => `d${o.user_id}`;
+const isDraft = (r) => r.kind === 'draft';
+// Both kinds read the same way: the person on top, how to reach them underneath.
+const fromText = (r) => (r.client ? r.client.name || r.client.email : isDraft(r) ? nameOf(r) : r.email);
+const whoNote = (r) => (r.client ? r.client.email : isDraft(r) ? 'No account' : 'Guest');
+const draftLine = (o) => [o.brief, ...(o.tags || []).map((t) => `#${t}`), o.consultants?.length ? firstNames(o.consultants) : null]
+  .filter(Boolean).join('  ·  ');
+const summary = (r) => (isDraft(r) ? draftLine(r) || 'Nothing written yet' : r.message);
+const statusOf = (r) => (isDraft(r) ? badge('closed', `Step ${r.step} of ${ONB_STEPS}`) : badge(r.status, LABELS.enquiryStatus[r.status]));
+const statusRank = (r) => (isDraft(r) ? -1 : ENQUIRY_STATUSES.indexOf(r.status));
+
+function inboxRows() {
+  return [
+    ...state.enquiries.map((e) => ({ ...e, kind: 'enquiry', id: String(e.id), at: e.created_at })),
+    ...state.onboarding.filter((o) => !doneOf(o)).map((o) => ({ ...o, kind: 'draft', id: draftId(o), at: o.updated_at }))
+  ];
+}
+
+// The row that is open, as the object held in state, so saving it updates the list as well.
+function openRow() {
+  const key = state.open;
+  if (!key) return null;
+  if (key.startsWith('d')) {
+    const o = state.onboarding.find((x) => draftId(x) === key);
+    return o && { kind: 'draft', row: o };
+  }
+  const e = state.enquiries.find((x) => String(x.id) === key);
+  return e && { kind: 'enquiry', row: e };
+}
+
+const INBOX_COLUMNS = [
+  { key: 'at', label: 'Received', cls: 'c-date', sort: (r) => Date.parse(r.at), cell: (r) => time(r.at) },
+  { key: 'from', label: 'From', cls: 'c-primary', sort: (r) => fromText(r).toLowerCase(),
+    cell: (r) => h('span', { class: 'who' }, avatar(r.client || { email: fromText(r) }),
+      h('span', { class: 'who-text' }, h('strong', {}, fromText(r)), h('span', { class: 'sub' }, whoNote(r)))) },
+  { key: 'stage', label: 'Stage', cls: 'c-stage', sort: (r) => FUNDING_STAGES.indexOf(r.stage),
+    cell: (r) => (r.stage ? h('span', { class: 'chip' }, r.stage) : h('span', { class: 'sub' }, '—')) },
+  { key: 'message', label: 'Message', cls: 'c-msg', cell: (r) => h('span', { class: 'clip' }, summary(r)) },
+  { key: 'estimated_cost', label: 'Estimate', cls: 'c-cost', sort: (r) => r.estimated_cost ?? -1,
+    cell: (r) => (r.estimated_cost != null ? h('span', { class: 'cost' }, fmtCost(r.estimated_cost)) : h('span', { class: 'sub' }, '—')) },
+  { key: 'status', label: 'Status', cls: 'c-status', sort: statusRank, cell: statusOf }
 ];
 
-function visibleEnquiries() {
+function visibleRows() {
   const { status, stage, text } = state.filter;
   const needle = text.trim().toLowerCase();
-  const rows = state.enquiries.filter((e) => (!status || e.status === status) && (!stage || e.stage === stage) &&
-    matches(needle, e.email, e.message, e.client?.name, `#${e.id}`));
-  return sortRows(rows, ENQUIRY_COLUMNS, state.sort);
+  const rows = inboxRows().filter((r) => {
+    const keep = status === '' ? true : status === 'draft' ? isDraft(r) : !isDraft(r) && r.status === status;
+    if (!keep || (stage && r.stage !== stage)) return false;
+    return matches(needle, fromText(r), r.client?.email, summary(r), isDraft(r) ? null : `#${r.id}`);
+  });
+  return sortRows(rows, INBOX_COLUMNS, state.sort);
 }
 
 function clearFilters() {
   Object.assign(state.filter, { status: '', stage: '', text: '' });
   $('f-stage').value = '';
   $('f-text').value = '';
-  renderEnquiries();
+  renderInbox();
 }
 
-function renderEnquiries() {
+function renderInbox() {
+  const drafts = state.onboarding.filter((o) => !doneOf(o)).length;
   const count = (s) => state.enquiries.filter((e) => e.status === s).length;
   segButtons($('f-status'),
-    [['', 'All', state.enquiries.length], ...ENQUIRY_STATUSES.map((s) => [s, LABELS.enquiryStatus[s], count(s)])],
-    state.filter.status, (value) => { state.filter.status = value; renderEnquiries(); });
+    [['', 'All', state.enquiries.length + drafts], ['draft', 'In progress', drafts],
+      ...ENQUIRY_STATUSES.map((s) => [s, LABELS.enquiryStatus[s], count(s)])],
+    state.filter.status, (value) => { state.filter.status = value; renderInbox(); });
 
-  const rows = visibleEnquiries();
+  const rows = visibleRows();
   const { status, stage, text } = state.filter;
-  $('enquiries-meta').textContent = status || stage || text.trim() ? `${rows.length} of ${state.enquiries.length}` : `${rows.length} total`;
+  const all = state.enquiries.length + drafts;
+  $('enquiries-meta').textContent = status || stage || text.trim() ? `${rows.length} of ${all}` : `${rows.length} total`;
   keepFocus($('enquiry-table'), () => $('enquiry-table').replaceChildren(dataTable({
-    label: 'Enquiries', columns: ENQUIRY_COLUMNS, rows, sort: state.sort, selected: state.open,
-    onSort: (key) => { toggleSort(state.sort, key, key === 'email' || key === 'stage' ? 1 : -1); renderEnquiries(); },
-    onOpen: (e, replace) => go(`enquiries/${e.id}`, replace),
-    empty: state.enquiries.length
-      ? ['No enquiries match these filters. ', h('button', { class: 'link', type: 'button', onclick: clearFilters }, 'Clear filters')]
-      : 'No enquiries yet. They show up here as soon as someone sends the contact form.'
+    label: 'Enquiries', columns: INBOX_COLUMNS, rows, sort: state.sort, selected: state.open,
+    onSort: (key) => { toggleSort(state.sort, key, key === 'from' || key === 'stage' ? 1 : -1); renderInbox(); },
+    onOpen: (r, replace) => go(`enquiries/${r.id}`, replace),
+    empty: all
+      ? ['Nothing matches these filters. ', h('button', { class: 'link', type: 'button', onclick: clearFilters }, 'Clear filters')]
+      : 'Nothing yet. Enquiries show up here as soon as someone sends the contact form, and drafts as soon as someone starts.'
   })));
-  shell.setCount('enquiries', count('new'));
+  shell.setCount('enquiries', count('new') + drafts);
 }
 
 function replyHref(e) {
@@ -117,43 +160,231 @@ async function setStatus(e, status) {
     flash(errorText(err), true);
   } finally {
     saving = false;
-    renderEnquiries();
+    renderInbox();
     renderDetail();
     $('detail').querySelector(`[data-status="${e.status}"]`)?.focus();
   }
 }
 
+/* ---------- the panel beside the list ---------- */
+
+let editingId = null; // the enquiry being edited, so the panel knows which way to draw itself
+
 function renderDetail() {
-  const e = state.enquiries.find((x) => x.id === state.open);
-  if (!e) return;
-  $('detail').replaceChildren(
-    h('div', { class: 'detail-head' },
-      h('span', { class: 'detail-id' }, `Enquiry #${e.id}`),
-      h('button', { class: 'icon-btn detail-close', type: 'button', 'aria-label': 'Close details', onclick: () => go('enquiries') }, icon('x'))),
+  const open = openRow();
+  if (!open) return;
+  if (open.kind === 'draft') return renderDraftDetail(open.row);
+  renderEnquiryDetail(open.row);
+}
+
+function panelHead(label) {
+  return h('div', { class: 'detail-head' },
+    h('span', { class: 'detail-id' }, label),
+    h('button', { class: 'icon-btn detail-close', type: 'button', 'aria-label': 'Close details', onclick: () => go('enquiries') }, icon('x')));
+}
+
+function viewAsLink(userId, label = 'View as user') {
+  return userId ? h('a', { class: 'btn btn-line btn-sm', href: `/account?as=${userId}#profile` }, icon('eye'), label) : null;
+}
+
+function renderEnquiryDetail(e) {
+  $('detail').replaceChildren(panelHead(`Enquiry #${e.id}`),
+    h('div', { class: 'detail-body' }, editingId === e.id ? editForm(e) : enquiryBody(e)));
+}
+
+function enquiryBody(e) {
+  return [
+    h('div', {},
+      h('h2', { class: 'detail-title' }, e.email),
+      h('p', { class: 'sub' }, e.client ? `Member · ${e.client.name || e.client.email}` : 'Guest · sent without an account'),
+      h('div', { class: 'detail-actions' },
+        h('a', { class: 'btn btn-white btn-sm', href: replyHref(e) }, icon('reply'), 'Reply by email'),
+        viewAsLink(e.user_id),
+        h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => copyEmail(e.email) }, icon('copy'), 'Copy email'),
+        h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => { editingId = e.id; renderDetail(); } }, icon('file'), 'Edit'))),
+    section('Status',
+      h('div', { class: 'seg seg-full', role: 'group', 'aria-label': 'Status' }, ENQUIRY_STATUSES.map((s) => h('button', {
+        class: 'seg-btn', type: 'button', 'data-status': s, 'aria-pressed': String(e.status === s), onclick: () => setStatus(e, s)
+      }, LABELS.enquiryStatus[s]))),
+      h('p', { class: 'hint' }, 'Senders with an account see this status on their account page.')),
+    section('Estimated cost', costEditor(e)),
+    section('Message', h('p', { class: 'msg' }, e.message)),
+    e.tags.length && section('Fields', tagList(e.tags)),
+    section('Focal', e.focus ? focalBar(e.focus) : h('p', { class: 'sub' }, 'Not set.')),
+    e.consultants.length && section(e.consultants.length > 1 ? 'Consultants' : 'Consultant', consultantList(e.consultants)),
+    section('Details', kv([
+      ['Stage', h('span', { class: 'chip' }, e.stage)],
+      ['Received', fmtDateTime(e.created_at)],
+      ['Updated', fmtDateTime(e.updated_at)],
+      ['Account', e.client ? e.client.name || e.client.email : 'None'],
+      ['ID', String(e.id)]
+    ])),
+    dangerZone('Delete this enquiry', 'It goes for good, and disappears from the client’s account too.', () => removeEnquiry(e))
+  ];
+}
+
+function renderDraftDetail(o) {
+  const theirs = enquiriesFor(o);
+  const written = o.stage || o.brief || o.tags.length || o.focus || o.consultants.length;
+  $('detail').replaceChildren(panelHead(`Draft · UID #${o.user_id}`),
     h('div', { class: 'detail-body' },
       h('div', {},
-        h('h2', { class: 'detail-title' }, e.email),
-        h('p', { class: 'sub' }, e.client ? `Member · ${e.client.name || e.client.email}` : 'Guest · sent without an account'),
+        h('h2', { class: 'detail-title' }, nameOf(o)),
+        h('p', { class: 'sub' }, o.client ? o.client.email : ''),
         h('div', { class: 'detail-actions' },
-          h('a', { class: 'btn btn-white btn-sm', href: replyHref(e) }, icon('reply'), 'Reply by email'),
-          h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => copyEmail(e.email) }, icon('copy'), 'Copy email'))),
-      section('Status',
-        h('div', { class: 'seg seg-full', role: 'group', 'aria-label': 'Status' }, ENQUIRY_STATUSES.map((s) => h('button', {
-          class: 'seg-btn', type: 'button', 'data-status': s, 'aria-pressed': String(e.status === s), onclick: () => setStatus(e, s)
-        }, LABELS.enquiryStatus[s]))),
-        h('p', { class: 'hint' }, 'Senders with an account see this status on their account page.')),
-      section('Estimated cost', costEditor(e)),
-      section('Message', h('p', { class: 'msg' }, e.message)),
-      e.tags.length && section('Fields', tagList(e.tags)),
-      section('Focal', e.focus ? focalBar(e.focus) : h('p', { class: 'sub' }, 'Not set.')),
-      e.consultants.length && section(e.consultants.length > 1 ? 'Consultants' : 'Consultant', consultantList(e.consultants)),
+          viewAsLink(o.user_id, 'View as user'),
+          theirs.length > 0 && h('a', { class: 'btn btn-line btn-sm', href: '#enquiries', onclick: () => showEnquiriesOf(o) },
+            `Their enquiries (${theirs.length})`))),
+      section('Onboarding', statusOf({ ...o, kind: 'draft' }),
+        h('p', { class: 'hint' }, `They stopped at step ${o.step} of ${ONB_STEPS}. Nothing has been sent yet; what they have written is below.`)),
+      written
+        ? section('Answers so far',
+          o.stage ? h('span', { class: 'chip' }, o.stage) : null,
+          h('p', { class: 'msg' }, o.brief || '—'),
+          o.tags.length ? tagList(o.tags) : null,
+          o.focus ? focalBar(o.focus) : null,
+          o.consultants.length ? consultantList(o.consultants) : null)
+        : section('Answers so far', h('p', { class: 'sub' }, 'Nothing written yet.')),
       section('Details', kv([
-        ['Stage', h('span', { class: 'chip' }, e.stage)],
-        ['Received', fmtDateTime(e.created_at)],
-        ['Updated', fmtDateTime(e.updated_at)],
-        ['Account', e.client ? e.client.name || e.client.email : 'None'],
-        ['ID', String(e.id)]
-      ]))));
+        ['Started', fmtDateTime(o.created_at)],
+        ['Updated', fmtDateTime(o.updated_at)]
+      ])),
+      dangerZone('Throw away this draft', 'They start the flow again from the beginning. Enquiries they have already sent are untouched.',
+        () => removeDraft(o))));
+}
+
+function showEnquiriesOf(o) {
+  clearFilters();
+  if (o.client) { state.filter.text = o.client.email; $('f-text').value = o.client.email; }
+  renderInbox();
+}
+
+function dangerZone(label, note, onGo) {
+  return h('div', { class: 'detail-section danger-zone' },
+    h('h3', {}, 'Danger zone'),
+    h('p', { class: 'hint' }, note),
+    h('button', { class: 'btn btn-danger btn-sm', type: 'button', onclick: onGo }, icon('x'), label));
+}
+
+/* ---------- editing an enquiry ---------- */
+
+function editForm(e) {
+  const stop = () => { editingId = null; renderDetail(); };
+
+  const email = h('input', { class: 'input', type: 'email', required: true, maxlength: '254', 'aria-label': 'Sender email' });
+  email.value = e.email;
+  const stage = h('select', { class: 'select', 'aria-label': 'Stage' },
+    FUNDING_STAGES.map((s) => h('option', { value: s, selected: s === e.stage ? '' : null }, s)));
+  stage.value = e.stage;
+  const message = h('textarea', { class: 'textarea', rows: '7', maxlength: String(MAX_MESSAGE), 'aria-label': 'Message' });
+  message.value = e.message;
+  const count = h('span', { class: 'sub' });
+
+  let tags = [...e.tags];
+  const tagBox = h('div', { class: 'tag-grid', role: 'group', 'aria-label': 'Fields' });
+  const drawTags = () => {
+    const full = tags.length >= MAX_TAGS;
+    const all = [...FIELD_TAGS, ...tags.filter((t) => !FIELD_TAGS.some((f) => f.toLowerCase() === t.toLowerCase()))];
+    tagBox.replaceChildren(...all.map((t) => {
+      const on = tags.some((x) => x.toLowerCase() === t.toLowerCase());
+      return h('button', { class: 'tag-chip tag-static', type: 'button', 'aria-pressed': String(on), disabled: !on && full,
+        onclick: () => { tags = on ? tags.filter((x) => x.toLowerCase() !== t.toLowerCase()) : [...tags, t]; drawTags(); } },
+      h('span', { class: 'tag-hash', 'aria-hidden': 'true' }, '#'), t);
+    }));
+  };
+  drawTags();
+
+  let focus = e.focus ? [...e.focus] : null;
+  const focalBox = h('div', { class: 'edit-focal' });
+  const drawFocal = () => {
+    focalBox.replaceChildren(focus
+      ? h('div', {}, focalBar(focus, { onChange: (values) => { focus = values; } }),
+        h('button', { class: 'link', type: 'button', onclick: () => { focus = null; drawFocal(); } }, 'Remove the focal'))
+      : h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => { focus = [...DEFAULT_FOCUS]; drawFocal(); } },
+        icon('plus'), 'Set a focal'));
+  };
+  drawFocal();
+
+  let consultants = [...e.consultants];
+  const whoBox = h('div', { class: 'edit-who', role: 'group', 'aria-label': 'Consultants' });
+  const drawWho = () => {
+    whoBox.replaceChildren(...Object.entries(CONSULTANTS).map(([key, c]) => {
+      const on = consultants.includes(key);
+      return h('button', { class: 'who-chip', type: 'button', 'aria-pressed': String(on),
+        onclick: () => { consultants = on ? consultants.filter((k) => k !== key) : [...consultants, key]; drawWho(); } },
+      consultantAvatar(key), h('span', {}, c.name.split(' ')[0]));
+    }));
+  };
+  drawWho();
+
+  const save = h('button', { class: 'btn btn-white btn-sm', type: 'submit' }, icon('check'), 'Save changes');
+  const sync = () => {
+    count.textContent = `${message.value.length} / ${MAX_MESSAGE}`;
+    save.disabled = !message.value.trim() || !email.value.trim() || !email.checkValidity();
+  };
+  message.addEventListener('input', sync);
+  email.addEventListener('input', sync);
+  sync();
+
+  const form = h('form', { class: 'edit-form', novalidate: true },
+    h('div', {}, h('h2', { class: 'detail-title' }, 'Editing enquiry'),
+      h('p', { class: 'sub' }, 'Nothing changes until you save.')),
+    section('Sender', email),
+    section('Stage', stage),
+    section('Message', message, h('div', { class: 'edit-foot' }, count)),
+    section('Fields', tagBox, h('p', { class: 'hint' }, `Up to ${MAX_TAGS}.`)),
+    section('Focal', focalBox),
+    section('Consultants', whoBox),
+    h('div', { class: 'edit-actions' }, save,
+      h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: stop }, 'Cancel')));
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    save.disabled = true;
+    try {
+      const { enquiry } = await api('/api/admin/enquiries', { method: 'PATCH', body: {
+        id: e.id, email: email.value.trim(), stage: stage.value, message: message.value.trim(), tags, focus, consultants
+      } });
+      Object.assign(e, enquiry);
+      editingId = null;
+      flash('Enquiry saved');
+      renderInbox();
+      renderDetail();
+    } catch (err) {
+      save.disabled = false;
+      flash(errorText(err), true);
+    }
+  });
+  return form;
+}
+
+async function removeEnquiry(e) {
+  const who = e.client ? e.client.name || e.client.email : e.email;
+  const line = e.message.length > 90 ? `${e.message.slice(0, 90)}…` : e.message;
+  if (!confirm(`Delete this enquiry from ${who}?\n\n${e.stage} · ${fmtDate(e.created_at)}\n"${line}"\n\nThis cannot be undone. It disappears from their account too.`)) return;
+  try {
+    await api('/api/admin/enquiries', { method: 'DELETE', body: { id: e.id } });
+    state.enquiries = state.enquiries.filter((x) => x.id !== e.id);
+    editingId = null;
+    flash('Enquiry deleted');
+    renderInbox();
+    go('enquiries');
+  } catch (err) {
+    flash(errorText(err), true);
+  }
+}
+
+async function removeDraft(o) {
+  if (!confirm(`Throw away ${nameOf(o)}’s draft?\n\nThey stopped at step ${o.step} of ${ONB_STEPS}. They will start the flow again from the beginning, and enquiries they have already sent are untouched.`)) return;
+  try {
+    await api('/api/admin/onboarding', { method: 'DELETE', body: { user_id: o.user_id } });
+    state.onboarding = state.onboarding.filter((x) => x.user_id !== o.user_id);
+    flash('Draft cleared');
+    renderInbox();
+    go('enquiries');
+  } catch (err) {
+    flash(errorText(err), true);
+  }
 }
 
 /* ---------- estimates ---------- */
@@ -163,7 +394,7 @@ async function saveCost(e, cost) {
     const { enquiry } = await api('/api/admin/enquiries', { method: 'PATCH', body: { id: e.id, estimated_cost: cost } });
     Object.assign(e, enquiry);
     flash(cost == null ? 'Estimate cleared' : `Estimate saved: ${fmtCost(cost)}`);
-    renderEnquiries();
+    renderInbox();
     renderDetail();
     $('cost-input')?.focus();
   } catch (err) {
@@ -189,85 +420,6 @@ function costEditor(e) {
   return [form, h('p', { class: 'hint', id: 'cost-hint' }, e.user_id
     ? (e.estimated_cost != null ? 'The client sees this on their enquiry.' : 'Until you save a value, the client sees “To be confirmed”.')
     : 'For your records: this enquiry has no account, so nobody else sees it.')];
-}
-
-/* ---------- onboarding (admin view of the first run through the enquiry flow) ---------- */
-
-const doneOf = (o) => Boolean(o.submitted_at);
-const ONB_STEPS = 5; // company, field, focal, consultants, confirm
-const progressBadge = (o) => (doneOf(o) ? badge('replied', 'Completed') : badge('closed', `Step ${o.step} of ${ONB_STEPS}`));
-const nameOf = (o) => (o.client ? o.client.name || o.client.email : `Member #${o.user_id}`);
-const enquiriesFor = (o) => state.enquiries.filter((e) => e.user_id === o.user_id);
-const draftText = (o, value) => (!doneOf(o) && value ? value : null);
-
-function showEnquiriesOf(o) {
-  clearFilters();
-  if (o.client) { state.filter.text = o.client.email; $('f-text').value = o.client.email; }
-  renderEnquiries();
-}
-
-const ONB_COLUMNS = [
-  { key: 'name', label: 'Member', cls: 'c-primary', sort: (o) => nameOf(o).toLowerCase(),
-    cell: (o) => h('span', { class: 'who' }, avatar(o.client || { email: '?' }),
-      h('span', { class: 'who-text' }, h('strong', {}, nameOf(o)), h('span', { class: 'sub' }, o.client ? o.client.email : ''))) },
-  { key: 'progress', label: 'Onboarding', cls: 'c-status', sort: (o) => (doneOf(o) ? ONB_STEPS + 1 : o.step), cell: progressBadge },
-  { key: 'draft', label: 'Draft in progress', cls: 'c-tags',
-    cell: (o) => h('span', { class: 'clip' }, [draftText(o, o.stage), ...(o.tags || []).map((t) => `#${t}`), o.consultants.length ? firstNames(o.consultants) : null].filter(Boolean).join('  ·  ') || '—') },
-  { key: 'enquiries', label: 'Enquiries', cls: 'c-num', sort: (o) => enquiriesFor(o).length,
-    cell: (o) => { const n = enquiriesFor(o).length; return n ? h('a', { class: 'num-link', href: '#enquiries', onclick: () => showEnquiriesOf(o), 'aria-label': `${n} enquiries from ${nameOf(o)}` }, String(n)) : h('span', { class: 'sub' }, '0'); } },
-  { key: 'submitted_at', label: 'Completed', cls: 'c-date', sort: (o) => (o.submitted_at ? Date.parse(o.submitted_at) : 0), cell: (o) => (o.submitted_at ? time(o.submitted_at) : h('span', { class: 'sub' }, '—')) },
-  { key: 'updated_at', label: 'Updated', cls: 'c-date', sort: (o) => Date.parse(o.updated_at), cell: (o) => time(o.updated_at) }
-];
-
-function renderOnboarding() {
-  const done = state.onboarding.filter(doneOf).length;
-  segButtons($('f-onb'),
-    [['', 'All', state.onboarding.length], ['done', 'Completed', done], ['progress', 'In progress', state.onboarding.length - done]],
-    state.onbFilter.status, (value) => { state.onbFilter.status = value; renderOnboarding(); });
-  const { status, text } = state.onbFilter;
-  const needle = text.trim().toLowerCase();
-  const rows = sortRows(state.onboarding
-    .filter((o) => (!status || (status === 'done') === doneOf(o)) && matches(needle, nameOf(o), o.client?.email, ...o.tags))
-    .map((o) => ({ ...o, id: o.user_id })), ONB_COLUMNS, state.onbSort);
-  $('onboarding-meta').textContent = status || needle ? `${rows.length} of ${state.onboarding.length}` : `${rows.length} total`;
-  keepFocus($('onboarding-table'), () => $('onboarding-table').replaceChildren(dataTable({
-    label: 'Onboarding', columns: ONB_COLUMNS, rows, sort: state.onbSort, selected: state.onbOpen,
-    onSort: (key) => { toggleSort(state.onbSort, key, ['name', 'progress'].includes(key) ? 1 : -1); renderOnboarding(); },
-    onOpen: (o, replace) => go(`onboarding/${o.user_id}`, replace),
-    empty: state.onboarding.length ? 'Nothing matches these filters.' : 'No one has started yet. New clients go through it right after they sign up.'
-  })));
-}
-
-function renderOnbDetail() {
-  const o = state.onboarding.find((x) => x.user_id === state.onbOpen);
-  if (!o) return;
-  const theirs = enquiriesFor(o);
-  const draft = !doneOf(o) || o.stage || o.brief || o.tags.length || o.focus || o.consultants.length;
-  $('onb-detail').replaceChildren(
-    h('div', { class: 'detail-head' },
-      h('span', { class: 'detail-id' }, `Onboarding · UID #${o.user_id}`),
-      h('button', { class: 'icon-btn detail-close', type: 'button', 'aria-label': 'Close details', onclick: () => go('onboarding') }, icon('x'))),
-    h('div', { class: 'detail-body' },
-      h('div', {},
-        h('h2', { class: 'detail-title' }, nameOf(o)),
-        h('p', { class: 'sub' }, o.client ? o.client.email : ''),
-        h('div', { class: 'detail-actions' },
-          h('a', { class: 'btn btn-white btn-sm', href: `/account?as=${o.user_id}#enquiries` }, icon('eye'), 'View as user'),
-          theirs.length > 0 && h('a', { class: 'btn btn-line btn-sm', href: '#enquiries', onclick: () => showEnquiriesOf(o) }, `Their enquiries (${theirs.length})`))),
-      section('Onboarding', progressBadge(o), h('p', { class: 'hint' }, doneOf(o)
-        ? `Completed ${fmtDateTime(o.submitted_at)}. Fields, focal, consultants and the estimate live on each enquiry.`
-        : `Stopped at step ${o.step} of ${ONB_STEPS}. Their answers so far are below.`)),
-      draft && section(doneOf(o) ? 'Next enquiry, in progress' : 'Answers so far',
-        o.stage ? h('span', { class: 'chip' }, o.stage) : null,
-        h('p', { class: 'msg' }, o.brief || '—'),
-        o.tags.length ? tagList(o.tags) : null,
-        o.focus ? focalBar(o.focus) : null,
-        o.consultants.length ? consultantList(o.consultants) : null),
-      section('Details', kv([
-        ['Started', fmtDateTime(o.created_at)],
-        ['Updated', fmtDateTime(o.updated_at)],
-        ['Completed', o.submitted_at ? fmtDateTime(o.submitted_at) : '—']
-      ]))));
 }
 
 /* ---------- members ---------- */
@@ -309,7 +461,7 @@ function enquiryCount(u) {
   // shows this member's enquiries in the Enquiries view
   return h('a', {
     class: 'num-link', href: '#enquiries', 'aria-label': `${n} ${n === 1 ? 'enquiry' : 'enquiries'} from ${u.email}`,
-    onclick: () => { clearFilters(); state.filter.text = u.email; $('f-text').value = u.email; renderEnquiries(); }
+    onclick: () => { clearFilters(); state.filter.text = u.email; $('f-text').value = u.email; renderInbox(); }
   }, String(n));
 }
 
@@ -525,8 +677,9 @@ function route() {
   shell.setView(view, VIEWS[view]);
 
   const previous = state.open;
-  const wanted = view === 'enquiries' ? Number(id) : null;
-  state.open = state.enquiries.some((e) => e.id === wanted) ? wanted : null;
+  const wanted = view === 'enquiries' && id ? String(id) : null;
+  state.open = inboxRows().some((r) => r.id === wanted) ? wanted : null;
+  if (state.open !== previous) editingId = null; // moving to another row leaves any half-finished edit behind
   markSelected($('enquiry-table'), state.open);
   if (state.open) renderDetail();
   showPanel($('detail'), Boolean(state.open), previous && $('enquiry-table').querySelector(`tr[data-id="${previous}"]`));
@@ -540,12 +693,6 @@ function route() {
   }
   showPanel($('process-detail'), Boolean(state.processOpen), prevProcess && $('process-table').querySelector(`tr[data-id="${prevProcess}"]`));
 
-  const prevOnb = state.onbOpen;
-  const wantedOnb = view === 'onboarding' ? Number(id) : null;
-  state.onbOpen = state.onboarding.some((o) => o.user_id === wantedOnb) ? wantedOnb : null;
-  markSelected($('onboarding-table'), state.onbOpen);
-  if (state.onbOpen) renderOnbDetail();
-  showPanel($('onb-detail'), Boolean(state.onbOpen), prevOnb && $('onboarding-table').querySelector(`tr[data-id="${prevOnb}"]`));
 }
 
 // The thread for the client whose process is open, kept out of the list request so it stays small.
@@ -561,8 +708,7 @@ async function load() {
   const [e, u, o, p, m] = await Promise.all([api('/api/admin/enquiries'), api('/api/admin/users'), api('/api/admin/onboarding'),
     api('/api/admin/process'), api('/api/admin/meetings')]);
   Object.assign(state, { enquiries: e.enquiries, users: u.users, onboarding: o.onboarding, process: p.process, meetings: m.meetings, me: u.me });
-  renderEnquiries();
-  renderOnboarding();
+  renderInbox();
   renderProcess();
   renderMeetings();
   renderMembers();
@@ -585,15 +731,14 @@ if (me) {
     denied();
   } else {
     FUNDING_STAGES.forEach((s) => $('f-stage').append(h('option', { value: s }, s)));
-    $('f-stage').addEventListener('change', () => { state.filter.stage = $('f-stage').value; renderEnquiries(); });
-    $('f-text').addEventListener('input', () => { state.filter.text = $('f-text').value; renderEnquiries(); });
+    $('f-stage').addEventListener('change', () => { state.filter.stage = $('f-stage').value; renderInbox(); });
+    $('f-text').addEventListener('input', () => { state.filter.text = $('f-text').value; renderInbox(); });
     $('m-text').addEventListener('input', () => { state.memberFilter.text = $('m-text').value; renderMembers(); });
-    $('o-text').addEventListener('input', () => { state.onbFilter.text = $('o-text').value; renderOnboarding(); });
     $('p-text').addEventListener('input', () => { state.processFilter.text = $('p-text').value; renderProcess(); });
-    const closePanel = () => go(state.onbOpen ? 'onboarding' : state.processOpen ? 'process' : 'enquiries');
+    const closePanel = () => go(state.processOpen ? 'process' : 'enquiries');
     $('detail-scrim').addEventListener('click', closePanel);
     document.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Escape' && (state.open || state.onbOpen || state.processOpen) && !document.body.classList.contains('nav-open')) closePanel();
+      if (ev.key === 'Escape' && (state.open || state.processOpen) && !document.body.classList.contains('nav-open')) closePanel();
     });
     $('refresh').addEventListener('click', async () => {
       try {

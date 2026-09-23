@@ -17,6 +17,7 @@ export const CONSULTANTS = {
 export const FIELD_TAGS = ['AI', 'Physical device', 'Tech', 'Medical', 'Finance', 'Health', 'Climate', 'Energy', 'Mobility',
   'Robotics', 'Education', 'Commerce', 'Consumer', 'Enterprise SaaS', 'Logistics', 'Food', 'Real estate', 'Media', 'Gaming', 'Security'];
 export const MAX_TAGS = 5;
+export const MAX_MESSAGE = 500;   // matches the enquiries table in supabase/schema.sql
 export const MAX_TAG = 24;
 
 // Calls one of our API routes and returns its JSON; throws with `status` and `message` (the error code) on failure.
@@ -300,7 +301,6 @@ export function mountShell(user, page, { query = '' } = {}) {
   document.getElementById('side-nav').replaceChildren(...[
     user.role === 'admin' && group('Workspace',
       item('/admin#enquiries', 'admin:enquiries', 'Enquiries', 'inbox'),
-      item('/admin#onboarding', 'admin:onboarding', 'Onboarding', 'list-checks'),
       item('/admin#process', 'admin:process', 'Process', 'folder'),
       item('/admin#meetings', 'admin:meetings', 'Meetings', 'calendar'),
       item('/admin#members', 'admin:members', 'Members', 'users')),
