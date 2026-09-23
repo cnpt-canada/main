@@ -10,7 +10,7 @@ export const FUNDING_STAGES = ['Pre-Seed', 'Seed Level', 'Series A', 'Series B']
 export const CONSULTANTS = {
   michael: { name: 'Michael (Joongmin) Park', role: 'Consultant', photo: '/cnptmichaelpark-web.jpg' },
   brandon: { name: 'Brandon Siow', role: 'Consultant', photo: '/cnptbrandonsiow-web.jpg' },
-  kenny: { name: 'Kenny', role: 'Consultant', photo: null }
+  kenny: { name: 'Kenny Huang', role: 'Consultant', photo: null }
 };
 
 // Suggested field tags for onboarding; clients can add their own (5 at most in total).

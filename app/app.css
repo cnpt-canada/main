@@ -13,6 +13,18 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
+/* Anything that scrolls inside the page — the details panel, the calendar, the navigation, a long note —
+   would otherwise show the system's pale scrollbar over a near-black panel. This is the same bar, quieter:
+   no arrows or track, a slim rounded thumb that brightens while the pointer is over the thing it scrolls. */
+*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}   /* scrollbar-width does not inherit, so it is set on every box */
+*::-webkit-scrollbar{width:11px;height:11px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-corner{background:transparent}
+*::-webkit-scrollbar-thumb{border:3px solid transparent;border-radius:999px;background:var(--line);background-clip:content-box}
+@media(hover:hover){
+  *:hover::-webkit-scrollbar-thumb{background:#3F3F3C;background-clip:content-box}
+  *::-webkit-scrollbar-thumb:hover{background:var(--faint);background-clip:content-box}
+}
 body{min-height:100vh;background:var(--ink);color:#fff;font-family:var(--font);font-size:16px;line-height:1.6;
   font-weight:500;letter-spacing:-0.004em;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}

@@ -180,6 +180,8 @@ h2 em{font-style:normal;color:var(--signal)}
   transition:transform .8s var(--ease-out)}
 .member h3{font-size:clamp(22px,1.9vw,26px);font-weight:800;letter-spacing:-0.028em;line-height:1.1}
 .member-role{font-size:14.5px;color:#A8A8A3;margin-top:10px}
+/* a line or two on what each person does, under their role */
+.member-bio{max-width:52ch;margin-top:14px;font-size:14px;line-height:1.6;color:#8E8E8A}
 .member-role span{white-space:nowrap}
 /* spec sheet: label | value rows */
 .member-spec > div{display:grid;grid-template-columns:72px minmax(0,1fr);gap:14px;align-items:baseline;
