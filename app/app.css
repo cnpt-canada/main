@@ -406,6 +406,8 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .as-item .who-text strong{display:block;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .as-item .who-text .sub{display:block;padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .as-note{flex:none;font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
+/* on a phone the name and address matter more than when someone was last seen */
+@media(max-width:560px){.as-note{display:none}}
 .as-item .ic{flex:none;width:15px;height:15px;color:var(--grey);transition:transform .15s,color .15s}
 @media(hover:hover){.as-item:hover{background:var(--hover)}.as-item:hover .ic{transform:translateX(3px);color:#fff}}
 .as-item:focus-visible{outline:2px solid #fff;outline-offset:-2px}
