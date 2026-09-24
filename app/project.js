@@ -41,14 +41,6 @@ export function slotText(startsAt, minutes) {
   return `${dayAt(start)} · ${clockAt(start)}–${clockAt(end)} (Toronto)${mine}`;
 }
 
-// The Monday of the week a date falls in, in Toronto, as a UTC instant at 00:00 Toronto.
-export function weekStart(date) {
-  const day = inToronto(date, { weekday: 'short' });
-  const back = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(day);
-  const at = new Date(date.getTime() - (back < 0 ? 0 : back) * 86400000);
-  return slotOn(at, OPEN_HOUR, 0);
-}
-
 // The instant for a wall-clock time in Toronto on the day `date` falls on.
 export function slotOn(date, hour, minute) {
   const ymd = torontoFormat({ year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -158,13 +150,31 @@ export function commentThread({ comments, me, onSend, onDelete, readOnly = false
 
 const SLOT_MINUTES = 30;
 const SLOTS_PER_DAY = ((CLOSE_HOUR - OPEN_HOUR) * 60) / SLOT_MINUTES;
+const DAYS_ON_SHOW = 5;
 
-// Mon–Fri, 09:00–18:00 in half hours. Tap a slot to place the meeting, drag down the same day to make it an
-// hour. The week is built once and repainted in place, so a drag never loses the cell under the pointer.
-// `busy` greys out what is gone, `mine` marks the times this person already booked.
+const isWeekend = (date) => ['Sat', 'Sun'].includes(inToronto(date, { weekday: 'short' }));
+
+// The working day `step` days on from here (backwards when step is negative), as 09:00 in Toronto.
+function nextWeekday(from, step) {
+  let at = from;
+  do { at = slotOn(new Date(at.getTime() + step * 86400000), OPEN_HOUR, 0); } while (isWeekend(at));
+  return at;
+}
+
+// The first working day on or after `date` — today, unless today is the weekend.
+export function firstWeekday(date) {
+  const at = slotOn(date, OPEN_HOUR, 0);
+  return isWeekend(at) ? nextWeekday(at, 1) : at;
+}
+
+// Five working days across, 09:00–18:00 in half hours, starting with today. Tap a slot to place the
+// meeting, drag down the same day to make it an hour. The days are built once and repainted in place, so a
+// drag never loses the cell under the pointer. `busy` greys out what is gone, `mine` marks the times this
+// person already booked, and anything longer than half an hour is drawn as one block rather than two.
 // `onPick({ startsAt, minutes })` runs whenever the block moves.
 export function meetingCalendar({ busy = [], mine = [], minutes = 30, onPick, from = new Date() }) {
-  let weekFrom = weekStart(from);
+  const today = firstWeekday(from);
+  let firstDay = today;
   let picked = null;
   let length = minutes;
   let cells = [];
@@ -172,16 +182,23 @@ export function meetingCalendar({ busy = [], mine = [], minutes = 30, onPick, fr
 
   const grid = h('div', { class: 'cal-grid' });
   const title = h('p', { class: 'cal-title' });
-  const back = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Previous week' }, icon('arrow-left'));
-  const forward = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Next week' }, icon('arrow-right'));
-  back.addEventListener('click', () => { weekFrom = new Date(weekFrom.getTime() - 7 * 86400000); build(); });
-  forward.addEventListener('click', () => { weekFrom = new Date(weekFrom.getTime() + 7 * 86400000); build(); });
+  const back = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Earlier days' }, icon('arrow-left'));
+  const forward = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Later days' }, icon('arrow-right'));
+  const shift = (step) => {
+    let at = firstDay;
+    for (let i = 0; i < DAYS_ON_SHOW; i++) at = nextWeekday(at, step);
+    firstDay = at.getTime() < today.getTime() ? today : at;
+    build();
+  };
+  back.addEventListener('click', () => shift(-1));
+  forward.addEventListener('click', () => shift(1));
 
   const overlaps = (aFrom, aMins, bFrom, bMins) =>
     aFrom < bFrom + bMins * 60000 && bFrom < aFrom + aMins * 60000;
   const takenBy = (list, at, mins) => list.some((m) => overlaps(at.getTime(), mins, Date.parse(m.starts_at), m.minutes));
   const isTaken = (at, mins) => takenBy(busy, at, mins);
-  const isMine = (at, mins) => takenBy(mine, at, mins);
+  // The booking covering this half hour, so a longer one can be drawn as a single block.
+  const coverAt = (list, time) => list.find((m) => time >= Date.parse(m.starts_at) && time < Date.parse(m.starts_at) + m.minutes * 60000);
 
   // Can a meeting of `mins` start here? It has to be free, ahead of now, and finish before the day closes.
   function canPlace(at, mins) {
@@ -203,40 +220,59 @@ export function meetingCalendar({ busy = [], mine = [], minutes = 30, onPick, fr
 
   // Updates the cells that are already on screen; never rebuilds them. A drag repaints on every step,
   // so each cell remembers how it was last left and the ones that have not changed are skipped.
+  // An hour covers two cells: the first carries the label, and the run classes close the seam between
+  // them so what you see is a single block.
   function paint() {
     const now = Date.now();
     const pickFrom = picked ? Date.parse(picked.startsAt) : 0;
     const pickTo = picked ? pickFrom + picked.minutes * 60000 : 0;
+    const step = SLOT_MINUTES * 60000;
     for (const cell of cells) {
       const { el, at } = cell;
       const time = at.getTime();
-      const past = time < now;
-      const busyHere = isTaken(at, SLOT_MINUTES);
-      const mineHere = isMine(at, SLOT_MINUTES);
+      const past = time < now;                                  // a meeting cannot start in the past, as the server also says
+      const mineAt = coverAt(mine, time);
+      const busyAt = mineAt || coverAt(busy, time);
       const inPick = Boolean(picked) && time >= pickFrom && time < pickTo;
-      const label = inPick && time === pickFrom ? `${picked.minutes} min` : mineHere ? 'Yours' : '';
-      const state = `${past ? 'p' : ''}${busyHere ? 'b' : ''}${mineHere ? 'm' : ''}${inPick ? 'k' : ''}|${label}`;
+      // where this cell sits inside the block it belongs to
+      const run = inPick
+        ? { from: pickFrom, minutes: picked.minutes }
+        : mineAt ? { from: Date.parse(mineAt.starts_at), minutes: mineAt.minutes } : null;
+      const runStart = Boolean(run) && time === run.from;
+      const runEnd = Boolean(run) && time + step >= run.from + run.minutes * 60000;
+      const label = !runStart ? '' : inPick ? `${picked.minutes} min` : 'Yours';
+      const state = `${past ? 'p' : ''}${busyAt ? 'b' : ''}${mineAt ? 'm' : ''}${inPick ? 'k' : ''}${runStart ? 's' : ''}${runEnd ? 'e' : ''}|${label}`;
       if (state === cell.state) continue;
       cell.state = state;
-      el.disabled = past || busyHere;
-      el.classList.toggle('is-taken', busyHere && !mineHere);
-      el.classList.toggle('is-mine', mineHere);
+      el.disabled = past || Boolean(busyAt);
+      el.classList.toggle('is-past', past && !busyAt);
+      el.classList.toggle('is-taken', Boolean(busyAt) && !mineAt);
+      el.classList.toggle('is-mine', Boolean(mineAt));
       el.classList.toggle('is-picked', inPick);
+      el.classList.toggle('is-run-start', runStart);
+      el.classList.toggle('is-run-end', runEnd);
+      el.classList.toggle('is-span2', runStart && !runEnd);     // the label is centred over both halves
       el.setAttribute('aria-pressed', String(inPick));
-      el.setAttribute('aria-label', `${cell.when}${mineHere ? ', yours' : busyHere ? ', already taken' : past ? ', past' : ''}`);
+      el.setAttribute('aria-label', `${cell.when}${mineAt ? ', yours' : busyAt ? ', already taken' : past ? ', past' : ''}`);
       el.firstChild.textContent = label;
       el.firstChild.hidden = !label;
     }
   }
 
   function build() {
-    const days = [0, 1, 2, 3, 4].map((d) => new Date(weekFrom.getTime() + d * 86400000));
-    title.textContent = `${inToronto(days[0], { month: 'long', day: 'numeric' })} – ${inToronto(days[4], { month: 'long', day: 'numeric', year: 'numeric' })}`;
-    back.disabled = days[0].getTime() < Date.now() - 7 * 86400000;
+    const days = [firstDay];
+    while (days.length < DAYS_ON_SHOW) days.push(nextWeekday(days[days.length - 1], 1));
+    title.textContent = `${inToronto(days[0], { month: 'long', day: 'numeric' })} – ${inToronto(days[DAYS_ON_SHOW - 1], { month: 'long', day: 'numeric', year: 'numeric' })}`;
+    back.disabled = firstDay.getTime() <= today.getTime();      // today is as far back as the calendar goes
     cells = [];
     byEl.clear();
     const rows = [h('div', { class: 'cal-corner', 'aria-hidden': 'true' }),
-      ...days.map((d) => h('div', { class: 'cal-day' }, h('strong', {}, inToronto(d, { weekday: 'short' })), h('span', {}, inToronto(d, { day: 'numeric' }))))];
+      ...days.map((d) => {
+        const isToday = d.getTime() === today.getTime();
+        return h('div', { class: isToday ? 'cal-day is-today' : 'cal-day' },
+          h('strong', {}, isToday ? 'Today' : inToronto(d, { weekday: 'short' })),
+          h('span', {}, isToday ? inToronto(d, { weekday: 'short', day: 'numeric' }) : inToronto(d, { day: 'numeric' })));
+      })];
     for (let i = 0; i < SLOTS_PER_DAY; i++) {
       const hour = OPEN_HOUR + Math.floor(i / 2);
       const minute = i % 2 ? 30 : 0;

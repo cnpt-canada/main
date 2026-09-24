@@ -1,7 +1,7 @@
 // /admin — the workspace: enquiries (with the drafts still being written), process, meetings and members.
 // The page only shows what the API allows;
 // every change is checked again on the server (admin role, allowed values, owners locked).
-import { commentThread, processThumbnail, readImage, slotText, STAGES, stageIndex } from '/app/project.js';
+import { clockAt, commentThread, MEETING_TZ, processThumbnail, readImage, slotText, STAGES, stageIndex } from '/app/project.js';
 import {
   CONSULTANTS, DEFAULT_FOCUS, ENQUIRY_STATUSES, FIELD_TAGS, FUNDING_STAGES, LABELS, MAX_MESSAGE, MAX_TAGS,
   api, avatar, badge, consultantAvatar, consultantList, dataTable, firstNames, flash, fmtCost, fmtDate, fmtDateTime, focalBar,
@@ -12,7 +12,7 @@ const $ = (id) => document.getElementById(id);
 const VIEWS = { enquiries: 'Enquiries', process: 'Process', meetings: 'Meetings', members: 'Members' };
 const state = {
   enquiries: [], users: [], onboarding: [], process: [], meetings: [], comments: [], me: null,
-  processFilter: { stage: '', text: '' }, processSort: { key: 'updated_at', dir: -1 }, processOpen: null, meetFilter: { status: '' },
+  processFilter: { stage: '', text: '' }, processSort: { key: 'updated_at', dir: -1 }, processOpen: null, meetFilter: { status: '' }, meetingOpen: null,
   filter: { status: '', stage: '', text: '' }, sort: { key: 'at', dir: -1 }, open: null,
   memberFilter: { role: '', text: '' }, memberSort: { key: 'created_at', dir: -1 }
 };
@@ -617,11 +617,18 @@ function renderProcessDetail() {
 const MEET_LABELS = { requested: 'Waiting', confirmed: 'Confirmed', declined: 'Declined', cancelled: 'Cancelled' };
 const MEET_BADGE = { requested: 'new', confirmed: 'replied', declined: 'closed', cancelled: 'closed' };
 
+// "Fri, Sep 25 · 11:00–12:00" — short enough for the list; the panel spells it out in full.
+function shortWhen(m) {
+  const start = new Date(m.starts_at);
+  const day = new Intl.DateTimeFormat('en-CA', { timeZone: MEETING_TZ, weekday: 'short', month: 'short', day: 'numeric' }).format(start);
+  return `${day} · ${clockAt(start)}–${clockAt(new Date(start.getTime() + m.minutes * 60000))}`;
+}
+
 const MEETING_COLUMNS = [
   { key: 'starts_at', label: 'When', cls: 'c-primary', sort: (m) => Date.parse(m.starts_at),
-    cell: (m) => [h('strong', {}, slotText(m.starts_at, m.minutes)), m.note ? h('span', { class: 'sub' }, m.note) : null] },
-  { key: 'client', label: 'Client', cls: 'c-msg', sort: (m) => clientName(m).toLowerCase(),
-    cell: (m) => h('span', { class: 'clip' }, clientName(m)) },
+    cell: (m) => [h('strong', {}, shortWhen(m)), m.note ? h('span', { class: 'sub clip' }, m.note) : null] },
+  { key: 'client', label: 'Client', cls: 'c-client', sort: (m) => clientName(m).toLowerCase(),
+    cell: (m) => h('span', { class: 'who-text' }, h('strong', {}, clientName(m)), h('span', { class: 'sub' }, m.client?.email || '')) },
   { key: 'minutes', label: 'Length', cls: 'c-num', sort: (m) => m.minutes, cell: (m) => `${m.minutes} min` },
   { key: 'status', label: 'Status', cls: 'c-status', sort: (m) => m.status, cell: (m) => badge(MEET_BADGE[m.status], MEET_LABELS[m.status]) },
   { key: 'actions', srLabel: 'Actions', cls: 'c-action', cell: (m) => (m.status === 'requested'
@@ -638,6 +645,7 @@ async function setMeeting(m, status) {
     const { meeting } = await api('/api/admin/meetings', { method: 'PATCH', body: { id: m.id, status } });
     Object.assign(m, meeting);
     renderMeetings();
+    if (state.meetingOpen) renderMeetingDetail();
     flash(status === 'confirmed' ? 'Meeting confirmed' : status === 'declined' ? 'Meeting declined' : 'Meeting called off');
   } catch (err) {
     flash(errorText(err), true);
@@ -653,8 +661,50 @@ function renderMeetings() {
   $('meetings-meta').textContent = `${rows.length} of ${state.meetings.length}`;
   keepFocus($('meeting-table'), () => $('meeting-table').replaceChildren(dataTable({
     label: 'Meetings', columns: MEETING_COLUMNS, rows, sort: { key: 'starts_at', dir: 1 },
+    selected: state.meetingOpen, onOpen: (m, replace) => go(`meetings/${m.id}`, replace),
     empty: 'Nobody has booked a time yet.'
   })));
+}
+
+// Everything about one booking: who asked, when it is, what they want to talk about, and where it stands.
+function renderMeetingDetail() {
+  const m = state.meetings.find((x) => String(x.id) === state.meetingOpen);
+  if (!m) return;
+  const over = Date.parse(m.starts_at) + m.minutes * 60000 <= Date.now();
+  const actions = m.status === 'requested'
+    ? [h('button', { class: 'btn btn-white btn-sm', type: 'button', onclick: () => setMeeting(m, 'confirmed') }, icon('check'), 'Confirm'),
+      h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => setMeeting(m, 'declined') }, 'Decline')]
+    : m.status === 'confirmed' && !over
+      ? [h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => setMeeting(m, 'cancelled') }, 'Call off')]
+      : [];
+
+  $('meeting-detail').replaceChildren(
+    h('div', { class: 'detail-head' },
+      h('span', { class: 'detail-id' }, `Meeting #${m.id}`),
+      h('button', { class: 'icon-btn detail-close', type: 'button', 'aria-label': 'Close details', onclick: () => go('meetings') }, icon('x'))),
+    h('div', { class: 'detail-body' },
+      h('div', {},
+        h('h2', { class: 'detail-title' }, slotText(m.starts_at, m.minutes)),
+        h('p', { class: 'sub' }, `${m.minutes} minutes · ${MEET_LABELS[m.status]}`),
+        actions.length ? h('div', { class: 'detail-actions' }, actions) : null),
+      section('Client',
+        h('div', { class: 'who' },
+          avatar(m.client || { email: `Member #${m.user_id}` }),
+          h('span', { class: 'who-text' },
+            h('strong', {}, clientName(m)),
+            h('span', { class: 'sub' }, m.client?.email || `Member #${m.user_id}`))),
+        h('div', { class: 'detail-actions' },
+          m.client?.email ? h('a', { class: 'btn btn-line btn-sm', href: `mailto:${m.client.email}` }, 'Email them') : null,
+          m.user_id ? h('a', { class: 'btn btn-line btn-sm', href: `/account?as=${m.user_id}#meeting` }, icon('eye'), 'View as user') : null)),
+      section('What they want to talk about',
+        m.note ? h('p', { class: 'msg' }, m.note) : h('p', { class: 'sub' }, 'Nothing written.')),
+      section('Details', kv([
+        ['Status', badge(MEET_BADGE[m.status], MEET_LABELS[m.status])],
+        ['When', slotText(m.starts_at, m.minutes)],
+        ['Length', `${m.minutes} min`],
+        ['Booked', fmtDateTime(m.created_at)],
+        ['Updated', fmtDateTime(m.updated_at)]
+      ]))));
 }
 
 /* ---------- views ---------- */
@@ -693,6 +743,12 @@ function route() {
   }
   showPanel($('process-detail'), Boolean(state.processOpen), prevProcess && $('process-table').querySelector(`tr[data-id="${prevProcess}"]`));
 
+  const prevMeeting = state.meetingOpen;
+  const wantedMeeting = view === 'meetings' && id ? String(id) : null;
+  state.meetingOpen = state.meetings.some((m) => String(m.id) === wantedMeeting) ? wantedMeeting : null;
+  markSelected($('meeting-table'), state.meetingOpen);
+  if (state.meetingOpen) renderMeetingDetail();
+  showPanel($('meeting-detail'), Boolean(state.meetingOpen), prevMeeting && $('meeting-table').querySelector(`tr[data-id="${prevMeeting}"]`));
 }
 
 // The thread for the client whose process is open, kept out of the list request so it stays small.
@@ -735,10 +791,10 @@ if (me) {
     $('f-text').addEventListener('input', () => { state.filter.text = $('f-text').value; renderInbox(); });
     $('m-text').addEventListener('input', () => { state.memberFilter.text = $('m-text').value; renderMembers(); });
     $('p-text').addEventListener('input', () => { state.processFilter.text = $('p-text').value; renderProcess(); });
-    const closePanel = () => go(state.processOpen ? 'process' : 'enquiries');
+    const closePanel = () => go(state.processOpen ? 'process' : state.meetingOpen ? 'meetings' : 'enquiries');
     $('detail-scrim').addEventListener('click', closePanel);
     document.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Escape' && (state.open || state.processOpen) && !document.body.classList.contains('nav-open')) closePanel();
+      if (ev.key === 'Escape' && (state.open || state.processOpen || state.meetingOpen) && !document.body.classList.contains('nav-open')) closePanel();
     });
     $('refresh').addEventListener('click', async () => {
       try {

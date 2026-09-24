@@ -651,6 +651,14 @@ nav .nav-sheet .wrap{display:block;height:auto}
 @media(max-width:900px){
   .nav-menu{display:inline-flex}
 }
+/* a small phone: the mark, the button and the menu have to share 320px, so the space comes out of the
+   gaps and the button. The mark keeps its size: below about 130px its second line stops drawing. */
+@media(max-width:380px){
+  .wrap{padding:0 14px}
+  nav .wrap{gap:10px}
+  .nav-actions{gap:8px}
+  .nav-actions .btn{padding:0 12px;font-size:12.5px}
+}
 @media(max-width:620px){
   .nav-menu{width:36px;height:36px}
   .nav-menu span{left:11px;right:11px}

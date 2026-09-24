@@ -3,7 +3,7 @@
 // Answers null rather than an error when sign-in isn't set up yet, so the public pages never break.
 import { json, methodNotAllowed, route } from '../http.js';
 import { welcomePending } from '../onboarding.js';
-import { currentUser, toPublicUser } from '../users.js';
+import { currentUser, isAdmin, toPublicUser } from '../users.js';
 
 export default route(async (req, res) => {
   if (req.method !== 'GET') return methodNotAllowed(res, ['GET']);
@@ -16,7 +16,7 @@ export default route(async (req, res) => {
   if (!user) return json(res, 200, { user: null });
 
   let pending = false;
-  if (user.role !== 'admin') {
+  if (!isAdmin(user)) {
     try {
       pending = await welcomePending(user.id);
     } catch (err) {

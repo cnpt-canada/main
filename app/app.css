@@ -183,6 +183,7 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .c-stage{width:112px}
 .c-status{width:116px}
 .c-msg{width:40%;max-width:0}
+.c-client{width:30%;min-width:150px;max-width:0}
 .clip{display:block;overflow:hidden;color:var(--soft);text-overflow:ellipsis;white-space:nowrap}
 .c-provider{width:118px}
 .c-role{width:96px}
@@ -281,6 +282,8 @@ th[aria-sort] .th-sort .ic{opacity:1}
 /* ---------- the work after an enquiry: where it is, the notes beside it, the meetings ---------- */
 .project-layout{display:grid;gap:16px;align-items:start;max-width:980px}
 @media(min-width:1280px){.project-layout{grid-template-columns:minmax(0,1fr) minmax(340px,420px);max-width:none}}
+/* the meeting view keeps one column at every width: pick a time, then your request, then your meetings */
+@media(min-width:1280px){.meeting-layout{grid-template-columns:minmax(0,1fr);max-width:980px}}
 .project-now{display:grid;gap:22px}
 
 /* the picture the cnpt team shares for the stage the work is in */
@@ -323,41 +326,56 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .note-field{min-height:66px}
 .note-add-foot{display:flex;align-items:center;justify-content:space-between;gap:12px}
 
-/* the calendar: weekdays across, half hours down, a block where you tap */
+/* the calendar: five working days across starting today, half hours down, a block where you tap */
 .cal{display:grid;gap:12px}
 .cal-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .cal-title{font-size:14px;font-weight:800;letter-spacing:-0.012em}
-.cal-grid{display:grid;grid-template-columns:54px repeat(5,minmax(0,1fr));gap:2px;max-height:440px;overflow:auto}
+.cal-grid{--cal-h:26px;--cal-gap:2px;display:grid;grid-template-columns:54px repeat(5,minmax(0,1fr));gap:var(--cal-gap);max-height:440px;overflow:auto}
 .cal-corner,.cal-day{position:sticky;top:0;z-index:1;background:var(--panel)}
 .cal-day{display:grid;justify-items:center;gap:1px;padding:6px 0 8px}
 .cal-day strong{font-size:12px;font-weight:800}
 .cal-day span{font-size:12px;color:var(--muted)}
+.cal-day.is-today strong{color:var(--signal)}
 .cal-time{padding-right:8px;font-size:11px;color:var(--muted);text-align:right;transform:translateY(-5px)}
-.cal-slot{position:relative;height:26px;padding:0;border:0;border-radius:4px;background:var(--raise);cursor:pointer;
-  transition:background-color .12s}
+.cal-slot{position:relative;height:var(--cal-h);padding:0;border:0;border-radius:4px;background:var(--raise);cursor:pointer;
+  overflow:visible;transition:background-color .12s}
 .cal-slot:disabled{cursor:default}
+/* a time that has gone by: nothing to reach for, so it sinks into the page */
+.cal-slot.is-past{background:#070706;box-shadow:inset 0 0 0 1px #0F0F0E;opacity:.4}
 .cal-slot.is-taken{background:repeating-linear-gradient(45deg,#151514,#151514 3px,#0d0d0c 3px,#0d0d0c 7px)}
 @media(hover:hover){.cal-slot:not(:disabled):hover{background:var(--line)}}
-.cal-slot.is-mine{background:rgb(230 0 69 / .22);box-shadow:inset 0 0 0 1px rgb(230 0 69 / .55);color:#fff}
-.cal-slot.is-mine .cal-block{font-size:10px;font-weight:700;color:rgb(255 255 255 / .85)}
+.cal-slot.is-mine{background:rgb(230 0 69 / .3);color:#fff}
+.cal-slot.is-mine .cal-block{font-size:10px;font-weight:700;color:rgb(255 255 255 / .9)}
 .cal-slot.is-picked{background:var(--signal-deep)}
 .cal-slot:focus-visible{outline:2px solid #fff;outline-offset:1px;z-index:2}
-.cal-block{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff}
+/* z-index keeps the label above the strip that bridges the gap between two cells of the same block */
+.cal-block{position:absolute;inset:0;z-index:1;display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff}
+/* an hour is two half-hour cells: only the ends of the run are rounded, its colour crosses the gap between
+   them, and the label is centred over the whole block — so it reads as one meeting, not two */
+.cal-slot.is-picked:not(.is-run-start),.cal-slot.is-mine:not(.is-run-start){border-top-left-radius:0;border-top-right-radius:0}
+.cal-slot.is-picked:not(.is-run-end),.cal-slot.is-mine:not(.is-run-end){border-bottom-left-radius:0;border-bottom-right-radius:0}
+.cal-slot.is-picked:not(.is-run-end)::after,.cal-slot.is-mine:not(.is-run-end)::after{content:"";position:absolute;
+  left:0;right:0;top:100%;height:var(--cal-gap);background:inherit}
+.cal-slot.is-span2{z-index:1}
+.cal-slot.is-span2 .cal-block{bottom:calc(-1 * (var(--cal-h) + var(--cal-gap)))}
 
-/* what you picked, written out under the calendar */
-.pick{display:grid;gap:14px;margin-top:18px;padding:16px;border:1px solid var(--rule);border-radius:10px;background:var(--raise)}
+/* what you picked, in its own panel between the calendar and your meetings */
+.pick{display:grid;gap:14px}
 .pick-when{font-size:16px;font-weight:800;letter-spacing:-0.02em}
+.pick-when.is-empty{color:var(--dim)}
 .pick-head .sub{display:block;margin-top:4px}
-.pick-row{display:flex;flex-wrap:wrap;gap:10px}
-.pick-row .input{flex:1 1 240px}
+.pick-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px}
+.pick-row .field{flex:1 1 260px;display:grid;gap:6px;min-width:0}
+.pick-row label{font-size:13px;font-weight:700;color:#D6D6D1}
+.pick-row label .sub{font-weight:600}
 .bookings{list-style:none;margin:0;padding:0}
 .booking{display:flex;align-items:center;gap:12px;padding:14px 20px;border-top:1px solid var(--rule)}
 .booking:first-child{border-top:0}
 .booking > div{flex:1 1 auto;min-width:0}
 .booking-when{font-size:13.5px;font-weight:700}
+.booking.is-past{opacity:.55}
 @media(max-width:719px){
-  .cal-grid{grid-template-columns:44px repeat(5,minmax(0,1fr))}
-  .cal-slot{height:30px}
+  .cal-grid{--cal-h:30px;grid-template-columns:44px repeat(5,minmax(0,1fr))}
   .note{grid-template-columns:auto minmax(0,1fr);padding:10px 2px}
   .note-remove{display:none}
 }

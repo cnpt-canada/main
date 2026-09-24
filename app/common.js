@@ -386,7 +386,8 @@ export function dataTable({ label, columns, rows, sort, onSort, onOpen, selected
 
   const body = rows.length
     ? rows.map((row) => {
-      const tr = h('tr', { 'data-id': row.id, 'aria-current': row.id === selected ? 'true' : null },
+      // ids come from the database as numbers and from the address bar as text, so they are compared as text
+      const tr = h('tr', { 'data-id': row.id, 'aria-current': selected != null && String(row.id) === String(selected) ? 'true' : null },
         columns.map((c) => h('td', { class: c.cls }, c.cell(row))));
       if (onOpen) {
         tr.tabIndex = 0;

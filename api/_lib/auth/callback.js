@@ -6,6 +6,7 @@ import { decodeJwt } from 'jose';
 import { db, run } from '../db.js';
 import { methodNotAllowed, publicUrl, redirect, route, safePath } from '../http.js';
 import { welcomePending } from '../onboarding.js';
+import { isAdmin } from '../users.js';
 import { consumeOAuthState, startSession } from '../session.js';
 
 const GOOGLE_ISSUERS = ['https://accounts.google.com', 'accounts.google.com'];
@@ -14,7 +15,7 @@ const GOOGLE_ISSUERS = ['https://accounts.google.com', 'accounts.google.com'];
 // instead of the workspace — decided here so the browser makes one jump, not two.
 async function landing(user, next) {
   const asked = safePath(next, '/account');
-  if (user.role === 'admin') return asked;
+  if (isAdmin(user)) return asked;                     // owners from ADMIN_EMAILS count, whatever the row says
   try {
     if (await welcomePending(user.id)) return '/onboarding';
   } catch (err) {
@@ -88,5 +89,5 @@ export default route(async (req, res) => {
   }
 
   await startSession(req, res, user.id);
-  redirect(res, await landing(user, saved.next));
+  redirect(res, await landing({ ...user, email }, saved.next));
 });

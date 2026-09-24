@@ -275,8 +275,8 @@ function renderProcess() {
 const liveMeetings = () => state.meetings.filter((m) => m.status === 'requested' || m.status === 'confirmed');
 
 function meetingRow(m) {
-  const past = Date.parse(m.starts_at) < Date.now();
-  return h('li', { class: 'booking' },
+  const past = Date.parse(m.starts_at) + m.minutes * 60000 <= Date.now();
+  return h('li', { class: past ? 'booking is-past' : 'booking' },
     h('div', {},
       h('p', { class: 'booking-when' }, slotText(m.starts_at, m.minutes)),
       m.note ? h('p', { class: 'sub' }, m.note) : null),
@@ -285,6 +285,15 @@ function meetingRow(m) {
     !state.viewingAs && !past && (m.status === 'requested' || m.status === 'confirmed')
       ? h('button', { class: 'btn btn-line btn-xs', type: 'button', onclick: () => cancelMeeting(m) }, 'Cancel')
       : null);
+}
+
+// Soonest first while they are still ahead; everything already over goes underneath, most recent first.
+function meetingsInOrder() {
+  const now = Date.now();
+  const over = (m) => Date.parse(m.starts_at) + m.minutes * 60000 <= now;
+  const ahead = state.meetings.filter((m) => !over(m)).sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at));
+  const done = state.meetings.filter(over).sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at));
+  return [...ahead, ...done];
 }
 
 async function cancelMeeting(m) {
@@ -305,16 +314,18 @@ function renderMeeting() {
   const mine = h('section', { class: 'card', 'aria-labelledby': 'mine-h' },
     h('div', { class: 'card-head' }, h('h2', { id: 'mine-h' }, 'Your meetings')),
     state.meetings.length
-      ? h('ul', { class: 'bookings' }, [...state.meetings].sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at)).map(meetingRow))
+      ? h('ul', { class: 'bookings' }, meetingsInOrder().map(meetingRow))
       : h('div', { class: 'empty-note' }, h('p', {}, state.viewingAs ? 'No meetings booked.' : 'Nothing booked yet. Pick a time above.')));
 
   if (state.viewingAs) return body.replaceChildren(mine);
 
-  // the picked block, written out under the calendar, with a note and the button that books it
-  const when = h('p', { class: 'pick-when' }, 'No time picked yet');
-  const sub = h('p', { class: 'sub' }, 'Tap a slot on the calendar.');
-  const note = h('input', { class: 'input', id: 'meeting-note', type: 'text', maxlength: '500', placeholder: 'What would you like to talk about? (optional)' });
+  // the time you picked, in a panel of its own between the calendar and the meetings you already have
+  const when = h('p', { class: 'pick-when is-empty' }, 'No time picked yet');
+  const sub = h('p', { class: 'sub' }, 'Tap a time on the calendar above. Weekdays, 09:00–18:00 Toronto time.');
+  const note = h('input', { class: 'input', id: 'meeting-note', type: 'text', maxlength: '500',
+    placeholder: 'e.g. Where the concept should go next' });
   const book = h('button', { class: 'btn btn-white btn-sm', type: 'submit', disabled: true }, 'Request this time', icon('arrow-right'));
+  const clear = h('button', { class: 'btn btn-line btn-sm', type: 'button', hidden: true }, 'Clear');
   const lengths = h('div', { class: 'seg', role: 'group', 'aria-label': 'How long' }, MEETING_LENGTHS.map((mins) => h('button', {
     class: 'seg-btn', type: 'button', 'aria-pressed': String(mins === 30), 'data-len': mins,
     onclick: (ev) => {
@@ -329,13 +340,31 @@ function renderMeeting() {
     onPick: (picked) => {
       state.picked = picked;
       when.textContent = slotText(picked.startsAt, picked.minutes);
+      when.classList.remove('is-empty');
       sub.textContent = 'The cnpt team confirms it by email, usually within a working day.';
       book.disabled = false;
+      clear.hidden = false;
+      // an hour that does not fit before the day closes is placed as half an hour; the control says so
+      for (const b of lengths.children) b.setAttribute('aria-pressed', String(Number(b.dataset.len) === picked.minutes));
     }
   });
+  clear.addEventListener('click', () => {
+    calendar.clear();
+    state.picked = null;
+    when.textContent = 'No time picked yet';
+    when.classList.add('is-empty');
+    sub.textContent = 'Tap a time on the calendar above. Weekdays, 09:00–18:00 Toronto time.';
+    book.disabled = true;
+    clear.hidden = true;
+  });
 
-  const form = h('form', { class: 'pick' }, h('div', { class: 'pick-head' }, when, sub),
-    h('div', { class: 'pick-row' }, note, book));
+  const form = h('form', { class: 'pick' },
+    h('div', { class: 'pick-head', role: 'status' }, when, sub),
+    h('div', { class: 'pick-row' },
+      h('div', { class: 'field' },
+        h('label', { for: 'meeting-note' }, 'What would you like to talk about? ', h('span', { class: 'sub' }, '(optional)')),
+        note),
+      clear, book));
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     if (!state.picked) return;
@@ -357,7 +386,10 @@ function renderMeeting() {
   body.replaceChildren(
     h('section', { class: 'card', 'aria-labelledby': 'cal-h' },
       h('div', { class: 'card-head card-head-row' }, h('h2', { id: 'cal-h' }, 'Pick a time'), lengths),
-      h('div', { class: 'card-body' }, calendar.el, form)),
+      h('div', { class: 'card-body' }, calendar.el)),
+    h('section', { class: 'card', 'aria-labelledby': 'pick-h' },
+      h('div', { class: 'card-head' }, h('h2', { id: 'pick-h' }, 'Your request')),
+      h('div', { class: 'card-body' }, form)),
     mine);
 }
 
