@@ -6,6 +6,13 @@ export const ONBOARDING_COLUMNS = 'id,user_id,step,stage,brief,enquiry_id,tags,f
 export const EMPTY_DRAFT = { step: 1, stage: null, brief: null, enquiry_id: null, tags: [], focus: null, consultants: [] };
 export const LAST_STEP = 5; // company, field, focal, consultants, confirm
 
+// Whether an account still owes us the welcome flow: it has never sent an enquiry and never chose to
+// skip. Sign-in and the workspace both ask this, so the answer is the same wherever a client arrives.
+export async function welcomePending(userId) {
+  const row = await run(db().from('onboarding').select('submitted_at,skipped_at').eq('user_id', userId).maybeSingle());
+  return !row?.submitted_at && !row?.skipped_at;
+}
+
 export function loadOnboarding(userId) {
   return run(db().from('onboarding').select(ONBOARDING_COLUMNS).eq('user_id', userId).maybeSingle());
 }

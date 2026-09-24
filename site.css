@@ -31,11 +31,6 @@ nav .wm-ext{width:176px}
 .navlinks{grid-column:2}
 .nav-actions{grid-column:3;justify-self:end}
 .navlinks a:not(.btn):hover{color:#fff}
-/* Sign in, or once signed in: the person's photo and "My Project" — an underlined text link, white so it reads as the one action beside the button */
-.nav-account{display:inline-flex;align-items:center;gap:8px;color:#fff;text-decoration:underline;
-  text-decoration-thickness:1.5px;text-underline-offset:5px;transition:text-decoration-color .25s ease}
-.nav-account:hover{text-decoration-color:var(--signal)}
-.nav-account img{display:block;width:24px;height:24px;border-radius:50%;object-fit:cover}
 .btn{display:inline-flex;align-items:center;height:40px;padding:0 22px;border-radius:var(--r-cap);
   font-size:14px;font-weight:700;letter-spacing:-0.012em;flex:none}
 .btn-sig{background:var(--signal-deep);color:#fff}

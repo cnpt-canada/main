@@ -92,28 +92,6 @@ window.addEventListener('error', function (e) {
   });
 })();
 
-/* signed-in visitors: the nav grows a way back into the workspace, with their photo.
-   Signed out there is no such link — "Start a project" is the way in, and it asks them to sign in. */
-(function () {
-  var link = document.querySelector('.nav-account');
-  if (!link || !window.fetch) return;
-  fetch('/api/auth/me', { credentials: 'same-origin' })
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (data) {
-      var user = data && data.user;
-      if (!user) return;
-      if (user.picture && /^https:\/\//.test(user.picture)) {
-        var img = document.createElement('img');
-        img.src = user.picture;
-        img.alt = '';
-        img.referrerPolicy = 'no-referrer';
-        link.prepend(img);
-      }
-      link.hidden = false;
-    })
-    .catch(function () {}); // no API (e.g. a static preview): the link stays hidden
-})();
-
 /* phone menu — the section links open in a sheet under the nav */
 (function () {
   var button = document.querySelector('.nav-menu');

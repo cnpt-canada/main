@@ -409,7 +409,9 @@ function viewAs(member) {
 /* ---------- start ---------- */
 
 const me = await signedInUser(`/account${location.search}`);
-if (me) {
+// a new client tells us about the project first, before the workspace is drawn
+if (me?.welcome_pending) location.replace('/onboarding');
+else if (me) {
   const asId = me.role === 'admin' ? new URLSearchParams(location.search).get('as') : null;
   if (!asId && location.search) history.replaceState(null, '', location.pathname + location.hash);
   state.viewingAs = asId;

@@ -5,9 +5,23 @@
 import { decodeJwt } from 'jose';
 import { db, run } from '../db.js';
 import { methodNotAllowed, publicUrl, redirect, route, safePath } from '../http.js';
+import { welcomePending } from '../onboarding.js';
 import { consumeOAuthState, startSession } from '../session.js';
 
 const GOOGLE_ISSUERS = ['https://accounts.google.com', 'accounts.google.com'];
+
+// Where a sign-in ends. A client who has never told us about their company opens the welcome flow
+// instead of the workspace — decided here so the browser makes one jump, not two.
+async function landing(user, next) {
+  const asked = safePath(next, '/account');
+  if (user.role === 'admin') return asked;
+  try {
+    if (await welcomePending(user.id)) return '/onboarding';
+  } catch (err) {
+    console.error('auth: could not read the welcome flow', err);   // the workspace asks again on arrival
+  }
+  return asked;
+}
 
 export default route(async (req, res) => {
   if (req.method !== 'GET') return methodNotAllowed(res, ['GET']);
@@ -64,8 +78,8 @@ export default route(async (req, res) => {
   try {
     const existing = await run(db().from('users').select('id').eq('google_sub', claims.sub).maybeSingle());
     user = existing
-      ? await run(db().from('users').update(profile).eq('id', existing.id).select('id').single())
-      : await run(db().from('users').insert({ google_sub: claims.sub, ...profile }).select('id').single());
+      ? await run(db().from('users').update(profile).eq('id', existing.id).select('id, role').single())
+      : await run(db().from('users').insert({ google_sub: claims.sub, ...profile }).select('id, role').single());
     // enquiries sent before signing up, from this same Google-verified address, now belong to the account
     await run(db().from('enquiries').update({ user_id: user.id }).is('user_id', null).eq('email', email));
   } catch (err) {
@@ -74,5 +88,5 @@ export default route(async (req, res) => {
   }
 
   await startSession(req, res, user.id);
-  redirect(res, safePath(saved.next, '/account'));
+  redirect(res, await landing(user, saved.next));
 });

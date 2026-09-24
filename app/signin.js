@@ -21,10 +21,11 @@ if (error) {
   box.hidden = false;
 }
 
-// already signed in: skip this page
+// already signed in: skip this page. A client who has not been through the welcome flow opens it
+// instead of the workspace, the same choice the sign-in callback makes.
 try {
   const { user } = await api('/api/auth/me');
-  if (user) location.replace(next);
+  if (user) location.replace(user.welcome_pending ? '/onboarding' : next);
 } catch {
   // stay on the page
 }
