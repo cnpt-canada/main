@@ -11,5 +11,7 @@ cnptmichaelpark.png
 cnptbrandonsiow.png
 Kennycnptheadshot 1.png
 
-# Source artwork for the navigation mark; the pages use the copy inside site-icons.svg.
+# Source artwork: the navigation mark lives in site-icons.svg, the square mark in favicon.svg
+# (and the raster icons built from it).
 cnpt_logo_extended.svg
+icon_cnpt_square.svg

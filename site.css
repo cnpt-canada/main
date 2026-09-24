@@ -511,7 +511,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 nav .nav-sheet .wrap{display:block;height:auto}
 .nav-sheet a{display:flex;align-items:center;gap:14px;padding:12px 0;font-size:26px;font-weight:400;letter-spacing:-0.028em;color:#9C9C97}
 .nav-sheet a[aria-current="page"],.nav-sheet a:hover{color:#fff}
-.nav-actions .btn{font-weight:inherit}
+.nav-actions .btn{font-weight:700}
 
 /* nav icons: a section link shows its icon on hover or keyboard focus, and the page you are on keeps its icon lit
    (playing its motion once as the page opens). The phone sheet always shows them.
