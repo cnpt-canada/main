@@ -57,6 +57,7 @@ create table if not exists public.onboarding (
   consultants    text[] not null default '{}'
                  check (consultants <@ array['michael', 'brandon', 'kenny']::text[] and cardinality(consultants) <= 3),
   submitted_at   timestamptz,                                                -- first run finished
+  skipped_at     timestamptz,                                                -- chose "Skip" and went straight into the workspace
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );
@@ -147,6 +148,8 @@ alter table public.onboarding add column if not exists focus smallint[] check (f
                    and focus[1] % 10 = 0 and focus[2] % 10 = 0 and focus[3] % 10 = 0 and focus[4] % 10 = 0));
 alter table public.onboarding drop constraint if exists onboarding_step_check;
 alter table public.onboarding add constraint onboarding_step_check check (step between 1 and 5);
+-- "Skip" on the welcome flow: the workspace opens straight away and stops asking on every visit
+alter table public.onboarding add column if not exists skipped_at timestamptz;
 do $$
 begin
   if exists (select 1 from information_schema.columns

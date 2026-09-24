@@ -1,7 +1,8 @@
 // The step-by-step enquiry flow (/onboarding): the first thing a new client does, and how anyone signed in
 // sends a new enquiry afterwards.
 // GET  /api/onboarding → my draft so far; on the first run also the enquiry I sent from the website (to continue it)
-// PUT  /api/onboarding {step?, stage?, brief?, enquiry_id?, tags?, focus?, consultants?} → saves the draft
+// PUT  /api/onboarding {step?, stage?, brief?, enquiry_id?, tags?, focus?, consultants?, skip?} → saves the draft;
+//                        skip: true opens the workspace without finishing, and stops the welcome flow asking again
 // POST /api/onboarding → sends it: completes the website enquiry it continues, or creates a new one, with the
 //                        fields, focal split and consultants on it. The draft is then cleared for next time.
 import { db, run } from './_lib/db.js';
@@ -54,6 +55,11 @@ async function readChanges(body, user) {
     if (!consultants) return { error: 'invalid_consultants' };
     changes.consultants = consultants;
   }
+  if ('skip' in body) {
+    if (typeof body.skip !== 'boolean') return { error: 'invalid_skip' };
+    // skipping is remembered on the account, so the flow does not reappear on the next visit or another device
+    changes.skipped_at = body.skip ? new Date().toISOString() : null;
+  }
   if ('enquiry_id' in body) {
     if (body.enquiry_id === null) changes.enquiry_id = null;
     else {
@@ -97,7 +103,8 @@ export default route(async (req, res) => {
     .insert({ user_id: user.id, email: user.email, ...fields }).select('id').single());
   const firstRun = !row.submitted_at;
   const saved = await run(db().from('onboarding')
-    .update({ ...EMPTY_DRAFT, submitted_at: row.submitted_at || now, updated_at: now })
+    // sending it answers what the welcome flow was asking, so a skip from before no longer applies
+    .update({ ...EMPTY_DRAFT, submitted_at: row.submitted_at || now, skipped_at: null, updated_at: now })
     .eq('id', row.id).select(ONBOARDING_COLUMNS).single());
 
   await emailStudio({

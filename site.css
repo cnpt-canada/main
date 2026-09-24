@@ -1,12 +1,14 @@
-/* cnpt site: shared styles for every public page (/, /practices, /process, /work, /team, /contact).
-   Type is Helvetica: Helvetica Neue on Apple devices, Helvetica or Arial elsewhere. */
+/* cnpt site: shared styles for every public page (/, /practices, /process, /work, /team).
+   Type is Manrope, self-hosted as one variable file with a 200–800 weight axis
+   (SIL Open Font License 1.1, fonts/Manrope-OFL.txt). */
+@font-face{font-family:'Manrope';src:url(/fonts/manrope.woff2) format('woff2');font-weight:200 800;font-style:normal;font-display:swap}
 :root{
   --ink:#000000; --paper:#FFFFFF; --surface:#F4F4F1; --mist:#E4E4DF;
   --grey:#6F6F6C; --signal:#FF004D; --signal-deep:#E60045; --signal-text:#C2003C;
   --ink-border:#2E2E2C; --text-dim:#A8A8A3;
   --nav-h:74px; --sec-pad:112px;
   --r-cap:999px; --r-lg:28px; --r-sm:14px;
-  --font:'Helvetica Neue',Helvetica,Arial,sans-serif;
+  --font:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:var(--nav-h)}
@@ -22,6 +24,9 @@ nav{position:sticky;top:0;z-index:20;background:var(--ink);border-bottom:1.5px s
 nav .wrap{height:var(--nav-h);display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:24px}
 .nav-home{grid-column:1;justify-self:start}
 nav .wm{width:86px;color:#fff;display:block;flex:none}
+/* the extended mark carries "Concept Canada 2027" beside the wordmark, so it is wider and set a touch
+   smaller than the plain wordmark would be */
+nav .wm-ext{width:176px}
 .navlinks,.nav-actions{display:flex;align-items:center;gap:30px;font-size:14px;font-weight:400;color:#9C9C97}
 .navlinks{grid-column:2}
 .nav-actions{grid-column:3;justify-self:end}
@@ -437,6 +442,7 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
   :root{--nav-h:62px;--sec-pad:64px}
   .wrap{padding:0 20px}
   nav .wm{width:74px}
+  nav .wm-ext{width:138px}
   .nav-actions{gap:16px}
   .nav-actions .btn{height:36px;padding:0 16px;font-size:13px}
   .hero{padding:0 0 48px}
@@ -661,10 +667,8 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .work-cover{aspect-ratio:4/3} /* a wide band is too thin on a phone */
 }
 
-/* hero headline weight follows the mouse (site.js). It needs a font with a weight axis, which Helvetica lacks:
-   Arimo has Helvetica's metrics and a 400–700 axis (SIL Open Font License, fonts/Arimo-OFL.txt).
-   The headline only switches to it where the effect runs, once the font has loaded. */
-@font-face{font-family:'Arimo Var';src:url(/fonts/arimo-latin-wght.woff2) format('woff2');font-weight:400 700;font-style:normal;font-display:swap}
-.hero h1.is-var{font-family:'Arimo Var',var(--font);font-weight:700}
-.hero h1.lines-locked{white-space:nowrap} /* site.js pins the Bold line breaks with <br>s */
+/* hero headline weight follows the mouse (site.js). Manrope's own weight axis carries it, so the headline
+   keeps the same font and only its weight moves; the class marks that the effect has taken over. */
+.hero h1.is-var{font-weight:800}
+.hero h1.lines-locked{white-space:nowrap} /* site.js pins the ExtraBold line breaks with <br>s */
 .hero h1:not([data-rv]) .wd{overflow:visible} /* once the words have risen, nothing clips a letter */

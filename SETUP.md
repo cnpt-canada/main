@@ -5,7 +5,7 @@ pages still work; sign-in, the account and admin pages, and saving enquiries nee
 
 | What | Service | Used for |
 | --- | --- | --- |
-| Sign-in | Google OAuth client | "Continue with Google" on `/signin` (a first sign-in creates the account) |
+| Sign-in | Google OAuth client | "Continue with Google" on `/signin`, the workspace door (a first sign-in creates the account) |
 | Data | Supabase (Postgres) | users, enquiries, onboarding |
 | Email (optional) | Resend | a copy of every enquiry in your inbox |
 
@@ -59,11 +59,16 @@ for production.
 
 ## How it fits together
 
-- Public pages: `/`, `/practices`, `/process` (what we do + process; `/what-we-do` redirects here), `/work` (client works), `/team`, `/contact`. They share
-  `site.css`, `site.js` (motion, cursor label, phone menu, contact form) and `site-icons.svg`; old `/#section` links
-  redirect to the matching page. Type is Helvetica (Helvetica Neue on Apple devices, Arial where Helvetica isn't installed).
+- Public pages: `/`, `/practices`, `/process` (what we do + process; `/what-we-do` redirects here), `/work` (client works),
+  `/team`, `/talent`. They share `site.css`, `site.js` (motion, cursor label, phone menu) and `site-icons.svg`; old
+  `/#section` links redirect to the matching page. Type is Manrope, self-hosted as one variable file
+  (`fonts/manrope.woff2`, 200–800 weight axis).
 
-- `/signin` → `/api/auth/google` → Google → `/api/auth/callback` → session cookie → `/account`.
+- There is no public enquiry form any more: **Start a project** everywhere opens `/signin`, so an enquiry always
+  belongs to an account. `/contact` redirects there for old links.
+
+- `/signin` → `/api/auth/google` → Google → `/api/auth/callback` → session cookie → `/account`, which opens on
+  Your process (the project phase). The page is split: signing in on the left, the brand picture on the right.
 - The session cookie is HttpOnly, SameSite=Lax, Secure (`__Host-` prefixed on HTTPS) and holds only the user id.
   The role is read from the database on every request, so admin changes and account deletion apply at once.
 - The OAuth `state` is signed and tied to a short-lived cookie, which stops login CSRF; `next=` only accepts
@@ -80,7 +85,7 @@ for production.
 | Page | Who | What |
 | --- | --- | --- |
 | `/signin` | anyone | Continue with Google |
-| `/onboarding` | signed in | the step-by-step enquiry: company, fields (up to 5 tags), focal, consultants, confirm. New clients see it first, with a welcome screen; "New enquiry" opens it later |
+| `/onboarding` | signed in | the step-by-step enquiry: company, fields (up to 5 tags), focal, consultants, confirm. New clients see it first, with a welcome screen; **Skip for now** (top right) opens the workspace instead and is remembered on the account (`onboarding.skipped_at`), with a card on Your process leading back. "New enquiry" opens the same steps later |
 | `/talent` | anyone | the networking pool around Toronto: pick Consultant, Designer, Engineer or Commerce & Management and write in. Sends to `TALENT_TO` with the category in the subject, and saves to `talent` |
 | `/account` | signed in | your enquiries (status, fields, focal, consultants, estimate), Your process, Book a meeting, profile with your project at a glance, sign out, delete account |
 | `/admin` | admins | enquiries — one list holding both what has been sent and what people are still writing (filter, search, sort, status, estimate, reply by email, edit or delete, view as user), process (stage, the picture the client sees, notes), meetings (confirm or decline), members (grant/remove admin) |

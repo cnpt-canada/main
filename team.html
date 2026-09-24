@@ -8,6 +8,7 @@
 <title>Team — cnpt</title>
 <meta name="description" content="The people behind cnpt.">
 <link rel="stylesheet" href="/site.css">
+<link rel="preload" href="/fonts/manrope.woff2" as="font" type="font/woff2" crossorigin>
 <script src="/site-head.js"></script>
 <script src="/site.js" defer></script>
 </head>
@@ -15,7 +16,7 @@
 
 <nav data-cursor-off>
   <div class="wrap">
-    <a class="nav-home" href="/" aria-label="cnpt home"><svg class="wm" viewBox="0 0 140 32" aria-hidden="true"><use href="/site-icons.svg#cnpt"/></svg></a>
+    <a class="nav-home" href="/" aria-label="cnpt home"><svg class="wm wm-ext" viewBox="0 0 1192 136" aria-hidden="true"><use href="/site-icons.svg#cnpt-ext"/></svg></a>
     <div class="navlinks">
       <a class="nav-link" href="/practices"><span class="nav-ic ic-practices" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/></svg></span>Practices</a>
       <a class="nav-link" href="/process"><span class="nav-ic ic-process" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.1 2.182a10 10 0 0 1 3.8 0"/><path d="M17.609 3.721a10 10 0 0 1 2.69 2.7"/><path d="M21.818 10.1a10 10 0 0 1 0 3.8"/><path d="M20.279 17.609a10 10 0 0 1-2.7 2.69"/><path d="M13.9 21.818a10 10 0 0 1-3.8 0"/><path d="M6.391 20.279a10 10 0 0 1-2.69-2.7"/><path d="M2.182 13.9a10 10 0 0 1 0-3.8"/><path d="M3.721 6.391a10 10 0 0 1 2.7-2.69"/></svg></span>Process</a>
@@ -24,8 +25,8 @@
       <a class="nav-link" href="/talent"><span class="nav-ic ic-talent" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2.5"/><path pathLength="1" d="m10.2 6.3-3.9 3.9"/><circle cx="4.5" cy="12" r="2.5"/><path pathLength="1" d="M7 12h10"/><circle cx="19.5" cy="12" r="2.5"/><path pathLength="1" d="m13.8 17.7 3.9-3.9"/><circle cx="12" cy="19.5" r="2.5"/></svg></span>Talent</a>
     </div>
     <div class="nav-actions">
-      <a class="nav-account" href="/signin">Sign in</a>
-      <a class="btn btn-sig" href="/contact">Start a project</a>
+      <a class="nav-account" href="/account" hidden>My project</a>
+      <a class="btn btn-sig" href="/signin">Start a project</a>
       <button class="nav-menu" type="button" aria-expanded="false" aria-controls="nav-sheet" aria-label="Menu"><span></span><span></span></button>
     </div>
   </div>
@@ -36,7 +37,7 @@
     <a href="/work"><span class="nav-ic ic-works" aria-hidden="true"><svg viewBox="0 0 24 24"><path pathLength="1" d="M2 12h20A10 10 0 1 1 12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 4-10"/><path pathLength="1" d="m15 6 2 2 4-4"/></svg></span>Client works</a>
     <a href="/team" aria-current="page"><span class="nav-ic ic-team" aria-hidden="true"><svg viewBox="0 0 24 24"><g><circle cx="12" cy="13" r="3"/><path pathLength="1" d="M17 21a5 5 0 0 0-10 0"/></g><g><circle cx="5.5" cy="4.5" r="2.5"/><path pathLength="1" d="M7.507 7.632A3.5 3.5 0 0 0 2 10.5"/></g><g><circle cx="18.5" cy="4.5" r="2.5"/><path pathLength="1" d="M22 10.5a3.5 3.5 0 0 0-5.507-2.868"/></g></svg></span>Team</a>
     <a href="/talent"><span class="nav-ic ic-talent" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2.5"/><path pathLength="1" d="m10.2 6.3-3.9 3.9"/><circle cx="4.5" cy="12" r="2.5"/><path pathLength="1" d="M7 12h10"/><circle cx="19.5" cy="12" r="2.5"/><path pathLength="1" d="m13.8 17.7 3.9-3.9"/><circle cx="12" cy="19.5" r="2.5"/></svg></span>Talent</a>
-    <a href="/contact"><span class="nav-ic ic-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span>Start a project</a>
+    <a href="/signin"><span class="nav-ic ic-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span>Start a project</a>
     </div>
   </div>
 </nav>
@@ -110,7 +111,7 @@
       <p>We are currently in the building phase, but we would love to know what you would be interested in building with us. We reply within two working days.</p>
     </div>
     <div class="cta-row">
-      <a class="btn btn-white btn-lg" href="/contact" data-cursor="Let’s talk">Start a project</a>
+      <a class="btn btn-white btn-lg" href="/signin" data-cursor="Let’s talk">Start a project</a>
       <a class="btn btn-line-c btn-lg" href="mailto:info@cnpt.ca" data-cursor="Email us">info@cnpt.ca</a>
     </div>
   </div>
@@ -135,7 +136,7 @@
         <a href="/team">Michael (Joongmin) Park</a>
         <a href="/team">Brandon Siow</a>
         <a href="/team">Kenny Huang</a>
-        <a href="/contact">Start a project</a>
+        <a href="/signin">Start a project</a>
         <a href="mailto:info@cnpt.ca">info@cnpt.ca</a>
       </div>
     </div>

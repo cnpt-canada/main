@@ -17,7 +17,8 @@ const STATUS_NOTES = {
   closed: 'This enquiry is closed. You can send a new one any time.'
 };
 const state = { enquiries: [], sort: { key: 'created_at', dir: -1 }, open: null, viewingAs: null,
-  me: null, project: null, comments: [], meetings: [], busy: [], imageUrl: null, projectLoaded: false, picked: null, members: null };
+  me: null, project: null, comments: [], meetings: [], busy: [], imageUrl: null, projectLoaded: false, picked: null, members: null,
+  onboarding: null };
 let shell;
 
 const COLUMNS = [
@@ -245,6 +246,13 @@ async function removeComment(comment) {
 function renderProcess() {
   const p = state.project;
   const body = $('process-body');
+  // someone who skipped the welcome flow has told us nothing yet: the way back to it sits at the top of their project
+  const skipped = !state.viewingAs && state.onboarding?.skipped_at && !state.onboarding?.submitted_at
+    && h('section', { class: 'card card-prompt' },
+      h('div', { class: 'card-body' },
+        h('h2', {}, 'Tell us about your project'),
+        h('p', { class: 'sub' }, 'Five short steps — your company, your field, the focal split and the consultants you want. It takes about two minutes and starts the work.'),
+        h('a', { class: 'btn btn-white', href: '/onboarding' }, 'Start now', icon('arrow-right'))));
   const head = h('section', { class: 'card' },
     h('div', { class: 'card-head card-head-row' },
       h('h2', {}, p?.headline || 'Your work with cnpt'),
@@ -259,7 +267,7 @@ function renderProcess() {
     h('div', { class: 'card-body' }, commentThread({
       comments: state.comments, me: state.me, onSend: addComment, onDelete: removeComment, readOnly: Boolean(state.viewingAs)
     })));
-  body.replaceChildren(head, thread);
+  body.replaceChildren(...[skipped, head, thread].filter(Boolean));
 }
 
 /* ---------- book a meeting ---------- */
@@ -367,7 +375,8 @@ function go(hash, replace) {
 
 function route() {
   const [name, id] = location.hash.slice(1).split('/');
-  const view = Object.hasOwn(VIEWS, name) ? name : 'enquiries';
+  // signing in lands on the project phase; the other views are a click away in the navigation
+  const view = Object.hasOwn(VIEWS, name) ? name : 'process';
   for (const v of Object.keys(VIEWS)) $(`view-${v}`).hidden = v !== view;
   shell.setView(view, VIEWS[view]);
 
@@ -426,12 +435,13 @@ if (me) {
   route();
   try {
     const data = await api(asId ? `/api/account?as=${encodeURIComponent(asId)}` : '/api/account');
-    // a new client finishes onboarding first
-    if (!data.viewing_as && me.role !== 'admin' && !data.onboarding?.submitted_at) {
+    // a new client tells us about the project first — unless they chose to skip, which the account remembers
+    if (!data.viewing_as && me.role !== 'admin' && !data.onboarding?.submitted_at && !data.onboarding?.skipped_at) {
       location.replace('/onboarding');
     } else {
       if (data.viewing_as) viewAs(data.user);
       state.enquiries = data.enquiries;
+      state.onboarding = data.onboarding;
       renderProfile(data.user);
       renderOverview();
       renderEnquiries();

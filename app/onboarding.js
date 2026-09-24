@@ -282,8 +282,8 @@ function done() {
     h('p', {}, `${firstNames(state.consultants) || 'Your consultant'} will review your brief and confirm an estimate on your enquiry.`),
     state.preview
       ? h('a', { class: 'btn btn-white btn-lg', href: '/admin#onboarding' }, 'Back to the workspace')
-      : h('a', { class: 'btn btn-white btn-lg', href: `/account#enquiries${state.enquiryId ? `/${state.enquiryId}` : ''}` },
-        state.firstRun ? 'Go to your workspace' : 'See your enquiry', icon('arrow-right'))));
+      : h('a', { class: 'btn btn-white btn-lg', href: state.firstRun ? '/account#process' : `/account#enquiries${state.enquiryId ? `/${state.enquiryId}` : ''}` },
+        state.firstRun ? 'Go to your project' : 'See your enquiry', icon('arrow-right'))));
   $('step-h').focus();
 }
 
@@ -320,10 +320,7 @@ if (user) {
     try {
       const { onboarding, draft } = await api('/api/onboarding');
       state.firstRun = !onboarding?.submitted_at;
-      if (!state.firstRun) {
-        document.title = 'New enquiry — cnpt';
-        $('exit').href = '/account#enquiries';
-      }
+      if (!state.firstRun) document.title = 'New enquiry — cnpt';
       {
         if (onboarding) {
           Object.assign(state, {
@@ -341,12 +338,20 @@ if (user) {
       ready = false;
       $('main').replaceChildren(h('p', { class: 'loading' }, 'This could not be loaded. Please refresh the page.'));
     }
-    // leaving mid-step keeps what's filled in
+    // Top right: a first run skips into the workspace (the account remembers, so it is not asked again on
+    // every visit — "Tell us about your project" waits there instead). Later runs just leave.
+    if (!state.firstRun) {
+      $('exit').textContent = 'Save and exit';
+      $('exit').href = '/account#enquiries';
+    }
     $('exit').addEventListener('click', async (ev) => {
       ev.preventDefault();
       const m = location.hash.match(/^#step-([1-4])$/);
-      try { if (m) await save(fieldsFor(Number(m[1]))); } catch { /* keep what was saved before */ }
-      location.href = state.firstRun ? '/' : '/account#enquiries';
+      try {
+        if (m) await save(fieldsFor(Number(m[1])));           // keep what is filled in
+        if (state.firstRun) await save({ skip: true });
+      } catch { /* keep what was saved before */ }
+      location.href = state.firstRun ? '/account#process' : '/account#enquiries';
     });
   }
   if (ready) {

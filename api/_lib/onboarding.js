@@ -2,7 +2,7 @@
 // step, cleared once it is sent) and when the account finished its first run (its onboarding).
 import { db, run } from './db.js';
 
-export const ONBOARDING_COLUMNS = 'id,user_id,step,stage,brief,enquiry_id,tags,focus,consultants,submitted_at,created_at,updated_at';
+export const ONBOARDING_COLUMNS = 'id,user_id,step,stage,brief,enquiry_id,tags,focus,consultants,submitted_at,skipped_at,created_at,updated_at';
 export const EMPTY_DRAFT = { step: 1, stage: null, brief: null, enquiry_id: null, tags: [], focus: null, consultants: [] };
 export const LAST_STEP = 5; // company, field, focal, consultants, confirm
 
@@ -23,6 +23,7 @@ export function toPublicOnboarding(row) {
     focus: row.focus || null,
     consultants: row.consultants || [],
     submitted_at: row.submitted_at,
+    skipped_at: row.skipped_at,
     created_at: row.created_at,
     updated_at: row.updated_at
   };

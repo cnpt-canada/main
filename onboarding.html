@@ -9,6 +9,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://*.googleusercontent.com; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <title>Welcome — cnpt</title>
 <link rel="stylesheet" href="/app/app.css">
+<link rel="preload" href="/fonts/manrope.woff2" as="font" type="font/woff2" crossorigin>
 <script type="module" src="/app/onboarding.js"></script>
 </head>
 <body class="onb">
@@ -17,7 +18,7 @@
   <a class="side-brand" href="/" aria-label="cnpt home"><svg class="wm" viewBox="0 0 140 32" aria-hidden="true"><use href="/app/icons.svg#cnpt"/></svg></a>
   <span class="side-tag">workspace</span>
   <ol class="onb-progress" id="progress" aria-label="Onboarding steps" hidden></ol>
-  <a class="onb-exit" id="exit" href="/">Save and exit</a>
+  <a class="onb-exit" id="exit" href="/account#process">Skip for now</a>
 </header>
 <p class="onb-preview" id="preview" hidden>Preview — you are seeing what a new client sees. Nothing you choose here is saved.</p>
 <main class="onb-main" id="main"><p class="loading">Loading…</p></main>

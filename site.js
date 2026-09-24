@@ -2,7 +2,7 @@
 
 /* old single-page links (cnpt.ca/#team) go to the page that now holds that section */
 (function () {
-  var moved = { '#what': '/process', '#focus': '/process#focus', '#practices': '/practices', '#process': '/process', '#team': '/team', '#contact': '/contact' };
+  var moved = { '#what': '/process', '#focus': '/process#focus', '#practices': '/practices', '#process': '/process', '#team': '/team', '#contact': '/signin' };
   if (location.pathname === '/' && moved[location.hash]) location.replace(moved[location.hash]);
 })();
 
@@ -25,74 +25,6 @@ window.addEventListener('error', function (e) {
         other.querySelector('.acc-row').setAttribute('aria-expanded', open ? 'true' : 'false');
       });
     });
-  });
-})();
-
-/* contact form — live character count, Send enabled only once the required fields are filled, sending through /api/contact */
-(function () {
-  var form = document.getElementById('contact-form');
-  if (!form) return;
-  var message = form.elements.message;
-  var email = form.elements.email;
-  var count = form.querySelector('.count');
-  var status = form.querySelector('.form-status');
-  var button = form.querySelector('.btn-send');
-  var max = +message.getAttribute('maxlength');
-  var sending = false;
-
-  function checkedStage() { return form.querySelector('input[name="stage"]:checked'); }
-  function isComplete() {
-    return !!checkedStage() && !!message.value.trim() && !!email.value.trim() && email.checkValidity();
-  }
-  function sync() {
-    var n = message.value.length;
-    count.textContent = n + ' / ' + max;
-    count.classList.toggle('is-near', n >= max - 50);
-    button.disabled = sending || !isComplete();
-  }
-  function say(text) { status.textContent = text; }
-
-  form.addEventListener('input', sync);
-  form.addEventListener('change', sync);
-  window.addEventListener('pageshow', sync); // browsers that restore typed values on back/reload
-  sync();
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    if (sending || !isComplete()) return;
-    var stage = checkedStage();
-
-    sending = true;
-    form.classList.add('is-sending');
-    sync();
-    say('Sending…');
-    fetch(form.action, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        stage: stage.value,
-        email: email.value.trim(),
-        message: message.value.trim(),
-        company_website: form.elements.company_website.value
-      })
-    })
-      .then(function (r) {
-        return r.json().catch(function () { return {}; }).then(function (data) {
-          if (!r.ok || !data.ok) throw new Error(data.error || 'HTTP ' + r.status);
-        });
-      })
-      .then(function () {
-        form.reset();
-        say('Thank you. We will reply within two working days.');
-      })
-      .catch(function () {
-        say('Your message could not be sent. Please try again, or email info@cnpt.ca.');
-      })
-      .then(function () {
-        sending = false;
-        form.classList.remove('is-sending');
-        sync();
-      });
   });
 })();
 
@@ -160,7 +92,8 @@ window.addEventListener('error', function (e) {
   });
 })();
 
-/* signed-in visitors: the nav shows their photo and "My Project", and the contact form knows their email */
+/* signed-in visitors: the nav grows a way back into the workspace, with their photo.
+   Signed out there is no such link — "Start a project" is the way in, and it asks them to sign in. */
 (function () {
   var link = document.querySelector('.nav-account');
   if (!link || !window.fetch) return;
@@ -169,8 +102,6 @@ window.addEventListener('error', function (e) {
     .then(function (data) {
       var user = data && data.user;
       if (!user) return;
-      link.href = '/account';
-      link.textContent = 'My Project';
       if (user.picture && /^https:\/\//.test(user.picture)) {
         var img = document.createElement('img');
         img.src = user.picture;
@@ -178,13 +109,9 @@ window.addEventListener('error', function (e) {
         img.referrerPolicy = 'no-referrer';
         link.prepend(img);
       }
-      var email = document.getElementById('cf-email');
-      if (email && !email.value) {
-        email.value = user.email;
-        email.dispatchEvent(new Event('input', { bubbles: true }));
-      }
+      link.hidden = false;
     })
-    .catch(function () {}); // no API (e.g. a static preview): keep "Sign in"
+    .catch(function () {}); // no API (e.g. a static preview): the link stays hidden
 })();
 
 /* phone menu — the section links open in a sheet under the nav */
@@ -435,27 +362,27 @@ window.addEventListener('error', function (e) {
   root.classList.add('motion-ready');
 })();
 
-/* hero headline: with the mouse inside the headline's box, the headline eases from Bold to Regular and the letters
-   near the pointer stay heavy (the closest ones a little past Bold), so the weight follows the pointer;
-   leaving eases everything back to Bold.
-   A smooth change of weight needs a font with a weight axis, and Helvetica has none, so the headline switches to
-   Arimo (Helvetica's metrics, 400–700 axis, self-hosted Latin subset) once it has loaded.
+/* hero headline: with the mouse inside the headline's box, the headline eases from ExtraBold to Regular and the
+   letters near the pointer stay heavy (the closest ones a little past ExtraBold), so the weight follows the pointer;
+   leaving eases everything back to ExtraBold.
+   A smooth change of weight needs a font with a weight axis: Manrope carries one (200–800), so the headline keeps
+   its font and only the weight moves, once the file has loaded.
    Mouse and trackpad only, and only with motion on. */
 (function () {
   var h1 = document.querySelector('.hero h1');
   if (!h1 || !document.documentElement.classList.contains('motion')) return;
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches || !document.fonts || !document.fonts.load) return;
 
-  var LIGHT = 400, HEAVY = 700;
-  // Arimo stops at 700, so the letters right under the pointer go further with same-colour shadows around them
-  var EXTRA = 0.022; // em the letter spreads by at full strength: any more and neighbours run together
+  var LIGHT = 400, HEAVY = 800;
+  // Manrope stops at 800, so the letters right under the pointer go further with same-colour shadows around them
+  var EXTRA = 0.016; // em the letter spreads by at full strength: any more and neighbours run together
   var AROUND = [[1, 0], [-1, 0], [0, 1], [0, -1], [0.7071, 0.7071], [-0.7071, 0.7071], [0.7071, -0.7071], [-0.7071, -0.7071]];
   function spread(x) {
     if (!x) return '';
     var r = x * EXTRA;
     return AROUND.map(function (o) { return (o[0] * r).toFixed(4) + 'em ' + (o[1] * r).toFixed(4) + 'em 0 currentColor'; }).join(',');
   }
-  document.fonts.load(HEAVY + ' 80px "Arimo Var"').then(function (faces) { if (faces.length) start(); }, function () {});
+  document.fonts.load(HEAVY + ' 80px "Manrope"').then(function (faces) { if (faces.length) start(); }, function () {});
 
   function start() {
     var letters = [];

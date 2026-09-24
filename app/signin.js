@@ -1,4 +1,5 @@
-// /signin — one button that starts Google sign-in. A first sign-in creates the account.
+// /signin — the door to the workspace: one button that starts Google sign-in, and a first sign-in
+// creates the account. Afterwards the browser lands on the project phase.
 import { api, safeNext } from '/app/common.js';
 
 const MESSAGES = {
@@ -10,7 +11,7 @@ const MESSAGES = {
 };
 
 const params = new URLSearchParams(location.search);
-const next = safeNext(params.get('next'), '/account');
+const next = safeNext(params.get('next'), '/account#process');
 document.getElementById('google').href = `/api/auth/google?next=${encodeURIComponent(next)}`;
 
 const error = params.get('error');

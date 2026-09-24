@@ -1,6 +1,8 @@
 /* Signed-in pages (/signin, /onboarding, /account, /admin). Same tokens and type as the public site; /account and /admin
    use a denser console layout: left navigation, data tables, and a details panel.
-   Type is Helvetica: Helvetica Neue on Apple devices, Helvetica or Arial elsewhere. */
+   Type is Manrope, the same self-hosted variable file the public pages use
+   (SIL Open Font License 1.1, fonts/Manrope-OFL.txt). */
+@font-face{font-family:'Manrope';src:url(/fonts/manrope.woff2) format('woff2');font-weight:200 800;font-style:normal;font-display:swap}
 :root{
   --ink:#000000; --paper:#FFFFFF; --mist:#E4E4DF;
   --grey:#6F6F6C; --signal:#FF004D; --signal-deep:#E60045; --signal-text:#C2003C;
@@ -8,7 +10,7 @@
   --panel:#0A0A09; --raise:#111110; --hover:#141413; --sel:#1A1A18;
   --side-w:248px; --bar-h:56px;
   --r-cap:999px; --r-card:12px; --r-field:9px;
-  --font:'Helvetica Neue',Helvetica,Arial,sans-serif;
+  --font:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -482,9 +484,17 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .onb-progress li.done{color:#A3A39E}
 .onb-progress li.now{background:#fff;color:var(--ink);box-shadow:none}
 .onb-progress li.now .onb-num{background:var(--signal-deep);color:#fff}
-.onb-exit{margin-left:auto;font-size:13.5px;font-weight:600;color:#A3A39E;white-space:nowrap}
+/* top right of the welcome flow: skip into the workspace, or leave with what is filled in */
+.onb-exit{display:inline-flex;align-items:center;gap:8px;height:34px;margin-left:auto;padding:0 15px;border-radius:var(--r-cap);
+  box-shadow:inset 0 0 0 1px var(--line);font-size:13.5px;font-weight:700;color:#A3A39E;white-space:nowrap;
+  transition:color .2s ease,box-shadow .2s ease}
+.onb-exit .ic{width:15px;height:15px}
 .onb-progress:not([hidden]) + .onb-exit{margin-left:0}
-.onb-exit:hover{color:#fff}
+.onb-exit:hover{color:#fff;box-shadow:inset 0 0 0 1px var(--faint)}
+/* the way back into the welcome flow for someone who skipped it */
+.card-prompt{border-color:var(--line);background:var(--raise)}
+.card-prompt h2{font-size:17px;font-weight:800;letter-spacing:-0.02em}
+.card-prompt .sub{display:block;max-width:56ch;margin:8px 0 16px}
 .onb-preview{padding:10px 32px;background:var(--signal-deep);color:#fff;font-size:13.5px;font-weight:700;text-align:center}
 .onb-main{max-width:760px;margin:0 auto;padding:64px 24px 96px}
 .onb-kicker{display:inline-flex;align-items:center;height:30px;padding:0 15px;border-radius:var(--r-cap);background:var(--signal-deep);
@@ -554,18 +564,40 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .onb-done-mark{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:var(--r-cap);background:var(--signal-deep);color:#fff}
 .onb-done-mark .ic{width:30px;height:30px}
 
-/* ---------- sign-in ---------- */
-.signin{display:grid;place-items:center;min-height:100vh;padding:48px 20px}
-.signin-card{width:100%;max-width:440px}
-.signin .wm{display:block;width:96px;color:#fff}
-.signin h1{margin-top:44px;font-size:clamp(34px,7vw,48px);font-weight:800;letter-spacing:-0.04em;line-height:1.02}
-.signin-lede{margin-top:16px;font-size:16px;color:var(--dim)}
-.btn-google{width:100%;height:54px;margin-top:36px;gap:12px;background:#fff;color:#1F1F1F;font-size:15px}
+/* ---------- sign-in: the door to the workspace — signing in on the left, the brand picture on the right ---------- */
+.signin{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);min-height:100vh}
+.signin-panel{display:flex;align-items:center;padding:56px clamp(24px,5vw,88px)}
+.signin-inner{width:100%;max-width:432px;margin:0 auto}
+.signin-home{display:block}
+.signin .wm{display:block;width:92px;color:#fff}
+.signin-kicker{display:inline-flex;align-items:center;height:28px;margin-top:40px;padding:0 13px;border-radius:var(--r-cap);
+  background:var(--signal-deep);color:#fff;font-size:12.5px;font-weight:700;letter-spacing:-0.02em}
+.signin h1{margin-top:18px;font-size:clamp(34px,4.4vw,46px);font-weight:800;letter-spacing:-0.04em;line-height:1.02}
+.signin-lede{margin-top:16px;font-size:15.5px;line-height:1.6;color:var(--dim)}
+.btn-google{width:100%;height:54px;margin-top:32px;gap:12px;background:#fff;color:#1F1F1F;font-size:15px}
 .btn-google svg{width:20px;height:20px}
 .signin-error{margin-top:16px;padding:12px 16px;border-radius:10px;background:rgba(230,0,69,.14);color:#FF7A98;font-size:14px;font-weight:600}
-.signin-fine{margin-top:28px;font-size:13px;color:var(--muted)}
-.signin-back{display:inline-block;margin-top:28px;font-size:14px;font-weight:600;color:#9C9C97}
+.signin-fine{margin-top:26px;font-size:13px;line-height:1.6;color:var(--muted)}
+.signin-alt{margin-top:12px;font-size:13.5px;color:var(--muted)}
+.signin-alt a{color:#fff;text-decoration:underline;text-underline-offset:3px}
+.signin-back{display:inline-block;margin-top:30px;font-size:14px;font-weight:600;color:#9C9C97}
 .signin-back:hover{color:#fff}
+.signin-art{position:relative;overflow:hidden;background:#0B0B0A}
+.signin-art img{width:100%;height:100%;object-fit:cover;object-position:60% center}
+.signin-art::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15) 40%,rgba(0,0,0,.78))}
+.signin-art-copy{position:absolute;z-index:1;left:clamp(24px,4vw,56px);right:clamp(24px,4vw,56px);bottom:clamp(28px,4vw,56px)}
+.signin-art-line{max-width:24ch;font-size:clamp(20px,2vw,26px);font-weight:800;letter-spacing:-0.03em;line-height:1.15;color:#fff}
+.signin-art-steps{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;list-style:none}
+.signin-art-steps li{padding:6px 13px;border-radius:var(--r-cap);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.5);
+  font-size:12.5px;font-weight:700;color:#fff}
+/* one column: the picture becomes a band above the panel */
+@media(max-width:900px){
+  .signin{grid-template-columns:1fr}
+  .signin-art{order:-1;height:min(38vh,320px)}
+  .signin-art-line{font-size:19px}
+  .signin-art-steps{margin-top:14px}
+  .signin-panel{padding:40px 24px 56px}
+}
 
 /* a short confirmation at the bottom of the screen after saving */
 .flash{position:fixed;left:50%;bottom:24px;z-index:70;max-width:calc(100vw - 40px);padding:11px 18px;border-radius:var(--r-cap);
