@@ -499,6 +499,17 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:2px;
 /* inner pages start with a section right under the nav */
 .page-first{padding-top:calc(var(--sec-pad) * .8)}
 
+/* a page that holds several sections says so at the top: the sections in order, one tap away */
+.page-nav{background:var(--ink);border-bottom:1px solid #1C1C1A}
+/* the row is a <nav>, so it has to undo the height and spacing the main navigation sets */
+.page-nav .wrap{display:flex;flex-wrap:wrap;justify-content:flex-start;align-items:center;gap:8px;
+  height:auto;padding-top:14px;padding-bottom:14px}
+.page-nav a{display:inline-flex;align-items:center;height:32px;padding:0 15px;border-radius:var(--r-cap);
+  box-shadow:inset 0 0 0 1.5px #2E2E2C;font-size:13px;font-weight:700;letter-spacing:-0.012em;color:#9C9C97;
+  transition:color .25s ease,box-shadow .25s ease}
+.page-nav a:hover,.page-nav a:focus-visible{color:#fff;box-shadow:inset 0 0 0 1.5px #fff}
+.page-nav + .sec.page-first{padding-top:calc(var(--sec-pad) * .55)}
+
 /* phone menu: the section links move into a sheet under the nav */
 .nav-menu{display:none;position:relative;width:40px;height:40px;border:0;border-radius:var(--r-cap);background:none;cursor:pointer;
   box-shadow:inset 0 0 0 1.5px #2E2E2C;color:#fff;flex:none}
@@ -541,31 +552,15 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .nav-sheet a:nth-child(2){--sd:70ms} .nav-sheet a:nth-child(3){--sd:140ms} .nav-sheet a:nth-child(4){--sd:210ms} .nav-sheet a:nth-child(5){--sd:280ms}
 .motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-practices svg > *{
   animation:nic-pop .6s cubic-bezier(.34,1.56,.64,1) calc(var(--sd,0ms) + var(--i,0) * 80ms) backwards}
-.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-process svg{animation:nic-turn .9s var(--ease-out) var(--sd,0ms) backwards}
-.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-process path{
-  animation:nic-dash .3s var(--ease-out) calc(var(--sd,0ms) + var(--i,0) * 45ms) backwards}
 .motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-works path:first-child{animation:nic-draw .7s var(--ease-out) var(--sd,0ms) backwards}
 .motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-works path:last-child{
   animation:nic-draw .35s var(--ease-out) calc(var(--sd,0ms) + 450ms) backwards}
-.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-team circle{
-  animation:nic-pop .5s cubic-bezier(.34,1.56,.64,1) calc(var(--sd,0ms) + var(--i,0) * 110ms) backwards}
-.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-team path{
-  animation:nic-draw .45s var(--ease-out) calc(var(--sd,0ms) + 80ms) backwards}
-.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-team g:nth-child(2){
-  animation:nic-in-left .5s var(--ease-out) calc(var(--sd,0ms) + 110ms) backwards}
 .motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-talent circle{
   animation:nic-pop .5s cubic-bezier(.34,1.56,.64,1) calc(var(--sd,0ms) + var(--i,0) * 70ms) backwards}
 .motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-talent path{
   animation:nic-draw .4s var(--ease-out) calc(var(--sd,0ms) + var(--i,0) * 70ms) backwards}
-.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-team g:nth-child(3){
-  animation:nic-in-right .5s var(--ease-out) calc(var(--sd,0ms) + 220ms) backwards}
-.ic-team g:nth-child(2) circle,.ic-team g:nth-child(3) circle{--i:1}
 @keyframes nic-pop{from{transform:scale(0) rotate(-40deg)}}
-@keyframes nic-turn{from{transform:rotate(-110deg)}}
-@keyframes nic-dash{from{opacity:0;transform:scale(.3)}}
 @keyframes nic-draw{from{stroke-dashoffset:1.01}}
-@keyframes nic-in-left{from{opacity:0;transform:translate(-5px,3px)}}
-@keyframes nic-in-right{from{opacity:0;transform:translate(5px,3px)}}
 
 /* home: the index of pages */
 .explore{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 40px;margin-top:52px}
