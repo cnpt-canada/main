@@ -190,7 +190,7 @@ window.addEventListener('error', function (e) {
   document.documentElement.addEventListener('mouseleave', hide);
 })();
 
-/* motion — scroll progress, hero parallax, entrance reveals */
+/* motion — hero parallax and entrance reveals */
 (function () {
   var root = document.documentElement;
   var motion = root.classList.contains('motion');
@@ -216,8 +216,6 @@ window.addEventListener('error', function (e) {
     requestAnimationFrame(function () {
       ticking = false;
       var y = window.pageYOffset;
-      var max = root.scrollHeight - window.innerHeight;
-      nav.style.setProperty('--progress', max > 0 ? Math.min(y / max, 1).toFixed(4) : 0);
       if (motion && hero && wrapH) {
         var gone = (y + nav.offsetHeight - wrapTop) / wrapH; // 0: its top is at the nav, 1: all of it has passed under
         var t = Math.min(Math.max((gone - 0.45) / 0.55, 0), 1);
