@@ -556,34 +556,28 @@ nav .nav-sheet .wrap{display:block;height:auto}
 @keyframes nic-pop{from{transform:scale(0) rotate(-40deg)}}
 @keyframes nic-draw{from{stroke-dashoffset:1.01}}
 
-/* home: the index of pages */
-.explore{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 40px;margin-top:52px}
-/* two columns that meet exactly at the centre line, so the pointer is always over one card or the other:
-   the 40px gutter lives inside the cards (20px each side), not between them */
-@media(min-width:1001px){
-  .explore{column-gap:0}
-  .ex-card:nth-child(odd):not(.ex-card-sig){padding-right:20px}
-  .ex-card:nth-child(odd):not(.ex-card-sig)::before{right:20px}
-  .ex-card:nth-child(even){padding-left:20px}
-  .ex-card:nth-child(even)::before{left:20px}
+/* home: each page gets a section of its own, with the numbered list of what is on it */
+.sum-list{list-style:none;margin-top:48px;border-top:1.5px solid #1C1C1A}
+.sum-list li{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:20px;align-items:baseline;
+  padding:26px 0;border-bottom:1.5px solid #1C1C1A}
+.sum-no{font-size:13px;font-weight:700;color:var(--signal)}
+.sum-list h3{font-size:clamp(22px,2.2vw,28px);font-weight:800;letter-spacing:-0.032em;line-height:1.05}
+.sum-list p{margin-top:8px;font-size:15px;line-height:1.6;color:#8E8E8A}
+.sum-tag{align-self:center;display:inline-flex;align-items:center;height:28px;padding:0 13px;border-radius:var(--r-cap);
+  box-shadow:inset 0 0 0 1.5px #2E2E2C;font-size:12.5px;font-weight:700;color:#B4B4AF;white-space:nowrap}
+.sum-track{list-style:none;display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+.sum-track li{display:inline-flex;align-items:baseline;gap:9px;height:38px;padding:0 17px;border-radius:var(--r-cap);
+  box-shadow:inset 0 0 0 1.5px #2E2E2C}
+.sum-track b{font-size:14px;font-weight:800;letter-spacing:-0.02em;color:#fff}
+.sum-track span{font-size:12.5px;font-weight:600;color:#8E8E8A}
+.sum-note{margin-top:26px;font-size:15px;line-height:1.6;color:#8E8E8A;max-width:52ch}
+.sum-more{margin-top:40px}
+.sum-more .btn svg{width:11px;height:11px;margin-left:10px}
+@media(hover:hover){.sum-more .btn:hover{background:#fff;border-color:#fff;color:var(--ink)}}
+@media(max-width:720px){
+  .sum-list li{grid-template-columns:38px minmax(0,1fr);gap:0 14px;padding:20px 0}
+  .sum-tag{grid-column:2;justify-self:start;margin-top:12px}
 }
-.ex-card{position:relative;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:18px;align-items:start;padding:30px 0 36px}
-.ex-card::before{content:"";position:absolute;left:0;right:0;top:0;height:1.5px;background:#2A2A28;transform-origin:left;
-  transition:transform 1.2s var(--ease-io) var(--d,0ms),background-color .5s var(--ease-out)}
-.ex-no{padding-top:6px;font-size:13px;font-weight:700;color:var(--signal)}
-.ex-card h3{font-size:clamp(24px,2.6vw,32px);font-weight:800;letter-spacing:-0.032em;line-height:1.05}
-.ex-card p{margin-top:12px;font-size:15px;line-height:1.6;color:#8E8E8A;max-width:40ch}
-/* each card is a summary of its page: the handful of things that page actually holds */
-.ex-sum{list-style:none;display:grid;gap:9px;margin-top:20px;max-width:44ch}
-.ex-sum li{display:flex;gap:12px;font-size:14px;line-height:1.5;color:#B4B4AF}
-.ex-sum b{flex:none;width:26px;font-weight:800;color:#fff}
-.ex-card .ex-foot{margin-top:16px;font-size:13px;font-weight:700;letter-spacing:-0.012em;color:var(--signal)}
-.ex-go{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:var(--r-cap);box-shadow:inset 0 0 0 1.5px #2E2E2C;
-  color:#fff;transition:background-color .35s var(--ease-out),color .35s var(--ease-out),box-shadow .35s var(--ease-out),transform .35s var(--ease-out)}
-.ex-go svg{display:block;width:12px;height:12px}
-.ex-card-sig .ex-go{background:var(--signal-deep);box-shadow:none}
-/* five cards in two columns: Start a project closes the grid across the full width */
-.motion [data-rv="rule"].ex-card > *{transition-delay:calc(var(--d,0ms) + 200ms + var(--i,0) * 80ms)}
 
 /* client works */
 .works-filter{display:flex;flex-wrap:wrap;gap:8px;margin-top:44px}
@@ -628,17 +622,13 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .cursor-tip.on span{opacity:1;transform:none}
 
 @media(hover:hover){
-  .explore:has(.ex-card:hover) .ex-card:not(:hover) > *{opacity:.45}
-  .ex-card:hover::before{background:#D6D6D1}
-  .ex-card:hover .ex-go{background:#fff;color:var(--ink);box-shadow:none;transform:translateX(4px)}
-  .ex-card-sig:hover .ex-go{background:var(--signal);color:#fff}
   .works:has(.work:hover) .work:not(:hover){opacity:.5}
   .work{transition:opacity .4s var(--ease-out)}
   .work:hover .work-cover svg{color:var(--signal-deep);transform:scale(1.04)}
   .wf-btn:not([aria-pressed="true"]):hover{box-shadow:inset 0 0 0 1.5px #fff}
 }
 @media(max-width:1000px){
-  .explore,.works{grid-template-columns:1fr}
+  .works{grid-template-columns:1fr}
   .cta-short .cta-row{justify-content:flex-start}
 }
 @media(max-width:900px){
@@ -658,7 +648,6 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .nav-menu span:first-child{top:14px}
   .nav-menu span:last-child{top:20.5px}
   .nav-menu[aria-expanded="true"] span:first-child,.nav-menu[aria-expanded="true"] span:last-child{top:17.25px}
-  .ex-card{grid-template-columns:32px minmax(0,1fr) auto;gap:12px;padding:24px 0 28px}
   .works{gap:44px}
   .work-cover{aspect-ratio:4/3} /* a wide band is too thin on a phone */
 }
