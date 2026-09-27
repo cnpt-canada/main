@@ -106,8 +106,16 @@ window.addEventListener('error', function (e) {
   }
   tell();
 
+  var easing = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? null : 0;
+  var settle;
+
   button.addEventListener('click', function () {
     var light = root.getAttribute('data-theme') !== 'light';
+    if (easing !== null) {                       // let the colours travel, then stop transitioning
+      root.classList.add('theming');
+      clearTimeout(settle);
+      settle = setTimeout(function () { root.classList.remove('theming'); }, 600);
+    }
     if (light) root.setAttribute('data-theme', 'light');
     else root.removeAttribute('data-theme');
     try { localStorage.setItem('cnpt-theme', light ? 'light' : 'dark'); } catch (e) {}
