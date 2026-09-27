@@ -92,6 +92,29 @@ window.addEventListener('error', function (e) {
   });
 })();
 
+/* dark or light: the switch beside "Start a project", remembered on this browser */
+(function () {
+  var button = document.querySelector('.theme-btn');
+  if (!button) return;
+  var root = document.documentElement;
+  var meta = document.querySelector('meta[name="theme-color"]');
+
+  function tell() {
+    var light = root.getAttribute('data-theme') === 'light';
+    button.setAttribute('aria-label', light ? 'Switch to dark mode' : 'Switch to light mode');
+    if (meta) meta.setAttribute('content', light ? '#EDEDEA' : '#141414');
+  }
+  tell();
+
+  button.addEventListener('click', function () {
+    var light = root.getAttribute('data-theme') !== 'light';
+    if (light) root.setAttribute('data-theme', 'light');
+    else root.removeAttribute('data-theme');
+    try { localStorage.setItem('cnpt-theme', light ? 'light' : 'dark'); } catch (e) {}
+    tell();
+  });
+})();
+
 /* phone menu — the section links open in a sheet under the nav */
 (function () {
   var button = document.querySelector('.nav-menu');
