@@ -183,12 +183,13 @@ h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.035em;line-h
 .pack-ic svg{display:block;width:48px;height:48px}
 .pack-no{display:block;font-size:13px;font-weight:700;color:var(--signal-ink)}
 .pack h3{font-size:clamp(20px,2vw,26px);font-weight:800;letter-spacing:-0.028em;line-height:1.1;margin-top:26px}
-.pack > p{font-size:15px;line-height:1.6;color:var(--fg-4);margin-top:12px}
-/* what is in the package: one ruled line each, so it reads as a spec sheet rather than a run of chips */
-.pack-in{list-style:none;margin-top:24px}
+.pack > p{font-size:15px;line-height:1.6;color:var(--fg-4);margin:12px 0 24px}
+/* what is in the package: one ruled line each, so it reads as a spec sheet rather than a run of chips.
+   The slack sits above the list, so the spec sheets line up across the row however long the copy runs. */
+.pack-in{list-style:none;margin-top:auto}
 .pack-in li{padding:10px 0;border-top:1.5px solid var(--line);font-size:14px;font-weight:600;color:var(--fg-2)}
-/* lengths sit at the foot of each (equal-height) column, so they share one line across the row */
-.pack-len{margin-top:auto;padding-top:20px;font-size:12.5px;font-weight:700;color:var(--signal-ink)}
+/* lengths sit at the foot of each column, so they share one line across the row */
+.pack-len{padding-top:20px;font-size:12.5px;font-weight:700;color:var(--signal-ink)}
 .pack-len b{margin-right:9px;font-weight:700;color:var(--fg-5)}
 /* three across while there is room, then two, then one */
 @media(max-width:900px){.packs{grid-template-columns:repeat(2,minmax(0,1fr))}}
