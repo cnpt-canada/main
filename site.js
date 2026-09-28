@@ -321,7 +321,7 @@ window.addEventListener('error', function (e) {
     ['.sec h2, .cta h2', 'split'],
     ['.sec-head p, .prac-note, .lede, .cta-grid > div > p, .cta-row, .cta-form, .works-filter, .works-note', 'up'],
     ['.acc, .fgrid > *, .work', 'up'],
-    ['.value, .step, .dl, .focus-item, .member, .ex-card', 'rule'],
+    ['.value, .step, .dl, .focus-item, .member, .pack', 'rule'],
     ['.cta', 'cta'],
     ['.fbottom', 'fade']
   ];

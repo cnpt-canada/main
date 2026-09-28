@@ -173,8 +173,29 @@ h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.035em;line-h
 .acc-out span + span::before{content:"·";position:absolute;left:-11px}
 .prac-note{font-size:14px;color:var(--fg-5);margin-top:28px;max-width:64ch}
 
+/* packages — three columns of work a client can commission by name. Each one is a ruled column:
+   icon and number, the name, what it is, then the spec sheet of what is in it and how long it runs. */
+.packs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 44px;margin-top:52px}
+.pack{position:relative;display:flex;flex-direction:column;padding:28px 0 8px}
+/* icon on the left, number pinned to the right — the same head as a focus item */
+.pack-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.pack-ic{display:block;color:var(--fg-2);transition:color .5s var(--ease-out)}
+.pack-ic svg{display:block;width:48px;height:48px}
+.pack-no{display:block;font-size:13px;font-weight:700;color:var(--signal-ink)}
+.pack h3{font-size:clamp(20px,2vw,26px);font-weight:800;letter-spacing:-0.028em;line-height:1.1;margin-top:26px}
+.pack > p{font-size:15px;line-height:1.6;color:var(--fg-4);margin-top:12px}
+/* what is in the package: one ruled line each, so it reads as a spec sheet rather than a run of chips */
+.pack-in{list-style:none;margin-top:24px}
+.pack-in li{padding:10px 0;border-top:1.5px solid var(--line);font-size:14px;font-weight:600;color:var(--fg-2)}
+/* lengths sit at the foot of each (equal-height) column, so they share one line across the row */
+.pack-len{margin-top:auto;padding-top:20px;font-size:12.5px;font-weight:700;color:var(--signal-ink)}
+.pack-len b{margin-right:9px;font-weight:700;color:var(--fg-5)}
+/* three across while there is room, then two, then one */
+@media(max-width:900px){.packs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.packs{grid-template-columns:minmax(0,1fr)}}
+
 /* hairline used by value rows, process steps, deliverables, focus items and team rows — drawn in by the "rule" reveal */
-.value::before,.step::before,.dl::before,.focus-item::before,.member::before{content:"";position:absolute;left:0;right:0;top:0;height:1.5px;background:var(--line-2);
+.value::before,.step::before,.dl::before,.focus-item::before,.member::before,.pack::before{content:"";position:absolute;left:0;right:0;top:0;height:1.5px;background:var(--line-2);
   transform-origin:left;transition:transform 1.2s var(--ease-io) var(--d,0ms),background-color .5s var(--ease-out)}
 
 /* process — a timeline: icon dots strung on one hairline */
@@ -382,7 +403,7 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
 .acc-out span:nth-child(3){--i:2}
 .acc-out span:nth-child(4){--i:3}
 /* :where() keeps these below the reveal transitions until a step has finished revealing */
-:where(.step > *, .step .dot, .step .dot svg, .value > *, .member > *, .focus-item > *){transition:opacity .5s var(--ease-out),color .5s var(--ease-out)}
+:where(.step > *, .step .dot, .step .dot svg, .value > *, .member > *, .focus-item > *, .pack > *){transition:opacity .5s var(--ease-out),color .5s var(--ease-out)}
 .dl b,.dl span{transition:color .35s ease}
 @media(hover:hover){
   .btn:not(:disabled):hover::before{transform:none}
@@ -415,6 +436,11 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
   .value-core:hover .value-ic{color:var(--signal)}
   .dl:hover b{color:var(--signal-ink)}
   .dl:hover span{color:var(--fg-2)}
+  /* packages answer hover like the focus items */
+  .pack:hover::before{background:var(--fg-2)}
+  .packs:has(.pack:hover) .pack:not(:hover) > *{opacity:.45}
+  .pack:hover .pack-ic{color:var(--signal)}
+  .pack:hover > p{color:var(--fg-2)}
   /* focus items: the hovered item's rule lights and its icon takes the signal colour; the others dim */
   .focus-item:hover::before{background:var(--fg-2)}
   .focus:has(.focus-item:hover) .focus-item:not(:hover) > *{opacity:.45}
@@ -470,6 +496,7 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
   /* vertically a stage's rule runs on to the next stage, so only the rules before the hovered stage light */
   @media(hover:hover){.track .step:hover::before{background:var(--line-2)}}
   .step h3{margin-top:8px}
+  .packs{gap:0 32px;margin-top:40px}
   .values{margin-top:44px}
   .value{grid-template-columns:56px minmax(0,1fr);gap:14px 24px;padding:34px 0}
   .value-body{grid-column:2}
@@ -510,6 +537,9 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
   .acc-inner{padding-bottom:26px}
   .prac-note{margin-top:24px}
   .step{padding-right:68px}
+  .packs{margin-top:32px}
+  .pack{padding:24px 0 4px}
+  .pack h3{margin-top:18px}
   .values{margin-top:36px}
   .value{grid-template-columns:1fr;gap:16px;padding:28px 0}
   .value-body{grid-column:auto}
