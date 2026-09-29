@@ -369,6 +369,23 @@ window.addEventListener('error', function (e) {
   root.classList.add('motion-ready');
 })();
 
+/* A phrase that can say a little more opens under the pointer. A phone has no pointer, so a tap opens
+   one and closes whichever was open; a tap anywhere else closes it. */
+(function () {
+  var kws = document.querySelectorAll('.kw');
+  if (!kws.length || window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  var shut = function () { Array.prototype.forEach.call(kws, function (k) { k.classList.remove('is-open'); }); };
+  Array.prototype.forEach.call(kws, function (kw) {
+    kw.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = kw.classList.contains('is-open');
+      shut();
+      if (!open) kw.classList.add('is-open');
+    });
+  });
+  document.addEventListener('click', shut);
+})();
+
 /* Publish the classic-scrollbar width, so a row that has to know the page's real content width can
    subtract it. Overlay scrollbars (macOS, touch) measure 0, which is the right answer there. */
 (function () {

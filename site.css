@@ -116,6 +116,26 @@ nav .wm-plain{display:none}
 .motion .ticker-track{animation:ticker 46s linear infinite}
 @keyframes ticker{to{transform:translate3d(-50%,0,0)}}
 @media(hover:hover){.ticker:hover .ticker-track{animation-play-state:paused}}
+/* a phrase that can say a little more: the qualifier opens out inline and pushes the rest of the
+   sentence along, instead of floating over the line above (0fr -> 1fr animates to its natural width).
+   The device is the 2026 portfolio's; there the phrase carries a filled plate, here it is marked with
+   a rule under it, the way every other way-through on this site is. */
+.kw{text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:4px;
+  text-decoration-color:var(--fg-5);color:var(--fg-2);cursor:default;
+  transition:color .26s ease,text-decoration-color .26s ease}
+.kw-note{display:inline-grid;grid-template-columns:0fr;opacity:0;vertical-align:baseline;
+  transition:grid-template-columns .45s var(--ease-ref),opacity .24s ease}
+.kw-note > span{overflow:hidden;white-space:nowrap;
+  text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:4px;
+  text-decoration-color:inherit}
+@media(hover:hover) and (pointer:fine){
+  .kw:hover{color:var(--fg);text-decoration-color:var(--fg)}
+  .kw:hover .kw-note{grid-template-columns:1fr;opacity:1}
+}
+/* a phone has no hover, so a tap opens one instead (site.js) */
+.kw.is-open{color:var(--fg);text-decoration-color:var(--fg)}
+.kw.is-open .kw-note{grid-template-columns:1fr;opacity:1}
+
 .hero-line{flex:none;margin-right:34px;font-size:14px;font-weight:600;letter-spacing:-0.012em;color:var(--fg-2)}
 .hero-line b{margin-right:9px;font-weight:700;color:var(--signal-ink)}
 
