@@ -243,31 +243,76 @@ async function removeComment(comment) {
   }
 }
 
+// Anything the client is the one holding up, said plainly and linked to where it is done.
+function waitingOn() {
+  const items = [];
+  if (!state.viewingAs && state.onboarding?.skipped_at && !state.onboarding?.submitted_at) {
+    items.push({ text: 'Tell us about your project — five short steps, about two minutes.', href: '/onboarding', action: 'Start now' });
+  }
+  const asked = state.meetings.filter((m) => m.status === 'requested' && Date.parse(m.starts_at) > Date.now());
+  if (asked.length) {
+    items.push({ text: asked.length === 1
+      ? `A meeting you asked for on ${slotText(asked[0].starts_at, asked[0].minutes)} is waiting for the team to confirm.`
+      : `${asked.length} meetings you asked for are waiting for the team to confirm.`, href: '#meeting', action: 'See meetings' });
+  }
+  if (!items.length) return null;
+  return h('section', { class: 'card card-waiting' },
+    h('div', { class: 'card-head' }, h('h2', {}, 'Waiting on')),
+    h('ul', { class: 'waiting' }, items.map((it) => h('li', {},
+      h('span', {}, it.text),
+      h('a', { class: 'btn btn-ghost btn-xs', href: it.href }, it.action)))));
+}
+
+// The soonest meeting still ahead, so the client can see it without opening the calendar.
+function nextMeetingCard() {
+  const ahead = state.meetings
+    .filter((m) => (m.status === 'confirmed' || m.status === 'requested') && Date.parse(m.starts_at) > Date.now())
+    .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at));
+  const next = ahead[0];
+  return h('section', { class: 'card' },
+    h('div', { class: 'card-head card-head-row' },
+      h('h2', {}, 'Next meeting'),
+      h('a', { href: '#meeting' }, next ? 'All meetings' : 'Book one')),
+    h('div', { class: 'card-body' }, next
+      ? h('div', { class: 'rail-meeting' },
+        h('p', { class: 'rail-strong' }, slotText(next.starts_at, next.minutes)),
+        next.note ? h('p', { class: 'sub' }, next.note) : null,
+        badge(next.status === 'confirmed' ? 'replied' : 'new', next.status === 'confirmed' ? 'Confirmed' : 'Waiting'))
+      : h('p', { class: 'sub' }, 'Nothing booked. Pick a time whenever you need one — weekdays, 09:00–18:00 Toronto time.')));
+}
+
 function renderProcess() {
   const p = state.project;
   const body = $('process-body');
-  // someone who skipped the welcome flow has told us nothing yet: the way back to it sits at the top of their project
-  const skipped = !state.viewingAs && state.onboarding?.skipped_at && !state.onboarding?.submitted_at
-    && h('section', { class: 'card card-prompt' },
-      h('div', { class: 'card-body' },
-        h('h2', {}, 'Tell us about your project'),
-        h('p', { class: 'sub' }, 'Five short steps — your company, your field, the focal split and the consultants you want. It takes about two minutes and starts the work.'),
-        h('a', { class: 'btn btn-primary', href: '/onboarding' }, 'Start now', icon('arrow-right'))));
-  const head = h('section', { class: 'card' },
+
+  // the conversation is the page: it is what this place is for
+  const thread = h('section', { class: 'card card-thread', 'aria-labelledby': 'notes-h' },
     h('div', { class: 'card-head card-head-row' },
-      h('h2', {}, p?.headline || 'Your work with cnpt'),
+      h('h2', { id: 'notes-h' }, 'Conversation'),
+      h('span', { class: 'sub' }, state.comments.length
+        ? `${state.comments.length} note${state.comments.length === 1 ? '' : 's'}`
+        : 'Between you and the cnpt team')),
+    h('div', { class: 'card-body' }, commentThread({
+      comments: state.comments, me: state.me, onSend: addComment, onDelete: removeComment,
+      readOnly: Boolean(state.viewingAs), placeholder: 'Write to the cnpt team…'
+    })));
+
+  // and beside it, where the work stands
+  const stateCard = h('section', { class: 'card' },
+    h('div', { class: 'card-head card-head-row' },
+      h('h2', {}, 'Where the work is'),
       p && h('span', { class: 'sub' }, `Updated ${fmtDate(p.updated_at)}`)),
     h('div', { class: 'card-body project-now' },
-      processThumbnail(p, state.imageUrl, { alt: p?.headline || 'The work right now' }),
+      p ? h('p', { class: 'rail-strong' }, p.headline || 'Your work with cnpt') : null,
+      // the picture only takes room once there is one to show
+      state.imageUrl ? processThumbnail(p, state.imageUrl, { alt: p?.headline || 'The work right now' }) : null,
       p
         ? stageTracker(p.stage)
-        : h('p', { class: 'sub' }, 'The cnpt team opens this once your enquiry is picked up. You will see the stage, a picture of what is being made, and notes here.')));
-  const thread = h('section', { class: 'card', 'aria-labelledby': 'notes-h' },
-    h('div', { class: 'card-head' }, h('h2', { id: 'notes-h' }, 'Notes')),
-    h('div', { class: 'card-body' }, commentThread({
-      comments: state.comments, me: state.me, onSend: addComment, onDelete: removeComment, readOnly: Boolean(state.viewingAs)
-    })));
-  body.replaceChildren(...[skipped, head, thread].filter(Boolean));
+        : h('p', { class: 'sub' }, 'The cnpt team opens this once your enquiry is picked up. You will see the stage, a picture of what is being made, and the conversation here.')));
+
+  const rail = h('div', { class: 'project-rail' },
+    ...[waitingOn(), stateCard, nextMeetingCard()].filter(Boolean));
+  body.replaceChildren(thread, rail);
 }
 
 /* ---------- book a meeting ---------- */

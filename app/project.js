@@ -91,28 +91,52 @@ const ago = (iso) => {
   return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(-value, unit);
 };
 
-// One comment: who wrote it, what they are on this project, when, and the text.
-function commentRow(comment, { canDelete, onDelete }) {
+// Which day a note belongs to, in the reader's own time, so the separators match their calendar.
+const dayKey = (iso) => new Date(iso).toDateString();
+const dayLabel = (iso) => {
+  const d = new Date(iso), today = new Date();
+  const days = Math.round((new Date(today.toDateString()) - new Date(d.toDateString())) / 86400000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  return d.toLocaleDateString('en-CA', { weekday: 'long', month: 'short', day: 'numeric',
+    year: d.getFullYear() === today.getFullYear() ? undefined : 'numeric' });
+};
+const clockOf = (iso) => new Date(iso).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
+
+// One comment. `runOn` means the person above wrote this too, on the same day, so it joins what they
+// were saying instead of repeating their name and their face.
+function commentRow(comment, { canDelete, onDelete, runOn = false }) {
   const who = comment.author || { name: 'Someone who left', email: '', title: '—' };
-  return h('li', { class: 'note', 'data-id': comment.id },
-    avatar(who),
+  return h('li', { class: runOn ? 'note note-run' : 'note', 'data-id': comment.id },
+    runOn ? h('span', { class: 'note-gutter', 'aria-hidden': 'true' }) : avatar(who),
     h('div', { class: 'note-body' },
-      h('p', { class: 'note-head' },
+      runOn ? null : h('p', { class: 'note-head' },
         h('strong', {}, who.name || who.email || 'Someone'),
         h('span', { class: `note-title note-title-${who.title === 'Consultant' ? 'team' : 'owner'}` }, who.title),
         h('time', { class: 'sub', datetime: comment.created_at, title: new Date(comment.created_at).toLocaleString('en-CA') }, ago(comment.created_at))),
-      h('p', { class: 'note-text' }, comment.body)),
+      h('p', { class: 'note-text' }, comment.body),
+      runOn ? h('time', { class: 'note-when', datetime: comment.created_at }, clockOf(comment.created_at)) : null),
     canDelete && h('button', { class: 'icon-btn note-remove', type: 'button', 'aria-label': 'Delete this note', onclick: () => onDelete(comment) }, icon('x')));
 }
+
+const daySeparator = (iso) => h('li', { class: 'notes-day', role: 'separator' }, h('span', {}, dayLabel(iso)));
 
 // The thread under the process: everything written so far, and a box to add to it.
 // `onSend(text)` should save and return the new comment; `onDelete(comment)` removes one.
 export function commentThread({ comments, me, onSend, onDelete, readOnly = false, placeholder = 'Write a note…' }) {
   const list = h('ul', { class: 'notes' });
-  const rowFor = (c) => commentRow(c, { canDelete: !readOnly && (me?.role === 'admin' || c.author?.id === me?.id), onDelete });
+  const canRemove = (c) => !readOnly && (me?.role === 'admin' || c.author?.id === me?.id);
+  const rowFor = (c, runOn) => commentRow(c, { canDelete: canRemove(c), onDelete, runOn });
+  // a day is announced once, and a run from one person on that day is written once
+  const rows = () => comments.flatMap((c, i) => {
+    const prev = comments[i - 1];
+    const newDay = !prev || dayKey(prev.created_at) !== dayKey(c.created_at);
+    const runOn = !newDay && prev.author?.id != null && prev.author.id === c.author?.id;
+    return [newDay ? daySeparator(c.created_at) : null, rowFor(c, runOn)].filter(Boolean);
+  });
   const draw = () => list.replaceChildren(...(comments.length
-    ? comments.map(rowFor)
-    : [h('li', { class: 'notes-empty' }, 'Nothing here yet. Notes you leave stay with your project.')]));
+    ? rows()
+    : [h('li', { class: 'notes-empty' }, 'Nothing here yet. Anything either side writes stays with the project.')]));
   draw();
   if (readOnly) return h('div', { class: 'thread' }, list);
 
@@ -124,7 +148,8 @@ export function commentThread({ comments, me, onSend, onDelete, readOnly = false
     if ((ev.metaKey || ev.ctrlKey) && ev.key === 'Enter') { ev.preventDefault(); form.requestSubmit(); }
   });
   const form = h('form', { class: 'note-add' }, field,
-    h('div', { class: 'note-add-foot' }, h('span', { class: 'sub' }, 'Everyone on this project can see it'), send));
+    h('div', { class: 'note-add-foot' },
+      h('span', { class: 'sub' }, 'Everyone on this project can see it · ⌘↩ to send'), send));
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const text = field.value.trim();
@@ -133,12 +158,17 @@ export function commentThread({ comments, me, onSend, onDelete, readOnly = false
     const added = await onSend(text);
     if (added) {
       const first = comments.length === 0;
+      const prev = comments[comments.length - 1];
+      const newDay = !prev || dayKey(prev.created_at) !== dayKey(added.created_at);
+      const runOn = !newDay && prev.author?.id != null && prev.author.id === added.author?.id;
       comments.push(added);
       field.value = '';
       // the new note arrives on its own, rather than the whole thread being drawn again under the reader
-      const row = rowFor(added);
+      const row = rowFor(added, runOn);
       row.classList.add('note-new');
-      if (first) list.replaceChildren(row); else list.append(row);
+      if (first) list.replaceChildren(...(newDay ? [daySeparator(added.created_at), row] : [row]));
+      else { if (newDay) list.append(daySeparator(added.created_at)); list.append(row); }
+      row.scrollIntoView({ block: 'nearest' });
     }
     sync();
     field.focus();

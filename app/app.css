@@ -353,8 +353,15 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .empty-note p{font-size:14px;color:var(--soft)}
 
 /* ---------- the work after an enquiry: where it is, the notes beside it, the meetings ---------- */
-.project-layout{display:grid;gap:16px;align-items:start;max-width:980px}
-@media(min-width:1280px){.project-layout{grid-template-columns:minmax(0,1fr) minmax(340px,420px);max-width:none}}
+/* The conversation is what this page is for, so it takes the wide column and the state of the work
+   reads down the side. The rail sticks while the thread scrolls, so a long conversation never leaves
+   the client wondering which stage they are in. */
+.project-layout{display:grid;gap:16px;align-items:start;max-width:1180px}
+.project-rail{display:grid;gap:16px;align-content:start}
+@media(min-width:1180px){
+  .project-layout{grid-template-columns:minmax(0,1fr) minmax(300px,360px);max-width:1500px}
+  .project-rail{position:sticky;top:calc(var(--bar-h) + 20px)}
+}
 /* the meeting view keeps one column at every width: pick a time, then your request, then your meetings */
 @media(min-width:1280px){.meeting-layout{grid-template-columns:minmax(0,1fr);max-width:980px}}
 .project-now{display:grid;gap:22px}
@@ -381,7 +388,21 @@ th[aria-sort] .th-sort .ic{opacity:1}
 /* notes: one thread on the project, the client as Project Owner and the cnpt team as Consultant */
 .thread{display:grid;gap:14px}
 .notes{display:grid;gap:2px;list-style:none;margin:0;padding:0}
+/* the day a run of notes belongs to, announced once, on the rule that divides them */
+.notes-day{display:flex;align-items:center;gap:12px;margin:18px 0 10px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.notes-day::before,.notes-day::after{content:"";flex:1;height:1px;background:var(--rule)}
+.notes-day:first-child{margin-top:0}
 .note{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;padding:12px;border-radius:var(--r-lg)}
+/* a note from the same person on the same day keeps the column but not the name */
+.note-run{padding-top:2px;padding-bottom:2px}
+.note-gutter{width:32px}
+.note-run .note-text{margin-top:0}
+/* the time of a joined note shows in the margin, where it does not interrupt the reading */
+.note-when{position:absolute;left:12px;width:32px;font-family:var(--mono);font-size:10.5px;color:var(--muted);
+  text-align:center;opacity:0;transition:opacity .15s}
+.note-run{position:relative}
+.note-run:hover .note-when{opacity:1}
 @media(hover:hover){.note:hover{background:var(--hover)}}
 .note-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
 .note-head strong{font-size:14px;font-weight:var(--w-title)}
@@ -583,6 +604,15 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .onb-progress:not([hidden]) + .onb-exit{margin-left:0}
 .onb-exit:hover{color:var(--fg);box-shadow:inset 0 0 0 1px var(--faint)}
 /* the way back into the welcome flow for someone who skipped it */
+/* what the client is holding up, and where to do it */
+.card-waiting{border-color:var(--line)}
+.waiting{list-style:none;margin:0;padding:0}
+.waiting li{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  padding:13px 20px;border-bottom:1px solid var(--rule);font-size:13.5px;line-height:1.5;color:var(--soft)}
+.waiting li:last-child{border-bottom:0}
+.waiting .btn{flex:none;margin-top:-2px}
+.rail-strong{font-size:15px;font-weight:var(--w-title);letter-spacing:-0.02em;line-height:1.35;color:var(--fg)}
+.rail-meeting{display:grid;gap:8px;justify-items:start}
 .card-prompt{border-color:var(--line);background:var(--raise)}
 .card-prompt h2{font-size:17px;font-weight:var(--w-title);letter-spacing:-0.02em}
 .card-prompt .sub{display:block;max-width:56ch;margin:8px 0 16px}
