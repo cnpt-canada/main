@@ -103,10 +103,20 @@ nav .wm-plain{display:none}
 .hero h1 em{font-style:normal;color:var(--signal)}
 .hero p{margin-top:30px;font-size:clamp(16px,1.5vw,19px);color:var(--fg-3);max-width:54ch;line-height:1.6}
 .hero-cta{display:flex;flex-wrap:wrap;align-items:center;gap:16px 30px;margin-top:44px}
-.hero-foot{position:relative;display:flex;flex-wrap:wrap;gap:10px 34px;margin-top:96px;padding-top:34px}
+.hero-foot{position:relative;margin-top:96px;padding-top:34px}
 .hero-foot::before{content:"";position:absolute;left:0;right:0;top:0;height:1.5px;background:var(--line);
   transform-origin:left;transition:transform 1.4s var(--ease-io) var(--d,0ms)}
-.hero-line{font-size:14px;font-weight:600;letter-spacing:-0.012em;color:var(--fg-2)}
+/* the three things we do run past as a band: one set, then the same set again, so translating the
+   track by half its width returns it exactly where it started. Each line carries its own spacing,
+   so half the track is exactly the first set. */
+.ticker{overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}
+.ticker-track{display:flex;width:max-content}
+.motion .ticker-track{animation:ticker 46s linear infinite}
+@keyframes ticker{to{transform:translate3d(-50%,0,0)}}
+@media(hover:hover){.ticker:hover .ticker-track{animation-play-state:paused}}
+.hero-line{flex:none;margin-right:34px;font-size:14px;font-weight:600;letter-spacing:-0.012em;color:var(--fg-2)}
 .hero-line b{margin-right:9px;font-weight:700;color:var(--signal-ink)}
 
 /* section shell */
@@ -162,7 +172,7 @@ h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.035em;line-h
 .acc[data-open="true"] .acc-ic::before,
 .acc[data-open="true"] .acc-ic::after{background:var(--fill)}
 .acc[data-open="true"] .acc-ic::after{transform:rotate(90deg) scaleX(0)}
-.acc-panel{display:grid;grid-template-rows:0fr;transition:grid-template-rows .34s ease}
+.acc-panel{display:grid;grid-template-rows:0fr;transition:grid-template-rows .34s var(--ease-ref)}
 .acc[data-open="true"] .acc-panel{grid-template-rows:1fr}
 .acc-panel > div{overflow:hidden;min-height:0}
 .acc-inner{padding:0 0 40px 164px;opacity:0;transform:translateY(-6px);transition:opacity .3s ease .05s,transform .3s ease .05s}
@@ -191,6 +201,11 @@ h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.035em;line-h
 /* lengths sit at the foot of each column, so they share one line across the row */
 .pack-len{padding-top:20px;font-size:12.5px;font-weight:700;color:var(--signal-ink)}
 .pack-len b{margin-right:9px;font-weight:700;color:var(--fg-5)}
+/* the three marks breathe out of step with each other, the way the reference's marks do */
+.motion .pack-ic svg{animation:pack-breath 6s ease-in-out infinite}
+.motion .pack:nth-child(2) .pack-ic svg{animation-delay:-2s}
+.motion .pack:nth-child(3) .pack-ic svg{animation-delay:-4s}
+@keyframes pack-breath{0%,100%{transform:scale(1)}50%{transform:scale(1.055)}}
 /* three across while there is room, then two, then one */
 @media(max-width:900px){.packs{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.packs{grid-template-columns:minmax(0,1fr)}}
@@ -338,7 +353,10 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
    The script tags targets with data-rv="up|fade|clip|split|line|rule|cta" and adds .in as they
    scroll into view; the attribute is dropped once the reveal ends so hover transitions take over. */
 :root{--ease-out:cubic-bezier(.16,1,.3,1);--ease-io:cubic-bezier(.7,0,.2,1);--ease-pop:cubic-bezier(.34,1.56,.64,1);
-  --ease-theme:cubic-bezier(.4,0,.2,1)}
+  --ease-theme:cubic-bezier(.4,0,.2,1);
+  /* the curves the 2026 portfolio moves on: one for everything that travels, one for the
+     overshoot a control gives back under the pointer */
+  --ease-ref:cubic-bezier(.2,.7,.2,1);--ease-spring:cubic-bezier(.34,1.4,.55,1)}
 
 /* changing the theme: every colour on the page eases to its new value. The class is only on the page
    while the change is running, so nothing else has to carry a transition it does not want. */
@@ -359,8 +377,8 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
 .motion .nav-actions > :nth-child(2){animation-delay:.38s}
 @keyframes nav-in{from{opacity:0;transform:translateY(-12px)}}
 
-.motion [data-rv]{transition:opacity .9s var(--ease-out) var(--d,0ms),transform .9s var(--ease-out) var(--d,0ms)}
-.motion [data-rv="up"]:not(.in){opacity:0;transform:translateY(28px)}
+.motion [data-rv]{transition:opacity .8s ease var(--d,0ms),transform .8s var(--ease-ref) var(--d,0ms)}
+.motion [data-rv="up"]:not(.in){opacity:0;transform:translateY(16px)}
 .motion [data-rv="fade"]:not(.in){opacity:0}
 .motion [data-rv="clip"]{transition:clip-path .8s var(--ease-io) var(--d,0ms)}
 .motion [data-rv="clip"]:not(.in){clip-path:inset(0 100% 0 0 round 999px)}
@@ -380,7 +398,7 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
 
 /* ruled rows (value rows, process steps, deliverables, focus items): the rule draws first, then the contents rise in */
 .motion [data-rv="rule"]:not(.in)::before{transform:scaleX(0)}
-.motion [data-rv="rule"] > *{transition:opacity .8s var(--ease-out),transform .8s var(--ease-out);
+.motion [data-rv="rule"] > *{transition:opacity .8s ease,transform .8s var(--ease-ref);
   transition-delay:calc(var(--d,0ms) + 200ms + var(--i,0) * 80ms)}
 .motion [data-rv="rule"]:not(.in) > *{opacity:0;transform:translateY(16px)}
 .motion [data-rv="rule"] > :nth-child(2){--i:1}
@@ -442,6 +460,9 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
   .packs:has(.pack:hover) .pack:not(:hover) > *{opacity:.45}
   .pack:hover .pack-ic{color:var(--signal)}
   .pack:hover > p{color:var(--fg-2)}
+  /* every section mark answers the pointer with the reference's overshoot: it lifts and comes back */
+  .value-ic,.focus-ic,.pack-ic,.step .dot{transition:transform .4s var(--ease-spring),color .5s var(--ease-out)}
+  .value:hover .value-ic,.focus-item:hover .focus-ic,.pack:hover .pack-ic,.step:hover .dot{transform:translateY(-5px) scale(1.06)}
   /* focus items: the hovered item's rule lights and its icon takes the signal colour; the others dim */
   .focus-item:hover::before{background:var(--fg-2)}
   .focus:has(.focus-item:hover) .focus-item:not(:hover) > *{opacity:.45}
@@ -455,6 +476,7 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
 }
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
+  .ticker-track{animation:none!important}
   *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;
     transition-duration:.01ms!important;transition-delay:0s!important}
 }
@@ -529,7 +551,8 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
   .hero-video{aspect-ratio:16/9;margin-bottom:28px}
   .hero p{margin-top:22px}
   .hero-cta{margin-top:32px}
-  .hero-foot{margin-top:44px;padding-top:26px;gap:8px 22px}
+  .hero-foot{margin-top:44px;padding-top:26px}
+  .hero-line{margin-right:22px}
   .chip{height:36px;padding:0 16px;font-size:13px}
   .sec-head{gap:12px 16px;margin-bottom:28px}
   .eyebrow + h2{margin-top:20px}

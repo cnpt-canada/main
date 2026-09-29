@@ -316,7 +316,7 @@ window.addEventListener('error', function (e) {
     ['.hero p', 'up', 480],
     ['.hero-cta .btn', 'up', 620, 80],
     ['.hero-foot', 'line', 760],
-    ['.hero-foot .chip', 'up', 880, 80],
+    ['.hero-foot .ticker', 'up', 880],
     ['.eyebrow', 'clip'],
     ['.sec h2, .cta h2', 'split'],
     ['.sec-head p, .prac-note, .lede, .cta-grid > div > p, .cta-row, .cta-form, .works-filter, .works-note', 'up'],
