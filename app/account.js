@@ -77,7 +77,7 @@ function focalSection(e) {
   const editable = !state.viewingAs && e.status !== 'closed';
   if (!e.focus) {
     return section('Focal', h('p', { class: 'sub' }, editable ? 'Not set yet. Tell us how the work should be split.' : 'Not set.'),
-      editable && h('button', { class: 'btn btn-line btn-sm focal-set', type: 'button', onclick: () => saveFocus(e, DEFAULT_FOCUS, { reopen: true }) },
+      editable && h('button', { class: 'btn btn-ghost btn-sm focal-set', type: 'button', onclick: () => saveFocus(e, DEFAULT_FOCUS, { reopen: true }) },
         icon('plus'), 'Set focal'));
   }
   if (!editable) return section('Focal', focalBar(e.focus));
@@ -175,7 +175,7 @@ function renderOverview() {
       h('div', { class: 'card-head' }, h('h2', { id: 'project-h' }, 'My project')),
       h('div', { class: 'empty-note' },
         h('p', {}, state.viewingAs ? 'No enquiries yet.' : 'Nothing here yet. Send your first enquiry and your project shows up here.'),
-        !state.viewingAs && h('a', { class: 'btn btn-white btn-sm', href: '/onboarding' }, icon('plus'), 'New enquiry'))));
+        !state.viewingAs && h('a', { class: 'btn btn-primary btn-sm', href: '/onboarding' }, icon('plus'), 'New enquiry'))));
   } else {
     const latest = list[0];
     const stat = (n, label) => h('div', { class: 'stat' }, h('strong', {}, String(n)), h('span', {}, label));
@@ -201,7 +201,7 @@ function renderOverview() {
   if (!state.viewingAs) {
     cards.push(h('section', { class: 'card card-row', 'aria-labelledby': 'help-h' },
       h('div', {}, h('h2', { id: 'help-h' }, 'Questions?'), h('p', { class: 'sub' }, 'Write to the cnpt team. We reply within two working days.')),
-      h('a', { class: 'btn btn-line btn-sm', href: 'mailto:info@cnpt.ca' }, 'info@cnpt.ca')));
+      h('a', { class: 'btn btn-ghost btn-sm', href: 'mailto:info@cnpt.ca' }, 'info@cnpt.ca')));
   }
   $('overview').replaceChildren(...cards);
 }
@@ -252,7 +252,7 @@ function renderProcess() {
       h('div', { class: 'card-body' },
         h('h2', {}, 'Tell us about your project'),
         h('p', { class: 'sub' }, 'Five short steps — your company, your field, the focal split and the consultants you want. It takes about two minutes and starts the work.'),
-        h('a', { class: 'btn btn-white', href: '/onboarding' }, 'Start now', icon('arrow-right'))));
+        h('a', { class: 'btn btn-primary', href: '/onboarding' }, 'Start now', icon('arrow-right'))));
   const head = h('section', { class: 'card' },
     h('div', { class: 'card-head card-head-row' },
       h('h2', {}, p?.headline || 'Your work with cnpt'),
@@ -283,7 +283,7 @@ function meetingRow(m) {
     badge(m.status === 'confirmed' ? 'replied' : m.status === 'requested' ? 'new' : 'closed',
       m.status === 'confirmed' ? 'Confirmed' : m.status === 'requested' ? 'Waiting' : m.status === 'declined' ? 'Declined' : 'Cancelled'),
     !state.viewingAs && !past && (m.status === 'requested' || m.status === 'confirmed')
-      ? h('button', { class: 'btn btn-line btn-xs', type: 'button', onclick: () => cancelMeeting(m) }, 'Cancel')
+      ? h('button', { class: 'btn btn-ghost btn-xs', type: 'button', onclick: () => cancelMeeting(m) }, 'Cancel')
       : null);
 }
 
@@ -324,8 +324,8 @@ function renderMeeting() {
   const sub = h('p', { class: 'sub' }, 'Tap a time on the calendar above. Weekdays, 09:00–18:00 Toronto time.');
   const note = h('input', { class: 'input', id: 'meeting-note', type: 'text', maxlength: '500',
     placeholder: 'e.g. Where the concept should go next' });
-  const book = h('button', { class: 'btn btn-white btn-sm', type: 'submit', disabled: true }, 'Request this time', icon('arrow-right'));
-  const clear = h('button', { class: 'btn btn-line btn-sm', type: 'button', hidden: true }, 'Clear');
+  const book = h('button', { class: 'btn btn-primary btn-sm', type: 'submit', disabled: true }, 'Request this time', icon('arrow-right'));
+  const clear = h('button', { class: 'btn btn-ghost btn-sm', type: 'button', hidden: true }, 'Clear');
   const lengths = h('div', { class: 'seg', role: 'group', 'aria-label': 'How long' }, MEETING_LENGTHS.map((mins) => h('button', {
     class: 'seg-btn', type: 'button', 'aria-pressed': String(mins === 30), 'data-len': mins,
     onclick: (ev) => {
@@ -432,7 +432,7 @@ function viewAs(member) {
   const banner = $('as-banner');
   banner.replaceChildren(icon('eye'),
     h('p', {}, 'Viewing as ', h('strong', {}, member.name || member.email), ` (${member.email}). Read-only.`),
-    h('a', { class: 'btn btn-line btn-xs', href: '/admin#members' }, 'Exit'));
+    h('a', { class: 'btn btn-ghost btn-xs', href: '/admin#members' }, 'Exit'));
   banner.hidden = false;
   for (const id of ['new-enquiry', 'signout-card', 'delete-card']) $(id).hidden = true;
   document.title = `${member.name || member.email} — viewing as — cnpt`;

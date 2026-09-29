@@ -184,7 +184,7 @@ function panelHead(label) {
 }
 
 function viewAsLink(userId, label = 'View as user') {
-  return userId ? h('a', { class: 'btn btn-line btn-sm', href: `/account?as=${userId}#profile` }, icon('eye'), label) : null;
+  return userId ? h('a', { class: 'btn btn-ghost btn-sm', href: `/account?as=${userId}#profile` }, icon('eye'), label) : null;
 }
 
 function renderEnquiryDetail(e) {
@@ -198,10 +198,10 @@ function enquiryBody(e) {
       h('h2', { class: 'detail-title' }, e.email),
       h('p', { class: 'sub' }, e.client ? `Member · ${e.client.name || e.client.email}` : 'Guest · sent without an account'),
       h('div', { class: 'detail-actions' },
-        h('a', { class: 'btn btn-white btn-sm', href: replyHref(e) }, icon('reply'), 'Reply by email'),
+        h('a', { class: 'btn btn-primary btn-sm', href: replyHref(e) }, icon('reply'), 'Reply by email'),
         viewAsLink(e.user_id),
-        h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => copyEmail(e.email) }, icon('copy'), 'Copy email'),
-        h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => { editingId = e.id; renderDetail(); } }, icon('file'), 'Edit'))),
+        h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => copyEmail(e.email) }, icon('copy'), 'Copy email'),
+        h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => { editingId = e.id; renderDetail(); } }, icon('file'), 'Edit'))),
     section('Status',
       h('div', { class: 'seg seg-full', role: 'group', 'aria-label': 'Status' }, ENQUIRY_STATUSES.map((s) => h('button', {
         class: 'seg-btn', type: 'button', 'data-status': s, 'aria-pressed': String(e.status === s), onclick: () => setStatus(e, s)
@@ -233,7 +233,7 @@ function renderDraftDetail(o) {
         h('p', { class: 'sub' }, o.client ? o.client.email : ''),
         h('div', { class: 'detail-actions' },
           viewAsLink(o.user_id, 'View as user'),
-          theirs.length > 0 && h('a', { class: 'btn btn-line btn-sm', href: '#enquiries', onclick: () => showEnquiriesOf(o) },
+          theirs.length > 0 && h('a', { class: 'btn btn-ghost btn-sm', href: '#enquiries', onclick: () => showEnquiriesOf(o) },
             `Their enquiries (${theirs.length})`))),
       section('Onboarding', statusOf({ ...o, kind: 'draft' }),
         h('p', { class: 'hint' }, `They stopped at step ${o.step} of ${ONB_STEPS}. Nothing has been sent yet; what they have written is below.`)),
@@ -263,7 +263,7 @@ function dangerZone(label, note, onGo) {
   return h('div', { class: 'detail-section danger-zone' },
     h('h3', {}, 'Danger zone'),
     h('p', { class: 'hint' }, note),
-    h('button', { class: 'btn btn-danger btn-sm', type: 'button', onclick: onGo }, icon('x'), label));
+    h('button', { class: 'btn btn-ghost is-danger btn-sm', type: 'button', onclick: onGo }, icon('x'), label));
 }
 
 /* ---------- editing an enquiry ---------- */
@@ -300,7 +300,7 @@ function editForm(e) {
     focalBox.replaceChildren(focus
       ? h('div', {}, focalBar(focus, { onChange: (values) => { focus = values; } }),
         h('button', { class: 'link', type: 'button', onclick: () => { focus = null; drawFocal(); } }, 'Remove the focal'))
-      : h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => { focus = [...DEFAULT_FOCUS]; drawFocal(); } },
+      : h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => { focus = [...DEFAULT_FOCUS]; drawFocal(); } },
         icon('plus'), 'Set a focal'));
   };
   drawFocal();
@@ -317,7 +317,7 @@ function editForm(e) {
   };
   drawWho();
 
-  const save = h('button', { class: 'btn btn-white btn-sm', type: 'submit' }, icon('check'), 'Save changes');
+  const save = h('button', { class: 'btn btn-primary btn-sm', type: 'submit' }, icon('check'), 'Save changes');
   const sync = () => {
     count.textContent = `${message.value.length} / ${MAX_MESSAGE}`;
     save.disabled = !message.value.trim() || !email.value.trim() || !email.checkValidity();
@@ -336,7 +336,7 @@ function editForm(e) {
     section('Focal', focalBox),
     section('Consultants', whoBox),
     h('div', { class: 'edit-actions' }, save,
-      h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: stop }, 'Cancel')));
+      h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: stop }, 'Cancel')));
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -409,8 +409,8 @@ function costEditor(e) {
   const form = h('form', { class: 'cost-form', novalidate: true },
     h('label', { class: 'cost-field' }, h('span', { class: 'cost-prefix', 'aria-hidden': 'true' }, '$'),
       h('span', { class: 'sr-only' }, 'Estimated cost in Canadian dollars'), input, h('span', { class: 'cost-suffix', 'aria-hidden': 'true' }, 'CAD')),
-    h('button', { class: 'btn btn-white btn-sm', type: 'submit' }, 'Save'),
-    e.estimated_cost != null && h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => saveCost(e, null) }, 'Clear'));
+    h('button', { class: 'btn btn-primary btn-sm', type: 'submit' }, 'Save'),
+    e.estimated_cost != null && h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => saveCost(e, null) }, 'Clear'));
   form.addEventListener('submit', (ev) => {
     ev.preventDefault();
     const n = Number(input.value);
@@ -450,7 +450,7 @@ function memberAction(u) {
   if (u.id === state.me) return h('span', { class: 'sub' }, 'You');
   const role = u.owner
     ? h('span', { class: 'sub' }, 'ADMIN_EMAILS')
-    : h('button', { class: 'btn btn-line btn-xs', type: 'button', onclick: () => setRole(u, u.role === 'admin' ? 'user' : 'admin') },
+    : h('button', { class: 'btn btn-ghost btn-xs', type: 'button', onclick: () => setRole(u, u.role === 'admin' ? 'user' : 'admin') },
       u.role === 'admin' ? 'Remove admin' : 'Make admin');
   return h('span', { class: 'row-actions' }, role);
 }
@@ -569,12 +569,12 @@ function renderProcessDetail() {
         h('h2', { class: 'detail-title' }, clientName(p)),
         h('p', { class: 'sub' }, p.client?.email || ''),
         h('div', { class: 'detail-actions' },
-          h('a', { class: 'btn btn-white btn-sm', href: `/account?as=${p.user_id}#process` }, icon('eye'), 'View as user'))),
+          h('a', { class: 'btn btn-primary btn-sm', href: `/account?as=${p.user_id}#process` }, icon('eye'), 'View as user'))),
       section('Picture', processThumbnail(p, p.image_url, { alt: p.headline || '' }),
         h('div', { class: 'detail-actions' },
-          h('label', { class: 'btn btn-line btn-sm', for: 'picture-input' }, icon('plus'), p.image_url ? 'Replace' : 'Upload'),
+          h('label', { class: 'btn btn-ghost btn-sm', for: 'picture-input' }, icon('plus'), p.image_url ? 'Replace' : 'Upload'),
           picture,
-          p.image_url && h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => saveProcess(p, { data: null }) }, 'Remove')),
+          p.image_url && h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => saveProcess(p, { data: null }) }, 'Remove')),
         h('p', { class: 'hint' }, 'The client sees this on Your process. Pictures are shrunk to 1600px before they are sent.')),
       section('Stage',
         h('div', { class: 'seg seg-full', role: 'group', 'aria-label': 'Stage' }, STAGES.map((s) => h('button', {
@@ -583,7 +583,7 @@ function renderProcessDetail() {
         h('p', { class: 'hint' }, STAGES[stageIndex(p.stage)].note)),
       section('What is happening', headline,
         h('div', { class: 'detail-actions' },
-          h('button', { class: 'btn btn-white btn-sm', type: 'button', onclick: () => saveProcess(p, { headline: headline.value.trim() }) }, 'Save'))),
+          h('button', { class: 'btn btn-primary btn-sm', type: 'button', onclick: () => saveProcess(p, { headline: headline.value.trim() }) }, 'Save'))),
       section('Notes', commentThread({
         comments: state.comments, me: state.me,
         onSend: async (text) => {
@@ -633,10 +633,10 @@ const MEETING_COLUMNS = [
   { key: 'status', label: 'Status', cls: 'c-status', sort: (m) => m.status, cell: (m) => badge(MEET_BADGE[m.status], MEET_LABELS[m.status]) },
   { key: 'actions', srLabel: 'Actions', cls: 'c-action', cell: (m) => (m.status === 'requested'
     ? h('span', { class: 'row-actions' },
-      h('button', { class: 'btn btn-white btn-xs', type: 'button', onclick: (ev) => { ev.stopPropagation(); setMeeting(m, 'confirmed'); } }, 'Confirm'),
-      h('button', { class: 'btn btn-line btn-xs', type: 'button', onclick: (ev) => { ev.stopPropagation(); setMeeting(m, 'declined'); } }, 'Decline'))
+      h('button', { class: 'btn btn-primary btn-xs', type: 'button', onclick: (ev) => { ev.stopPropagation(); setMeeting(m, 'confirmed'); } }, 'Confirm'),
+      h('button', { class: 'btn btn-ghost btn-xs', type: 'button', onclick: (ev) => { ev.stopPropagation(); setMeeting(m, 'declined'); } }, 'Decline'))
     : m.status === 'confirmed' && Date.parse(m.starts_at) > Date.now()
-      ? h('button', { class: 'btn btn-line btn-xs', type: 'button', onclick: (ev) => { ev.stopPropagation(); setMeeting(m, 'cancelled'); } }, 'Call off')
+      ? h('button', { class: 'btn btn-ghost btn-xs', type: 'button', onclick: (ev) => { ev.stopPropagation(); setMeeting(m, 'cancelled'); } }, 'Call off')
       : h('span', { class: 'sub' }, '—')) }
 ];
 
@@ -672,10 +672,10 @@ function renderMeetingDetail() {
   if (!m) return;
   const over = Date.parse(m.starts_at) + m.minutes * 60000 <= Date.now();
   const actions = m.status === 'requested'
-    ? [h('button', { class: 'btn btn-white btn-sm', type: 'button', onclick: () => setMeeting(m, 'confirmed') }, icon('check'), 'Confirm'),
-      h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => setMeeting(m, 'declined') }, 'Decline')]
+    ? [h('button', { class: 'btn btn-primary btn-sm', type: 'button', onclick: () => setMeeting(m, 'confirmed') }, icon('check'), 'Confirm'),
+      h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => setMeeting(m, 'declined') }, 'Decline')]
     : m.status === 'confirmed' && !over
-      ? [h('button', { class: 'btn btn-line btn-sm', type: 'button', onclick: () => setMeeting(m, 'cancelled') }, 'Call off')]
+      ? [h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => setMeeting(m, 'cancelled') }, 'Call off')]
       : [];
 
   $('meeting-detail').replaceChildren(
@@ -694,8 +694,8 @@ function renderMeetingDetail() {
             h('strong', {}, clientName(m)),
             h('span', { class: 'sub' }, m.client?.email || `Member #${m.user_id}`))),
         h('div', { class: 'detail-actions' },
-          m.client?.email ? h('a', { class: 'btn btn-line btn-sm', href: `mailto:${m.client.email}` }, 'Email them') : null,
-          m.user_id ? h('a', { class: 'btn btn-line btn-sm', href: `/account?as=${m.user_id}#meeting` }, icon('eye'), 'View as user') : null)),
+          m.client?.email ? h('a', { class: 'btn btn-ghost btn-sm', href: `mailto:${m.client.email}` }, 'Email them') : null,
+          m.user_id ? h('a', { class: 'btn btn-ghost btn-sm', href: `/account?as=${m.user_id}#meeting` }, icon('eye'), 'View as user') : null)),
       section('What they want to talk about',
         m.note ? h('p', { class: 'msg' }, m.note) : h('p', { class: 'sub' }, 'Nothing written.')),
       section('Details', kv([

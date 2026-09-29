@@ -74,14 +74,14 @@ function progress(current) {
 }
 
 function stepFrame(step, title, lede, content, { next = 'Continue', canContinue = () => true, onNext } = {}) {
-  const nextBtn = h('button', { class: 'btn btn-white btn-lg', type: 'submit' }, next, icon('arrow-right'));
+  const nextBtn = h('button', { class: 'btn btn-primary btn-lg', type: 'submit' }, next, icon('arrow-right'));
   const form = h('form', { class: 'onb-step', 'aria-labelledby': 'step-h', novalidate: true },
     h('span', { class: 'onb-kicker' }, `Step ${step} of ${LAST}`),
     h('h1', { id: 'step-h', tabindex: '-1' }, title),
     h('p', { class: 'onb-lede' }, lede),
     h('div', { class: 'onb-body' }, content),
     h('div', { class: 'onb-actions' },
-      h('button', { class: 'btn btn-line btn-lg', type: 'button', onclick: () => {
+      h('button', { class: 'btn btn-ghost btn-lg', type: 'button', onclick: () => {
         // after the first run there is no welcome screen to go back to
         if (step === 1 && !state.firstRun) location.href = '/account#enquiries'; else go(step - 1);
       } }, icon('arrow-left'), 'Back'),
@@ -129,7 +129,7 @@ function splash() {
         ? 'Your answers are saved. Pick up where you left off.'
         : 'Five short steps so we can prepare before your first call. It takes about two minutes.'),
       h('ol', { class: 'splash-steps' }, STEPS.map((s, i) => h('li', {}, h('span', {}, i + 1), s))),
-      h('button', { class: 'btn btn-white btn-lg', type: 'button', onclick: () => go(Math.min(state.resume, reachable())) },
+      h('button', { class: 'btn btn-primary btn-lg', type: 'button', onclick: () => go(Math.min(state.resume, reachable())) },
         state.returning ? 'Continue' : 'Let’s start', icon('arrow-right'))));
 }
 
@@ -172,7 +172,7 @@ function stepField() {
   const chips = h('div', { class: 'tag-grid', role: 'group', 'aria-label': 'Fields' });
   const input = h('input', { class: 'input input-pill', id: 'tag-new', type: 'text', maxlength: String(MAX_TAG), autocomplete: 'off',
     placeholder: 'Add your own, e.g. Agritech' });
-  const addBtn = h('button', { class: 'btn btn-line', type: 'button' }, icon('plus'), 'Add');
+  const addBtn = h('button', { class: 'btn btn-ghost', type: 'button' }, icon('plus'), 'Add');
   const hint = h('p', { class: 'onb-hint', id: 'tag-hint' });
 
   const has = (t) => state.tags.some((x) => x.toLowerCase() === t.toLowerCase());
@@ -285,8 +285,8 @@ function done() {
     h('h1', { id: 'step-h', tabindex: '-1' }, state.firstRun ? 'You’re all set.' : 'Enquiry sent.'),
     h('p', {}, `${firstNames(state.consultants) || 'Your consultant'} will review your brief and confirm an estimate on your enquiry.`),
     state.preview
-      ? h('a', { class: 'btn btn-white btn-lg', href: '/admin#onboarding' }, 'Back to the workspace')
-      : h('a', { class: 'btn btn-white btn-lg', href: state.firstRun ? '/account#process' : `/account#enquiries${state.enquiryId ? `/${state.enquiryId}` : ''}` },
+      ? h('a', { class: 'btn btn-primary btn-lg', href: '/admin#onboarding' }, 'Back to the workspace')
+      : h('a', { class: 'btn btn-primary btn-lg', href: state.firstRun ? '/account#process' : `/account#enquiries${state.enquiryId ? `/${state.enquiryId}` : ''}` },
         state.firstRun ? 'Go to your project' : 'See your enquiry', icon('arrow-right'))));
   $('step-h').focus();
 }

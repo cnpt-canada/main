@@ -222,7 +222,10 @@ window.addEventListener('error', function (e) {
   if (!root.classList.contains('motion')) return;
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
 
-  function slot(node) {
+  // `count` carries the running character index. One counter is shared by everything that belongs to
+  // the same label or heading, so a sentence rolls over left to right instead of all at once — even
+  // where the sentence has been cut into separate pieces beforehand, as the headings have.
+  function slot(node, count) {
     var text = node.textContent;
     if (!text.trim()) return;
     var frag = document.createDocumentFragment();
@@ -234,18 +237,17 @@ window.addEventListener('error', function (e) {
     var run = document.createElement('span');
     run.className = 'sl-run';
     run.setAttribute('aria-hidden', 'true');
-    var i = 0;
     // A box per character, but the boxes of one word are held together: a line may break between
     // words, as it always could, and never inside one.
     text.split(/(\s+)/).forEach(function (part) {
       if (!part) return;
-      if (/^\s+$/.test(part)) { run.appendChild(document.createTextNode(' ')); i++; return; }
+      if (/^\s+$/.test(part)) { run.appendChild(document.createTextNode(' ')); count.i++; return; }
       var word = document.createElement('span');
       word.className = 'sl-word';
       part.split('').forEach(function (ch) {
         var box = document.createElement('span');
         box.className = 'sl';
-        box.style.setProperty('--i', i++);
+        box.style.setProperty('--i', count.i++);
         var up = document.createElement('span');
         var next = document.createElement('span');
         up.textContent = next.textContent = ch;
@@ -277,14 +279,20 @@ window.addEventListener('error', function (e) {
     ' .value h3, .focus-item h3, .pack h3, .step h3, .sum-list h3, .member h3, .work h3,' +
     ' .sec-head p';
   Array.prototype.forEach.call(document.querySelectorAll(labels), function (el) {
-    textIn(el).forEach(slot);
+    var count = { i: 0 };
+    textIn(el).forEach(function (node) { slot(node, count); });
   });
 
   // The section headings are split into words for their entrance; the letters go inside those words,
-  // so this waits until that has happened.
+  // so this waits until that has happened. A heading counts as one sentence: the words share a
+  // counter, and the space between them takes a place in it, so the wave crosses the whole line.
   window.cnptSlotHeadings = function () {
-    Array.prototype.forEach.call(document.querySelectorAll('.sec h2 .wd > span, .cta h2 .wd > span'), function (el) {
-      textIn(el).forEach(slot);
+    Array.prototype.forEach.call(document.querySelectorAll('.sec h2, .cta h2'), function (head) {
+      var count = { i: 0 };
+      Array.prototype.forEach.call(head.querySelectorAll('.wd > span'), function (el) {
+        textIn(el).forEach(function (node) { slot(node, count); });
+        count.i++;
+      });
     });
   };
 })();
@@ -483,7 +491,7 @@ window.addEventListener('error', function (e) {
 /* hero headline: with the mouse inside the headline's box, the headline eases from ExtraBold to Regular and the
    letters near the pointer stay heavy (the closest ones a little past ExtraBold), so the weight follows the pointer;
    leaving eases everything back to ExtraBold.
-   A smooth change of weight needs a font with a weight axis: Manrope carries one (200–800), so the headline keeps
+   A smooth change of weight needs a font with a weight axis: Geist carries one (100–900), so the headline keeps
    its font and only the weight moves, once the file has loaded.
    Mouse and trackpad only, and only with motion on. */
 (function () {
@@ -491,16 +499,9 @@ window.addEventListener('error', function (e) {
   if (!h1 || !document.documentElement.classList.contains('motion')) return;
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches || !document.fonts || !document.fonts.load) return;
 
-  var LIGHT = 400, HEAVY = 800;
-  // Manrope stops at 800, so the letters right under the pointer go further with same-colour shadows around them
-  var EXTRA = 0.016; // em the letter spreads by at full strength: any more and neighbours run together
-  var AROUND = [[1, 0], [-1, 0], [0, 1], [0, -1], [0.7071, 0.7071], [-0.7071, 0.7071], [0.7071, -0.7071], [-0.7071, -0.7071]];
-  function spread(x) {
-    if (!x) return '';
-    var r = x * EXTRA;
-    return AROUND.map(function (o) { return (o[0] * r).toFixed(4) + 'em ' + (o[1] * r).toFixed(4) + 'em 0 currentColor'; }).join(',');
-  }
-  document.fonts.load(HEAVY + ' 80px "Manrope"').then(function (faces) { if (faces.length) start(); }, function () {});
+  // REST is the ladder's own weight, so a headline nobody is pointing at is simply the headline.
+  var REST = 480, PEAK = 820;
+  document.fonts.load(PEAK + ' 80px "Geist"').then(function (faces) { if (faces.length) start(); }, function () {});
 
   function start() {
     var letters = [];
@@ -517,20 +518,21 @@ window.addEventListener('error', function (e) {
           el.setAttribute('aria-hidden', 'true');
           el.textContent = ch;
           frag.appendChild(el);
-          letters.push({ el: el, v: 1, x: 0, shown: HEAVY, shownX: 0, cx: 0, cy: 0 });
+          letters.push({ el: el, v: 0, shown: REST, cx: 0, cy: 0 });
         });
         node.replaceChild(frag, child);
       });
     })(h1);
     h1.classList.add('is-var');
 
-    // Regular is narrower than Bold, so words would hop up a line while the weight changes:
-    // pin the line breaks where they fall in Bold, and pin them again whenever the width changes
+    // Medium is narrower than the peak, so words would hop between lines while the weight changes,
+    // and a locked line cannot wrap out of trouble: pin the breaks where they fall at the heaviest
+    // the headline ever gets, and pin them again whenever the width changes.
     var words = Array.prototype.slice.call(h1.querySelectorAll('.wd'));
     function lockLines() {
       Array.prototype.forEach.call(h1.querySelectorAll('br.wl'), function (br) { br.remove(); });
       h1.classList.remove('lines-locked');
-      var saved = letters.map(function (l) { var w = l.el.style.fontWeight; l.el.style.fontWeight = ''; return w; });
+      var saved = letters.map(function (l) { var w = l.el.style.fontWeight; l.el.style.fontWeight = PEAK; return w; });
       var top = null;
       words.forEach(function (wd) {
         var t = Math.round(wd.getBoundingClientRect().top);
@@ -575,27 +577,20 @@ window.addEventListener('error', function (e) {
       var core = fontSize * 0.35, reach = fontSize * 1.4, moving = false;
       for (i = 0; i < letters.length; i++) {
         l = letters[i];
-        var target = 1, extra = 0; // Bold while the mouse is outside the headline
+        var target = 0; // the headline's own weight while the mouse is outside it
         if (inside) {
           var dx = l.cx - mouseX, dy = l.cy - mouseY;
-          // fully heavy within the core around the pointer, easing to Regular further out
+          // heaviest within the core around the pointer, easing back to Medium further out
           var p = Math.max(0, 1 - Math.max(0, Math.sqrt(dx * dx + dy * dy) - core) / reach);
           target = p * p * (3 - 2 * p);
-          extra = target * target * target; // only the letters closest to the pointer go past Bold
         }
         l.v += (target - l.v) * k;
-        l.x += (extra - l.x) * k;
-        if (Math.abs(target - l.v) > 0.002 || Math.abs(extra - l.x) > 0.002) moving = true;
-        else { l.v = target; l.x = extra; }
-        var w = Math.round(LIGHT + (HEAVY - LIGHT) * l.v);
+        if (Math.abs(target - l.v) > 0.002) moving = true;
+        else l.v = target;
+        var w = Math.round(REST + (PEAK - REST) * l.v);
         if (w !== l.shown) {
           l.shown = w;
-          l.el.style.fontWeight = w === HEAVY ? '' : w;
-        }
-        var x = Math.round(l.x * 100) / 100;
-        if (x !== l.shownX) {
-          l.shownX = x;
-          l.el.style.textShadow = spread(x);
+          l.el.style.fontWeight = w === REST ? '' : w;
         }
       }
       if (moving) raf = requestAnimationFrame(frame);

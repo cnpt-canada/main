@@ -117,7 +117,7 @@ export function commentThread({ comments, me, onSend, onDelete, readOnly = false
   if (readOnly) return h('div', { class: 'thread' }, list);
 
   const field = h('textarea', { class: 'textarea note-field', rows: '2', maxlength: String(MAX_COMMENT), placeholder, 'aria-label': 'Write a note' });
-  const send = h('button', { class: 'btn btn-white btn-sm', type: 'submit', disabled: true }, 'Post', icon('arrow-right'));
+  const send = h('button', { class: 'btn btn-primary btn-sm', type: 'submit', disabled: true }, 'Post', icon('arrow-right'));
   const sync = () => { send.disabled = !field.value.trim(); };
   field.addEventListener('input', sync);
   field.addEventListener('keydown', (ev) => {
