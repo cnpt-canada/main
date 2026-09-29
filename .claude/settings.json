@@ -2,6 +2,14 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Edit",
+      "Write",
+      "WebFetch",
+      "WebSearch",
+
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
@@ -9,13 +17,57 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push origin main:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(git restore:*)",
+      "Bash(git stash:*)",
+
+      "Bash(node:*)",
+      "Bash(npx:*)",
+      "Bash(npm run:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(sed:*)",
+      "Bash(awk:*)",
+      "Bash(find:*)",
+      "Bash(echo:*)",
+      "Bash(printf:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(diff:*)",
+      "Bash(curl:*)",
+      "Bash(for:*)",
+      "Bash(until:*)",
+
+      "PowerShell(Get-Process:*)",
+      "PowerShell(Get-Command:*)",
+      "PowerShell(Get-ChildItem:*)",
+      "PowerShell(Get-CimInstance:*)",
+      "PowerShell(Get-NetTCPConnection:*)",
+      "PowerShell(Get-Content:*)",
+      "PowerShell(Get-Item:*)",
+      "PowerShell(Test-Path:*)",
+      "PowerShell(Start-Process:*)",
+      "PowerShell(Stop-Process:*)",
+      "PowerShell(Start-Sleep:*)",
+      "PowerShell(Invoke-WebRequest:*)"
     ],
     "deny": [
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
       "Bash(git reset --hard:*)",
-      "Bash(git rebase:*)"
+      "Bash(git rebase:*)",
+      "Bash(rm -rf:*)",
+      "Bash(rm -fr:*)"
     ]
   }
 }

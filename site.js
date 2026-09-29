@@ -114,7 +114,7 @@ window.addEventListener('error', function (e) {
     if (easing !== null) {                       // let the colours travel, then stop transitioning
       root.classList.add('theming');
       clearTimeout(settle);
-      settle = setTimeout(function () { root.classList.remove('theming'); }, 600);
+      settle = setTimeout(function () { root.classList.remove('theming'); }, 700);
     }
     if (light) root.setAttribute('data-theme', 'light');
     else root.removeAttribute('data-theme');
@@ -157,7 +157,7 @@ window.addEventListener('error', function (e) {
     if (!el || !el.closest || el.closest('input, textarea, select, [data-cursor-off]')) return '';
     var own = el.closest('[data-cursor]');
     if (!own) return '';
-    if (own.classList.contains('acc-row')) return own.getAttribute('aria-expanded') === 'true' ? 'Close' : 'Open';
+    if (own.classList.contains('acc-row')) return own.getAttribute('aria-expanded') === 'true' ? 'Close' : 'What it covers';
     return own.getAttribute('data-cursor');
   }
   function hide() { current = ''; tip.classList.remove('on'); }
@@ -205,6 +205,74 @@ window.addEventListener('error', function (e) {
     requestAnimationFrame(function () { if (current) update(document.elementFromPoint(mouseX, mouseY)); });
   });
   document.documentElement.addEventListener('mouseleave', hide);
+})();
+
+/* Letters that change places.
+
+   Every label you can click is rebuilt as one small box per character, each holding that character
+   twice: the one you see, and the same one waiting underneath. Pointing at the label sends the first
+   copy up out of its box and brings the second up behind it, each letter a few milliseconds after the
+   one before, so the word rolls over from the left. Nothing about the label's own width or position
+   changes, so nothing around it moves.
+
+   The letters are scenery: each label keeps a plain copy of its text for screen readers and the split
+   version is hidden from them. */
+(function () {
+  var root = document.documentElement;
+  if (!root.classList.contains('motion')) return;
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+  function slot(node) {
+    var text = node.textContent;
+    if (!text.trim()) return;
+    var frag = document.createDocumentFragment();
+    var spoken = document.createElement('span');
+    spoken.className = 'sr-only';
+    spoken.textContent = text;
+    frag.appendChild(spoken);
+
+    var run = document.createElement('span');
+    run.className = 'sl-run';
+    run.setAttribute('aria-hidden', 'true');
+    var i = 0;
+    text.split('').forEach(function (ch) {
+      if (ch === ' ') {
+        // a space of its own would collapse inside an inline-block, so it keeps its width here
+        run.appendChild(document.createTextNode(' '));
+        i++;
+        return;
+      }
+      var box = document.createElement('span');
+      box.className = 'sl';
+      box.style.setProperty('--i', i++);
+      var up = document.createElement('span');
+      var next = document.createElement('span');
+      up.textContent = next.textContent = ch;
+      box.appendChild(up);
+      box.appendChild(next);
+      run.appendChild(box);
+    });
+    frag.appendChild(run);
+    node.parentNode.replaceChild(frag, node);
+  }
+
+  // the text of a label, wherever it sits among the icons and arrows that keep it company
+  function textIn(el) {
+    var found = [];
+    (function walk(n) {
+      for (var c = n.firstChild; c; c = c.nextSibling) {
+        if (c.nodeType === 3) { if (c.textContent.trim()) found.push(c); }
+        else if (c.nodeType === 1 && c.tagName.toLowerCase() !== 'svg' && !c.classList.contains('sr-only')) walk(c);
+      }
+    })(el);
+    return found;
+  }
+
+  var labels = '.navlinks .nav-link, .nav-sheet a, .nav-actions .btn, .hero-cta .btn, .cta-row .btn,' +
+    ' .link-out span, .fcol a, .acc-name .code, .works-note a';
+  Array.prototype.forEach.call(document.querySelectorAll(labels), function (el) {
+    textIn(el).forEach(slot);
+  });
 })();
 
 /* motion — hero parallax and entrance reveals */
