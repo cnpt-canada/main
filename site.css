@@ -549,6 +549,8 @@ h2 .sl{--sl-step:15ms}
 /* :where() keeps these below the reveal transitions until a step has finished revealing */
 :where(.step > *, .step .dot, .step .dot svg, .value > *, .member > *, .focus-item > *, .pack > *){transition:opacity .5s var(--ease-out),color .5s var(--ease-out)}
 .dl b,.dl span{transition:color .35s ease}
+/* the step is a transition on the row itself, so it also eases back out when the pointer leaves */
+.sum-list li,.value,.dl,.pack-in li{transition:padding-left .3s var(--ease-ref)}
 @media(hover:hover){
   .btn:not(:disabled):hover::before{transform:none}
   .link-out:hover > span::after{background:var(--fg)}
@@ -593,6 +595,9 @@ h2 .sl{--sl-step:15ms}
   .focus:has(.focus-item:hover) .focus-item:not(:hover) > *{opacity:.45}
   .focus-item:hover .focus-ic{color:var(--signal)}
   .focus-item:hover p{color:var(--fg-2)}
+  /* a ruled row steps into its own rule when you point at it, the way the reference's contact rows
+     do. The row keeps its width and only its contents inset, so nothing beside it moves. */
+  :is(.sum-list li,.value,.dl,.pack-in li):hover{padding-left:10px}
   /* team rows answer hover like the value rows: the rule lights, the other person dims, the portrait leans in */
   .member:hover::before{background:var(--fg-2)}
   .team:has(.member:hover) .member:not(:hover) > *{opacity:.45}
