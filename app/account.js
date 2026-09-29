@@ -9,7 +9,7 @@ import {
 } from '/app/common.js';
 
 const $ = (id) => document.getElementById(id);
-const VIEWS = { enquiries: 'Your enquiries', process: 'Your process', meeting: 'Book a meeting', profile: 'Profile' };
+const VIEWS = { enquiries: 'Your enquiries', process: 'Your project', meeting: 'Book a meeting', profile: 'Profile' };
 const STATUS_NOTES = {
   new: 'Received. Someone from the cnpt team will read it shortly.',
   in_review: 'The cnpt team is reading it and will reply by email.',

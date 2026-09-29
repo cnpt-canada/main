@@ -308,7 +308,7 @@ export function mountShell(user, page, { query = '' } = {}) {
       item('/admin#members', 'admin:members', 'Members', 'users')),
     group('Account',
       item(`/account${query}#enquiries`, 'account:enquiries', 'Your enquiries', 'message'),
-      item(`/account${query}#process`, 'account:process', 'Your process', 'folder'),
+      item(`/account${query}#process`, 'account:process', 'Your project', 'folder'),
       item(`/account${query}#meeting`, 'account:meeting', 'Book a meeting', 'calendar'),
       item(`/account${query}#profile`, 'account:profile', 'Profile', 'user')),
     h('div', { class: 'nav-group' },

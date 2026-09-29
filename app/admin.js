@@ -575,7 +575,7 @@ function renderProcessDetail() {
           h('label', { class: 'btn btn-ghost btn-sm', for: 'picture-input' }, icon('plus'), p.image_url ? 'Replace' : 'Upload'),
           picture,
           p.image_url && h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => saveProcess(p, { data: null }) }, 'Remove')),
-        h('p', { class: 'hint' }, 'The client sees this on Your process. Pictures are shrunk to 1600px before they are sent.')),
+        h('p', { class: 'hint' }, 'The client sees this on Your project. Pictures are shrunk to 1600px before they are sent.')),
       section('Stage',
         h('div', { class: 'seg seg-full', role: 'group', 'aria-label': 'Stage' }, STAGES.map((s) => h('button', {
           class: 'seg-btn', type: 'button', 'aria-pressed': String(p.stage === s.key), onclick: () => saveProcess(p, { stage: s.key })
