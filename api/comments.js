@@ -1,7 +1,9 @@
 // POST   /api/comments {body, owner_id?} → writes in a process thread. Clients write in their own;
 //                                          admins write in any client's thread (owner_id), as Consultant.
+//                                          The other side is emailed, so a note is not left unread.
 // DELETE /api/comments {id}               → removes a comment you wrote (admins can remove any).
 import { db, run } from './_lib/db.js';
+import { emailStudio } from './_lib/notify.js';
 import { fail, json, methodNotAllowed, readBody, route } from './_lib/http.js';
 import { COMMENT_COLUMNS, withAuthors } from './_lib/process.js';
 import { MAX_COMMENT, toId } from './_lib/rules.js';
@@ -27,15 +29,52 @@ export default route(async (req, res) => {
   if (!text || text.length > MAX_COMMENT) return fail(res, 400, 'invalid_comment');
 
   let ownerId = user.id;
+  let client = null;
   if (isAdmin(user) && body.owner_id != null) {
     ownerId = toId(body.owner_id);
-    const client = ownerId && await run(db().from('users').select('id').eq('id', ownerId).maybeSingle());
+    client = ownerId && await run(db().from('users').select('id,email,name').eq('id', ownerId).maybeSingle());
     if (!client) return fail(res, 404, 'not_found');
   } else if (body.owner_id != null && toId(body.owner_id) !== user.id) {
     return fail(res, 403, 'not_your_thread');
   }
 
+  // who wrote last, so a run of notes from one person is one email rather than one each
+  const previous = await run(db().from('comments').select('author_id,created_at')
+    .eq('owner_id', ownerId).order('created_at', { ascending: false }).limit(1).maybeSingle());
+
   const saved = await run(db().from('comments').insert({ owner_id: ownerId, author_id: user.id, body: text })
     .select(COMMENT_COLUMNS).single());
+  // sent before the reply, the way a booking is: work left running after a response can be cut short
+  await tellTheOtherSide({ user, client, text, previous });
   json(res, 200, { ok: true, comment: (await withAuthors([saved]))[0] });
 });
+
+// A note goes the other way: a client's reaches the studio, the studio's reaches that client. Sending
+// happens after the reply, so a mail that will not go out never costs the writer their note.
+const RUN_WINDOW = 15 * 60 * 1000; // a second note this soon after your own is part of the same thought
+
+async function tellTheOtherSide({ user, client, text, previous }) {
+  if (previous && previous.author_id === user.id
+    && Date.now() - Date.parse(previous.created_at) < RUN_WINDOW) return;
+  const who = user.name || user.email;
+  const quoted = text.length > 600 ? `${text.slice(0, 600)}\u2026` : text;
+  try {
+    if (client) {
+      await emailStudio({
+        to: client.email,
+        subject: 'cnpt: a new note on your project',
+        text: [`${who} wrote in your project workspace:`, '', quoted, '',
+          'Reply in the workspace: https://cnpt.ca/account#process'].join('\n')
+      });
+    } else {
+      await emailStudio({
+        subject: `New note from ${who}`,
+        text: [`Client: ${who} <${user.email}>`, '', quoted, '',
+          'Reply on /admin \u2192 Process.'].join('\n'),
+        replyTo: user.email
+      });
+    }
+  } catch (err) {
+    console.error('comments: could not send the notification', err);
+  }
+}
