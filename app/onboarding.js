@@ -16,6 +16,8 @@ const MAX_BRIEF = 500;
 const TAG_RE = /^[\p{L}\p{N}][\p{L}\p{N} &+./-]*$/u;
 const STEPS = ['Your company', 'Your field', 'Focal', 'Consultants', 'Confirm'];
 const LAST = STEPS.length;
+// roughly what is left from each step, so the progress bar answers "have I got time for this?"
+const MINUTES_LEFT = ['about 2 minutes', 'about 90 seconds', 'about a minute', 'about 30 seconds', 'nearly done'];
 const ERRORS = {
   invalid_tags: 'One of the tags isn’t allowed. Use letters, numbers, spaces and & + . / -',
   invalid_focus: 'The focal split has to add up to 100, in tens.',
@@ -76,7 +78,9 @@ function progress(current) {
 function stepFrame(step, title, lede, content, { next = 'Continue', canContinue = () => true, onNext } = {}) {
   const nextBtn = h('button', { class: 'btn btn-primary btn-lg', type: 'submit' }, next, icon('arrow-right'));
   const form = h('form', { class: 'onb-step', 'aria-labelledby': 'step-h', novalidate: true },
-    h('span', { class: 'onb-kicker' }, `Step ${step} of ${LAST}`),
+    // what is left, and how long it takes: a step count on its own tells a client nothing about
+    // whether they have time for this now
+    h('span', { class: 'onb-kicker' }, `Step ${step} of ${LAST} · ${MINUTES_LEFT[step - 1]}`),
     h('h1', { id: 'step-h', tabindex: '-1' }, title),
     h('p', { class: 'onb-lede' }, lede),
     h('div', { class: 'onb-body' }, content),

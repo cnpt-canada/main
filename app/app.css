@@ -192,7 +192,20 @@ button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 
 /* a view: heading, toolbar, content */
 .main{padding:32px 32px 72px}
+/* One measure and one grid under every heading, so whichever page a client is on the content starts
+   and ends on the same two lines: twelve columns with 24px gutters, the frame Linear, Stripe and
+   Vercel's consoles all settle on. A block says how many columns it wants and nothing else. */
+.view-head,.view-body{max-width:1320px}
 .view-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:22px}
+.view-body{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:24px;align-items:start}
+.col-4{grid-column:span 4}
+.col-5{grid-column:span 5}
+.col-6{grid-column:span 6}
+.col-7{grid-column:span 7}
+.col-8{grid-column:span 8}
+.col-12{grid-column:1 / -1}
+/* below the console's two-column width every block takes the whole measure */
+@media(max-width:1180px){.view-body > *{grid-column:1 / -1}}
 .view-head h1{font-size:30px;font-weight:var(--w-display);letter-spacing:-0.036em;line-height:1.1}
 .view-sub{margin-top:6px;max-width:70ch;font-size:14px;color:var(--dim)}
 .view-sub a{color:var(--fg);text-decoration:underline;text-underline-offset:3px}
@@ -228,6 +241,7 @@ button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 
 /* data table + details panel side by side */
 .split{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+.view-body > .split{grid-column:1 / -1}
 .table-card{border:1px solid var(--rule);border-radius:var(--r-card);background:var(--panel);overflow:clip}
 .grid{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px}
 .grid th{position:sticky;top:var(--bar-h);z-index:2;height:40px;padding:0 14px;background:var(--raise);border-bottom:1px solid var(--rule);
@@ -323,7 +337,7 @@ th[aria-sort] .th-sort .ic{opacity:1}
 /* settings cards (profile) */
 /* one column that is allowed to be narrower than its contents: without this a long enquiry line,
    which is meant to be cut short with an ellipsis, widens the card and pushes the page sideways */
-.cards{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;max-width:760px}
+.cards{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
 .card{border:1px solid var(--rule);border-radius:var(--r-card);background:var(--panel)}
 .card h2{font-size:15px;font-weight:var(--w-title);letter-spacing:-0.016em}
 .card-head{padding:15px 20px;border-bottom:1px solid var(--rule)}
@@ -335,9 +349,6 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .profile-top strong{font-size:17px;font-weight:var(--w-title);letter-spacing:-0.02em}
 .card .kv > div:first-child{padding-top:10px;border-top:1px solid var(--rule)}
 /* profile: account on the left, the client's project at a glance on the right */
-.profile-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
-.profile-layout .cards{max-width:none}
-@media(min-width:1100px){.profile-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
 .card-head-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .card-head-row a{font-size:12.5px;font-weight:var(--w-title);color:var(--soft);text-decoration:underline;text-underline-offset:3px}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid var(--rule)}
@@ -353,17 +364,15 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .empty-note p{font-size:14px;color:var(--soft)}
 
 /* ---------- the work after an enquiry: where it is, the notes beside it, the meetings ---------- */
-/* The conversation is what this page is for, so it takes the wide column and the state of the work
-   reads down the side. The rail sticks while the thread scrolls, so a long conversation never leaves
-   the client wondering which stage they are in. */
-.project-layout{display:grid;gap:16px;align-items:start;max-width:1180px}
-.project-rail{display:grid;gap:16px;align-content:start}
+/* The conversation is what this page is for, so it takes eight columns and the state of the work
+   reads down the remaining four. The rail sticks while the thread scrolls, so a long conversation
+   never leaves the client wondering which stage they are in. */
+.project-rail{display:grid;gap:24px;align-content:start}
 @media(min-width:1180px){
-  .project-layout{grid-template-columns:minmax(0,1fr) minmax(300px,360px);max-width:1500px}
   .project-rail{position:sticky;top:calc(var(--bar-h) + 20px)}
 }
 /* the meeting view keeps one column at every width: pick a time, then your request, then your meetings */
-@media(min-width:1280px){.meeting-layout{grid-template-columns:minmax(0,1fr);max-width:980px}}
+
 .project-now{display:grid;gap:22px}
 
 /* the picture the cnpt team shares for the stage the work is in */
@@ -604,6 +613,18 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .onb-progress:not([hidden]) + .onb-exit{margin-left:0}
 .onb-exit:hover{color:var(--fg);box-shadow:inset 0 0 0 1px var(--faint)}
 /* the way back into the welcome flow for someone who skipped it */
+/* Four readings across the top: where the work is, the next meeting, how the conversation stands and
+   what it costs. Set in the site's own language — a mono label over a plain line of type, a hairline
+   box, no colour spent on decoration. One that leads somewhere answers the pointer. */
+.readings{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:24px}
+.reading{display:block;padding:15px 18px 17px;border:1px solid var(--rule);border-radius:var(--r-card);background:var(--panel)}
+.reading-label{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.reading-value{margin-top:9px;font-size:19px;font-weight:var(--w-title);letter-spacing:-0.022em;line-height:1.25;color:var(--fg)}
+.reading-note{margin-top:5px;font-size:12.5px;line-height:1.45;color:var(--muted)}
+a.reading{transition:border-color .2s ease,background-color .2s ease}
+@media(hover:hover){a.reading:hover{border-color:var(--line);background:var(--raise)}}
+a.reading:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
 /* what the client is holding up, and where to do it */
 .card-waiting{border-color:var(--line)}
 .waiting{list-style:none;margin:0;padding:0}

@@ -30,7 +30,7 @@
   <div class="stage">
     <header class="bar">
       <button class="icon-btn bar-menu" id="menu" type="button" aria-label="Open navigation" aria-controls="side" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="/app/icons.svg#menu"/></svg></button>
-      <nav class="crumbs" aria-label="Breadcrumb"><span>Account</span><span class="crumb-sep" aria-hidden="true">/</span><span id="crumb-view" aria-current="page">Your enquiries</span></nav>
+      <nav class="crumbs" aria-label="Breadcrumb"><span>Account</span><span class="crumb-sep" aria-hidden="true">/</span><span id="crumb-view" aria-current="page">Your project</span></nav>
     </header>
     <div class="as-banner" id="as-banner" role="status" hidden></div>
 
@@ -38,15 +38,15 @@
       <section class="view" id="view-enquiries" aria-labelledby="enquiries-h">
         <div class="view-head">
           <div>
-            <h1 id="enquiries-h">Your enquiries</h1>
+            <h1 id="enquiries-h">Enquiries</h1>
             <p class="view-sub">What you have sent to cnpt, where each one is, and its estimate.</p>
           </div>
           <a class="btn btn-primary btn-sm" id="new-enquiry" href="/onboarding"><svg class="ic" aria-hidden="true"><use href="/app/icons.svg#plus"/></svg>New enquiry</a>
         </div>
-        <div class="split">
+        <div class="view-body"><div class="split col-12">
           <div class="table-card" id="enquiry-table"><p class="loading">Loading…</p></div>
           <aside class="detail" id="detail" aria-label="Enquiry details" hidden></aside>
-        </div>
+        </div></div>
       </section>
 
       <section class="view" id="view-process" aria-labelledby="process-h" hidden>
@@ -56,17 +56,17 @@
             <p class="view-sub">Your conversation with the cnpt team, and where the work stands.</p>
           </div>
         </div>
-        <div class="project-layout" id="process-body"><p class="loading">Loading…</p></div>
+        <div class="view-body" id="process-body"><p class="loading">Loading…</p></div>
       </section>
 
       <section class="view" id="view-meeting" aria-labelledby="meeting-h" hidden>
         <div class="view-head">
           <div>
-            <h1 id="meeting-h">Book a meeting</h1>
-            <p class="view-sub">Pick a time that suits you. The cnpt team confirms it by email.</p>
+            <h1 id="meeting-h">Meetings</h1>
+            <p class="view-sub">Pick a time that suits you, and see everything already booked. The cnpt team confirms by email.</p>
           </div>
         </div>
-        <div class="project-layout meeting-layout" id="meeting-body"><p class="loading">Loading…</p></div>
+        <div class="view-body" id="meeting-body"><p class="loading">Loading…</p></div>
       </section>
 
       <section class="view" id="view-profile" aria-labelledby="profile-h" hidden>
@@ -76,8 +76,8 @@
             <p class="view-sub">Your cnpt account. You sign in with Google, so there is no password to manage here.</p>
           </div>
         </div>
-        <div class="profile-layout">
-        <div class="cards">
+        <div class="view-body">
+        <div class="cards col-6">
           <section class="card" aria-labelledby="account-h">
             <div class="card-head"><h2 id="account-h">Account</h2></div>
             <div class="card-body" id="profile"></div>
@@ -95,7 +95,7 @@
             <button class="btn btn-ghost btn-sm is-danger" id="delete" type="button">Delete account</button>
           </section>
         </div>
-        <div class="cards" id="overview" aria-label="My project"></div>
+        <div class="cards col-6" id="overview" aria-label="My project"></div>
         </div>
       </section>
     </main>

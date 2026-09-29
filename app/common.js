@@ -306,10 +306,11 @@ export function mountShell(user, page, { query = '' } = {}) {
       item('/admin#process', 'admin:process', 'Process', 'folder'),
       item('/admin#meetings', 'admin:meetings', 'Meetings', 'calendar'),
       item('/admin#members', 'admin:members', 'Members', 'users')),
+    // the project first, because that is what a client comes here for; the papers behind it last
     group('Account',
-      item(`/account${query}#enquiries`, 'account:enquiries', 'Your enquiries', 'message'),
       item(`/account${query}#process`, 'account:process', 'Your project', 'folder'),
-      item(`/account${query}#meeting`, 'account:meeting', 'Book a meeting', 'calendar'),
+      item(`/account${query}#meeting`, 'account:meeting', 'Meetings', 'calendar'),
+      item(`/account${query}#enquiries`, 'account:enquiries', 'Enquiries', 'message'),
       item(`/account${query}#profile`, 'account:profile', 'Profile', 'user')),
     h('div', { class: 'nav-group' },
       h('a', { class: 'nav-item', href: '/onboarding' }, icon('plus'), h('span', { class: 'nav-label' }, 'New enquiry')),

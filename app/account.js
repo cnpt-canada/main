@@ -1,7 +1,7 @@
 // /account — the client's enquiries (with fields, the focal split, consultants and the estimate) and profile,
 // in the same workspace frame as /admin. Profile also shows the client's project at a glance.
 // Admins can open /account?as=<id> to see a member's account exactly as they do ("view as user", read-only).
-import { commentThread, meetingCalendar, MEETING_LENGTHS, processThumbnail, slotText, stageTracker, STAGES, stageIndex } from '/app/project.js';
+import { clockAt, commentThread, dayAt, meetingCalendar, MEETING_LENGTHS, processThumbnail, slotText, stageTracker, STAGES, stageIndex } from '/app/project.js';
 import {
   DEFAULT_FOCUS, ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
   api, avatar, badge, consultantList, dataTable, estimateBlock, flash, fmtCost, fmtDate, fmtDateTime, focalBar, h, icon, keepFocus, kv,
@@ -9,7 +9,7 @@ import {
 } from '/app/common.js';
 
 const $ = (id) => document.getElementById(id);
-const VIEWS = { enquiries: 'Your enquiries', process: 'Your project', meeting: 'Book a meeting', profile: 'Profile' };
+const VIEWS = { process: 'Your project', meeting: 'Meetings', enquiries: 'Enquiries', profile: 'Profile' };
 const STATUS_NOTES = {
   new: 'Received. Someone from the cnpt team will read it shortly.',
   in_review: 'The cnpt team is reading it and will reply by email.',
@@ -247,7 +247,10 @@ async function removeComment(comment) {
 function waitingOn() {
   const items = [];
   if (!state.viewingAs && state.onboarding?.skipped_at && !state.onboarding?.submitted_at) {
-    items.push({ text: 'Tell us about your project — five short steps, about two minutes.', href: '/onboarding', action: 'Start now' });
+    const step = Math.min(5, Math.max(1, state.onboarding.step || 1));
+    items.push(step > 1
+      ? { text: `Finish telling us about your project — you are on step ${step} of 5.`, href: '/onboarding', action: 'Continue' }
+      : { text: 'Tell us about your project — five short steps, about two minutes.', href: '/onboarding', action: 'Start now' });
   }
   const asked = state.meetings.filter((m) => m.status === 'requested' && Date.parse(m.starts_at) > Date.now());
   if (asked.length) {
@@ -263,22 +266,34 @@ function waitingOn() {
       h('a', { class: 'btn btn-ghost btn-xs', href: it.href }, it.action)))));
 }
 
-// The soonest meeting still ahead, so the client can see it without opening the calendar.
-function nextMeetingCard() {
-  const ahead = state.meetings
-    .filter((m) => (m.status === 'confirmed' || m.status === 'requested') && Date.parse(m.starts_at) > Date.now())
-    .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at));
-  const next = ahead[0];
-  return h('section', { class: 'card' },
-    h('div', { class: 'card-head card-head-row' },
-      h('h2', {}, 'Next meeting'),
-      h('a', { href: '#meeting' }, next ? 'All meetings' : 'Book one')),
-    h('div', { class: 'card-body' }, next
-      ? h('div', { class: 'rail-meeting' },
-        h('p', { class: 'rail-strong' }, slotText(next.starts_at, next.minutes)),
-        next.note ? h('p', { class: 'sub' }, next.note) : null,
-        badge(next.status === 'confirmed' ? 'replied' : 'new', next.status === 'confirmed' ? 'Confirmed' : 'Waiting'))
-      : h('p', { class: 'sub' }, 'Nothing booked. Pick a time whenever you need one — weekdays, 09:00–18:00 Toronto time.')));
+// The soonest meeting still ahead.
+const nextMeeting = () => state.meetings
+  .filter((m) => (m.status === 'confirmed' || m.status === 'requested') && Date.parse(m.starts_at) > Date.now())
+  .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at))[0] || null;
+
+const reading = (label, value, note, href) => h(href ? 'a' : 'div', href ? { class: 'reading', href } : { class: 'reading' },
+  h('p', { class: 'reading-label' }, label),
+  h('p', { class: 'reading-value' }, value),
+  note ? h('p', { class: 'reading-note' }, note) : null);
+
+// Where the client stands, in four readings, before they read a word of the thread.
+function statusStrip() {
+  const p = state.project;
+  const at = p ? stageIndex(p.stage) : -1;
+  const next = nextMeeting();
+  const last = state.comments[state.comments.length - 1];
+  const priced = state.enquiries.find((e) => e.estimated_cost != null);
+  return h('div', { class: 'readings col-12' },
+    reading('Stage', p ? STAGES[at].label : 'Not started',
+      p ? `${at + 1} of ${STAGES.length} · ${STAGES[at].note}` : 'Opens when your enquiry is picked up'),
+    reading('Next meeting', next ? dayAt(new Date(next.starts_at)) : 'None booked',
+      next
+        ? `${clockAt(new Date(next.starts_at))} Toronto · ${next.status === 'confirmed' ? 'Confirmed' : 'Waiting on the team'}`
+        : 'Pick a time', '#meeting'),
+    reading('Conversation', state.comments.length ? `${state.comments.length} note${state.comments.length === 1 ? '' : 's'}` : 'Nothing yet',
+      last ? `Last ${fmtDate(last.created_at)}` : 'Write whenever you need to'),
+    reading('Estimate', priced ? fmtCost(priced.estimated_cost) : 'To be confirmed',
+      priced ? 'From your enquiry' : 'Set after the team reads your enquiry', '#enquiries'));
 }
 
 function renderProcess() {
@@ -286,7 +301,7 @@ function renderProcess() {
   const body = $('process-body');
 
   // the conversation is the page: it is what this place is for
-  const thread = h('section', { class: 'card card-thread', 'aria-labelledby': 'notes-h' },
+  const thread = h('section', { class: 'card card-thread col-8', 'aria-labelledby': 'notes-h' },
     h('div', { class: 'card-head card-head-row' },
       h('h2', { id: 'notes-h' }, 'Conversation'),
       h('span', { class: 'sub' }, state.comments.length
@@ -310,9 +325,9 @@ function renderProcess() {
         ? stageTracker(p.stage)
         : h('p', { class: 'sub' }, 'The cnpt team opens this once your enquiry is picked up. You will see the stage, a picture of what is being made, and the conversation here.')));
 
-  const rail = h('div', { class: 'project-rail' },
-    ...[waitingOn(), stateCard, nextMeetingCard()].filter(Boolean));
-  body.replaceChildren(thread, rail);
+  const rail = h('div', { class: 'project-rail col-4' },
+    ...[waitingOn(), stateCard].filter(Boolean));
+  body.replaceChildren(statusStrip(), thread, rail);
 }
 
 /* ---------- book a meeting ---------- */
@@ -356,7 +371,7 @@ async function cancelMeeting(m) {
 
 function renderMeeting() {
   const body = $('meeting-body');
-  const mine = h('section', { class: 'card', 'aria-labelledby': 'mine-h' },
+  const mine = h('section', { class: 'card col-12', 'aria-labelledby': 'mine-h' },
     h('div', { class: 'card-head' }, h('h2', { id: 'mine-h' }, 'Your meetings')),
     state.meetings.length
       ? h('ul', { class: 'bookings' }, meetingsInOrder().map(meetingRow))
@@ -429,10 +444,10 @@ function renderMeeting() {
   });
 
   body.replaceChildren(
-    h('section', { class: 'card', 'aria-labelledby': 'cal-h' },
+    h('section', { class: 'card col-8', 'aria-labelledby': 'cal-h' },
       h('div', { class: 'card-head card-head-row' }, h('h2', { id: 'cal-h' }, 'Pick a time'), lengths),
       h('div', { class: 'card-body' }, calendar.el)),
-    h('section', { class: 'card', 'aria-labelledby': 'pick-h' },
+    h('section', { class: 'card col-4', 'aria-labelledby': 'pick-h' },
       h('div', { class: 'card-head' }, h('h2', { id: 'pick-h' }, 'Your request')),
       h('div', { class: 'card-body' }, form)),
     mine);
