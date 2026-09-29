@@ -1,6 +1,10 @@
 // /signin — the door to the workspace: one button that starts Google sign-in, and a first sign-in
 // creates the account. Afterwards the browser lands on the project phase.
 import { api, safeNext } from '/app/common.js';
+import { themeButton } from '/app/theme.js';
+
+/* the dark / light switch goes in first: what follows may wait on the network */
+document.getElementById('theme-slot')?.replaceChildren(themeButton());
 
 const MESSAGES = {
   cancelled: 'Sign-in was cancelled. You can try again whenever you are ready.',

@@ -86,11 +86,14 @@ nav .wm-plain{display:none}
 .btn-line{border:1.5px solid var(--ink-border);color:var(--fg)}
 /* a way through is a line of type: the pill is kept for the action that starts something */
 .link-out{display:inline-flex;align-items:center;gap:10px;font-size:15px;font-weight:700;letter-spacing:-0.012em;color:var(--fg)}
-.link-out span{text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:6px;
-  text-decoration-color:var(--fg-5);transition:text-decoration-color .25s ease}
+.link-out > span{position:relative;text-decoration:none}
+/* drawn under the words rather than decorated onto them: a text decoration hangs off the baseline,
+   and the boxes the letters roll in move that baseline */
+.link-out > span::after{content:"";position:absolute;left:0;right:0;bottom:-.42em;height:1.5px;
+  background:var(--fg-5);transition:background-color .25s ease}
 .link-out svg{display:block;width:11px;height:11px;transition:transform .25s var(--ease-out)}
 .cta .link-out{color:#fff}
-.cta .link-out span{text-decoration-color:rgba(255,255,255,.6)}
+.cta .link-out > span::after{background:rgba(255,255,255,.6)}
 .btn-line-d{border:1.5px solid var(--line-2);color:var(--fg)}
 .btn-lg{height:52px;padding:0 30px;font-size:15px}
 
@@ -169,7 +172,7 @@ h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.035em;line-h
 .acc-row{
   width:100%;background:none;border:0;cursor:pointer;text-align:left;
   font-family:inherit;color:inherit;padding:34px 0;
-  display:grid;grid-template-columns:120px 1fr auto;gap:44px;align-items:center;
+  display:grid;grid-template-columns:120px auto minmax(0,1fr) auto;gap:44px;align-items:center;
   transition:opacity .5s var(--ease-out);-webkit-tap-highlight-color:transparent;
 }.acc-row:focus-visible{outline:2px solid var(--signal);outline-offset:6px;border-radius:4px}
 .acc-mark{display:flex;align-items:flex-end;height:48px}
@@ -181,8 +184,8 @@ h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.035em;line-h
 .acc-name .kor{display:block;font-size:13.5px;font-weight:600;color:var(--fg-5);margin-top:8px}
 .acc-seg{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-5);white-space:nowrap}
 /* each practice carries its own mark: what the row is about, beside who it is for */
-.acc-ic-line{display:block;flex:none;color:var(--fg-5);transition:color .3s ease,transform .4s var(--ease-spring)}
-.acc-ic-line svg{display:block;width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;
+.acc-ic-line{display:block;flex:none;color:var(--fg-3);transition:color .3s ease,transform .4s var(--ease-spring)}
+.acc-ic-line svg{display:block;width:38px;height:38px;fill:none;stroke:currentColor;stroke-width:1.8;
   stroke-linecap:round;stroke-linejoin:round}
 .acc-right{display:flex;align-items:center;gap:18px}
 .acc-ic{position:relative;width:20px;height:20px}
@@ -445,18 +448,25 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
    The padding under each box gives the descenders somewhere to go; the matching negative margin
    keeps that space out of the layout. */
 .sl-run{display:inline}
+/* a word's letters stay together: a line breaks between words, never inside one */
+.sl-word{white-space:nowrap}
 /* the box hugs its letter: a line-height of its own, so a letter leaving it is gone at once rather
    than drifting around inside a box the height of the whole line. An overflow-hidden inline-block
    sits on its bottom edge rather than its baseline, hence bottom / the descender padding. */
-.sl{position:relative;display:inline-block;overflow:hidden;vertical-align:bottom;line-height:1.06;
-  padding-bottom:.22em;margin-bottom:-.22em}
+.sl{position:relative;display:inline-block;overflow:hidden;vertical-align:bottom;line-height:1.02;
+  padding-bottom:.2em;margin-bottom:-.2em}
 .sl > span{display:block;transition:transform .42s var(--ease-ref) calc(var(--i,0) * 22ms)}
-.sl > span + span{position:absolute;left:0;top:0;transform:translateY(110%)}
+/* the waiting copy has to clear the padding under the box as well as the line itself, or it shows
+   through in the space kept for the descenders */
+.sl > span + span{position:absolute;left:0;top:0;transform:translateY(calc(100% + .24em))}
+/* a label answers when you point at it; a title answers when you point at the row it belongs to */
 @media(hover:hover){
-  :is(a,button):hover .sl > span:first-child{transform:translateY(-110%)}
-  :is(a,button):hover .sl > span + span{transform:translateY(0)}
+  :is(a,button):hover .sl > span:first-child,
+  :is(.value,.focus-item,.pack,.step,.member,.sum-list li,.work):hover .sl > span:first-child{transform:translateY(calc(-100% - .24em))}
+  :is(a,button):hover .sl > span + span,
+  :is(.value,.focus-item,.pack,.step,.member,.sum-list li,.work):hover .sl > span + span{transform:translateY(0)}
 }
-:is(a,button):focus-visible .sl > span:first-child{transform:translateY(-110%)}
+:is(a,button):focus-visible .sl > span:first-child{transform:translateY(calc(-100% - .24em))}
 :is(a,button):focus-visible .sl > span + span{transform:translateY(0)}
 
 /* headings: each word rises out of its own mask */
@@ -500,9 +510,9 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
 .dl b,.dl span{transition:color .35s ease}
 @media(hover:hover){
   .btn:not(:disabled):hover::before{transform:none}
-  .link-out:hover span{text-decoration-color:var(--fg)}
+  .link-out:hover > span::after{background:var(--fg)}
   .link-out:hover svg{transform:translate(2px,-2px)}
-  .cta .link-out:hover span{text-decoration-color:#fff}
+  .cta .link-out:hover > span::after{background:#fff}
   .btn-sig:hover,.btn-line:hover{color:var(--on-fill)}
   .btn-line:hover{border-color:var(--fg)}
   .cta .btn-white:hover{color:#fff}
@@ -578,8 +588,9 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
   .sec-head{margin-bottom:36px}
   .acc-list,.track,.focus{margin-top:40px}
   .navlinks,.nav-actions{gap:20px}
-  .acc-row{grid-template-columns:1fr auto;gap:18px 16px;padding:26px 0}
+  .acc-row{grid-template-columns:auto minmax(0,1fr) auto;gap:18px 16px;padding:26px 0}
   .acc-mark{grid-column:1 / -1;height:40px}
+  .acc-ic-line svg{width:32px;height:32px}
   .mk-ai{width:61px;height:40px} .mk-ux{width:64px;height:30px} .mk-df{width:65px;height:40px}
   .acc-name .code{font-size:26px}
   .acc-right{gap:14px}

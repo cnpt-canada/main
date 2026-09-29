@@ -1,5 +1,7 @@
 // Shared helpers for the signed-in pages (/signin, /account, /admin).
 
+import { themeButton } from '/app/theme.js';
+
 export const LABELS = {
   enquiryStatus: { new: 'New', in_review: 'In review', replied: 'Replied', closed: 'Closed' }
 };
@@ -317,6 +319,7 @@ export function mountShell(user, page, { query = '' } = {}) {
   document.getElementById('side-foot').replaceChildren(
     h('div', { class: 'me' }, avatar(user),
       h('div', { class: 'me-text' }, h('strong', {}, user.name || user.email), h('span', {}, user.email))),
+    themeButton(),
     h('button', { class: 'icon-btn', type: 'button', title: 'Sign out', 'aria-label': 'Sign out', onclick: signOut }, icon('logout')));
 
   // navigation drawer on smaller screens

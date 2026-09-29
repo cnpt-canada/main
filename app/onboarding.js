@@ -6,6 +6,10 @@ import {
   CONSULTANTS, DEFAULT_FOCUS, FIELD_TAGS, FUNDING_STAGES, MAX_TAG, MAX_TAGS,
   api, consultantAvatar, estimateBlock, firstNames, flash, fmtDate, focalBar, h, icon, signedInUser
 } from '/app/common.js';
+import { themeButton } from '/app/theme.js';
+
+/* the dark / light switch goes in first: what follows may wait on the network */
+document.getElementById('theme-slot')?.replaceChildren(themeButton());
 
 const $ = (id) => document.getElementById(id);
 const MAX_BRIEF = 500;

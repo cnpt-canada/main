@@ -9,12 +9,14 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://*.googleusercontent.com; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <title>CNPT Workspace</title>
 <link rel="stylesheet" href="/app/app.css">
+<script src="/site-head.js"></script>
 <link rel="preload" href="/fonts/manrope.woff2" as="font" type="font/woff2" crossorigin>
 <script type="module" src="/app/signin.js"></script>
 </head>
 <body class="signin-page">
 <main class="signin">
   <section class="signin-panel" aria-labelledby="signin-h">
+    <span class="signin-theme" id="theme-slot"></span>
     <div class="signin-inner">
       <a class="signin-home" href="/" aria-label="cnpt home"><svg class="wm" viewBox="0 0 140 32" aria-hidden="true"><use href="/app/icons.svg#cnpt"/></svg></a>
       <span class="signin-kicker">workspace</span>

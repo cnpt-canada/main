@@ -235,22 +235,25 @@ window.addEventListener('error', function (e) {
     run.className = 'sl-run';
     run.setAttribute('aria-hidden', 'true');
     var i = 0;
-    text.split('').forEach(function (ch) {
-      if (ch === ' ') {
-        // a space of its own would collapse inside an inline-block, so it keeps its width here
-        run.appendChild(document.createTextNode(' '));
-        i++;
-        return;
-      }
-      var box = document.createElement('span');
-      box.className = 'sl';
-      box.style.setProperty('--i', i++);
-      var up = document.createElement('span');
-      var next = document.createElement('span');
-      up.textContent = next.textContent = ch;
-      box.appendChild(up);
-      box.appendChild(next);
-      run.appendChild(box);
+    // A box per character, but the boxes of one word are held together: a line may break between
+    // words, as it always could, and never inside one.
+    text.split(/(\s+)/).forEach(function (part) {
+      if (!part) return;
+      if (/^\s+$/.test(part)) { run.appendChild(document.createTextNode(' ')); i++; return; }
+      var word = document.createElement('span');
+      word.className = 'sl-word';
+      part.split('').forEach(function (ch) {
+        var box = document.createElement('span');
+        box.className = 'sl';
+        box.style.setProperty('--i', i++);
+        var up = document.createElement('span');
+        var next = document.createElement('span');
+        up.textContent = next.textContent = ch;
+        box.appendChild(up);
+        box.appendChild(next);
+        word.appendChild(box);
+      });
+      run.appendChild(word);
     });
     frag.appendChild(run);
     node.parentNode.replaceChild(frag, node);
@@ -268,8 +271,10 @@ window.addEventListener('error', function (e) {
     return found;
   }
 
+  // the labels you click, and the titles of the things you point at
   var labels = '.navlinks .nav-link, .nav-sheet a, .nav-actions .btn, .hero-cta .btn, .cta-row .btn,' +
-    ' .link-out span, .fcol a, .acc-name .code, .works-note a';
+    ' .link-out span, .fcol a, .acc-name .code, .acc-name .kor, .works-note a,' +
+    ' .value h3, .focus-item h3, .pack h3, .step h3, .sum-list h3, .member h3, .work h3';
   Array.prototype.forEach.call(document.querySelectorAll(labels), function (el) {
     textIn(el).forEach(slot);
   });
