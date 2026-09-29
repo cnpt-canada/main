@@ -273,11 +273,20 @@ window.addEventListener('error', function (e) {
 
   // the labels you click, and the titles of the things you point at
   var labels = '.navlinks .nav-link, .nav-sheet a, .nav-actions .btn, .hero-cta .btn, .cta-row .btn,' +
-    ' .link-out span, .fcol a, .acc-name .code, .acc-name .kor, .works-note a,' +
-    ' .value h3, .focus-item h3, .pack h3, .step h3, .sum-list h3, .member h3, .work h3';
+    ' .link-out span, .fcol a, .acc-name .kor, .works-note a,' +
+    ' .value h3, .focus-item h3, .pack h3, .step h3, .sum-list h3, .member h3, .work h3,' +
+    ' .sec-head p';
   Array.prototype.forEach.call(document.querySelectorAll(labels), function (el) {
     textIn(el).forEach(slot);
   });
+
+  // The section headings are split into words for their entrance; the letters go inside those words,
+  // so this waits until that has happened.
+  window.cnptSlotHeadings = function () {
+    Array.prototype.forEach.call(document.querySelectorAll('.sec h2 .wd > span, .cta h2 .wd > span'), function (el) {
+      textIn(el).forEach(slot);
+    });
+  };
 })();
 
 /* motion — hero parallax and entrance reveals */
@@ -393,6 +402,7 @@ window.addEventListener('error', function (e) {
       targets.push(el);
     });
   });
+  if (window.cnptSlotHeadings) window.cnptSlotHeadings();
 
   var io = new IntersectionObserver(function (entries) {
     var batch = [];
