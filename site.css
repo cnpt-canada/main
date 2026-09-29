@@ -280,6 +280,22 @@ h2 em{font-style:normal;color:var(--signal)}
 @media(max-width:900px){.team{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.team{grid-template-columns:minmax(0,1fr)}}
 
+/* hover opens one frame: the person under the pointer takes more of the row and the other two give
+   way, the way the 2026 portfolio's media rows do. The portrait is the part that grows — it keeps its
+   height and simply shows more of its own crop — while the words keep the width they had at rest, so
+   nothing rewraps while the row is moving. That fixed width is the row's own column width, worked out
+   from the page measure the same way the reference works out its cards (scrollbar included).
+   Only where there is a real pointer, and only while all three are across. */
+.team{--member-w:calc((min(100vw - var(--sbw,0px),1200px) - 88px - 64px) / 3)}
+@media(hover:hover) and (pointer:fine) and (min-width:1181px){
+  .team{display:flex;gap:0 32px}
+  .member{flex:1 1 0;min-width:0;transition:flex-grow .45s var(--ease-ref)}
+  .team:has(.member:hover) .member:hover{flex-grow:1.6}
+  /* the frame keeps the height it had, so the row never jumps */
+  .member-photo{aspect-ratio:auto;height:calc(var(--member-w) * 1764 / 1350)}
+  .member-id,.member-bio,.member-spec{width:var(--member-w)}
+}
+
 /* cta band */
 .cta{position:relative;isolation:isolate;background:var(--ink);color:#fff;padding:96px 0}
 .cta::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--signal)}

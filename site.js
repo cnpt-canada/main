@@ -369,6 +369,17 @@ window.addEventListener('error', function (e) {
   root.classList.add('motion-ready');
 })();
 
+/* Publish the classic-scrollbar width, so a row that has to know the page's real content width can
+   subtract it. Overlay scrollbars (macOS, touch) measure 0, which is the right answer there. */
+(function () {
+  function measure() {
+    var w = window.innerWidth - document.documentElement.clientWidth;
+    document.documentElement.style.setProperty('--sbw', (w > 0 ? w : 0) + 'px');
+  }
+  measure();
+  window.addEventListener('resize', measure);
+})();
+
 /* hero headline: with the mouse inside the headline's box, the headline eases from ExtraBold to Regular and the
    letters near the pointer stay heavy (the closest ones a little past ExtraBold), so the weight follows the pointer;
    leaving eases everything back to ExtraBold.
