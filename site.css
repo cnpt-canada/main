@@ -128,11 +128,9 @@ nav .wm-plain{display:none}
 .kw-note > span{overflow:hidden;white-space:nowrap;
   text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:4px;
   text-decoration-color:inherit}
-@media(hover:hover) and (pointer:fine){
-  .kw:hover{color:var(--fg);text-decoration-color:var(--fg)}
-  .kw:hover .kw-note{grid-template-columns:1fr;opacity:1}
-}
-/* a phone has no hover, so a tap opens one instead (site.js) */
+/* Opening a note makes the sentence longer, which can carry the phrase onto the next line and out
+   from under the pointer, so :hover cannot hold one open without flickering. site.js latches the
+   state and sets this class instead — for the pointer and for a tap alike. */
 .kw.is-open{color:var(--fg);text-decoration-color:var(--fg)}
 .kw.is-open .kw-note{grid-template-columns:1fr;opacity:1}
 
@@ -302,18 +300,29 @@ h2 em{font-style:normal;color:var(--signal)}
 
 /* hover opens one frame: the person under the pointer takes more of the row and the other two give
    way, the way the 2026 portfolio's media rows do. The portrait is the part that grows — it keeps its
-   height and simply shows more of its own crop — while the words keep the width they had at rest, so
-   nothing rewraps while the row is moving. That fixed width is the row's own column width, worked out
-   from the page measure the same way the reference works out its cards (scrollbar included).
+   height and simply shows more of its own crop. The words underneath scale with their own column
+   rather than rewrapping, which is also what keeps them inside it: this pair of factors is the
+   reference's, and it holds the row's weight of type even — what the open column gains, the two
+   beside it give up. The column width is worked out from the page measure the way the reference
+   works out its cards, scrollbar included.
    Only where there is a real pointer, and only while all three are across. */
-.team{--member-w:calc((min(100vw - var(--sbw,0px),1200px) - 88px - 64px) / 3)}
+.team{--member-w:calc((min(100vw - var(--sbw,0px),1200px) - 88px - 64px) / 3);
+  --open:1.35;
+  --type-up:calc(2 * var(--open) / (var(--open) + 1));
+  --type-down:calc(2 / (var(--open) + 1))}
+/* the words are one block only where they scale together; everywhere else they stay their own grid
+   items, so the phone layout is untouched */
+.member-info{display:contents}
 @media(hover:hover) and (pointer:fine) and (min-width:1181px){
   .team{display:flex;gap:0 32px}
   .member{flex:1 1 0;min-width:0;transition:flex-grow .45s var(--ease-ref)}
-  .team:has(.member:hover) .member:hover{flex-grow:1.6}
+  .team:has(.member:hover) .member:hover{flex-grow:var(--open)}
   /* the frame keeps the height it had, so the row never jumps */
   .member-photo{aspect-ratio:auto;height:calc(var(--member-w) * 1764 / 1350)}
-  .member-id,.member-bio,.member-spec{width:var(--member-w)}
+  .member-info{display:block;width:var(--member-w);transform-origin:0 0;
+    transition:transform .45s var(--ease-ref)}
+  .team:has(.member:hover) .member:hover .member-info{transform:scale(var(--type-up))}
+  .team:has(.member:hover) .member:not(:hover) .member-info{transform:scale(var(--type-down))}
 }
 
 /* cta band */

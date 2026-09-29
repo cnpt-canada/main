@@ -139,20 +139,6 @@ window.addEventListener('error', function (e) {
   window.matchMedia('(min-width: 901px)').addEventListener('change', function (e) { if (e.matches) setOpen(false); });
 })();
 
-/* client works — filter the cards by practice */
-(function () {
-  var buttons = Array.prototype.slice.call(document.querySelectorAll('.wf-btn'));
-  var works = Array.prototype.slice.call(document.querySelectorAll('.work'));
-  if (!buttons.length) return;
-  buttons.forEach(function (b) {
-    b.addEventListener('click', function () {
-      var f = b.getAttribute('data-filter');
-      buttons.forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-      works.forEach(function (w) { w.hidden = !!f && w.getAttribute('data-practice') !== f; });
-    });
-  });
-})();
-
 /* a rounded label beside the mouse, only while it hovers something with data-cursor: what clicking does.
    Mouse and trackpad only; it is decorative, so screen readers never see it. */
 (function () {
@@ -319,7 +305,7 @@ window.addEventListener('error', function (e) {
     ['.hero-foot .ticker', 'up', 880],
     ['.eyebrow', 'clip'],
     ['.sec h2, .cta h2', 'split'],
-    ['.sec-head p, .prac-note, .lede, .cta-grid > div > p, .cta-row, .cta-form, .works-filter, .works-note', 'up'],
+    ['.sec-head p, .prac-note, .lede, .cta-grid > div > p, .cta-row, .cta-form, .works-note', 'up'],
     ['.acc, .fgrid > *, .work', 'up'],
     ['.value, .step, .dl, .focus-item, .member, .pack', 'rule'],
     ['.cta', 'cta'],
@@ -369,21 +355,35 @@ window.addEventListener('error', function (e) {
   root.classList.add('motion-ready');
 })();
 
-/* A phrase that can say a little more opens under the pointer. A phone has no pointer, so a tap opens
-   one and closes whichever was open; a tap anywhere else closes it. */
+/* A phrase that can say a little more.
+
+   Opening one makes the sentence longer, which can push the phrase itself onto the next line — out
+   from under the pointer. Left to :hover that closes the note, which puts the phrase back under the
+   pointer, which opens it again: it flickers as fast as the browser can lay the line out. So the open
+   state is latched here instead. Arriving at a phrase opens it, and it stays open until the pointer
+   leaves the whole sentence — a target that does not move out from under you — or another phrase
+   takes over. A phone has no pointer, so a tap does the same and a tap outside shuts it. */
 (function () {
-  var kws = document.querySelectorAll('.kw');
-  if (!kws.length || window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-  var shut = function () { Array.prototype.forEach.call(kws, function (k) { k.classList.remove('is-open'); }); };
-  Array.prototype.forEach.call(kws, function (kw) {
+  var kws = Array.prototype.slice.call(document.querySelectorAll('.kw'));
+  if (!kws.length) return;
+  var shut = function () { kws.forEach(function (k) { k.classList.remove('is-open'); }); };
+  var open = function (kw) { shut(); kw.classList.add('is-open'); };
+
+  kws.forEach(function (kw) {
+    kw.addEventListener('pointerenter', function (e) { if (e.pointerType !== 'touch') open(kw); });
     kw.addEventListener('click', function (e) {
       e.stopPropagation();
-      var open = kw.classList.contains('is-open');
-      shut();
-      if (!open) kw.classList.add('is-open');
+      if (kw.classList.contains('is-open')) shut(); else open(kw);
     });
+    var sentence = kw.parentNode;
+    if (sentence && sentence.nodeType === 1 && !sentence.hasAttribute('data-kw-sentence')) {
+      sentence.setAttribute('data-kw-sentence', '');
+      sentence.addEventListener('pointerleave', shut);
+    }
   });
-  document.addEventListener('click', shut);
+  document.addEventListener('click', function (e) {
+    if (!(e.target.closest && e.target.closest('.kw'))) shut();
+  });
 })();
 
 /* Publish the classic-scrollbar width, so a row that has to know the page's real content width can
