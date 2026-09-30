@@ -285,18 +285,10 @@ window.addEventListener('error', function (e) {
     textIn(el).forEach(function (node) { slot(node, count); });
   });
 
-  // The section headings are split into words for their entrance; the letters go inside those words,
-  // so this waits until that has happened. A heading counts as one sentence: the words share a
-  // counter, and the space between them takes a place in it, so the wave crosses the whole line.
-  window.cnptSlotHeadings = function () {
-    Array.prototype.forEach.call(document.querySelectorAll('.sec h2, .cta h2'), function (head) {
-      var count = { i: 0 };
-      Array.prototype.forEach.call(head.querySelectorAll('.wd > span'), function (el) {
-        textIn(el).forEach(function (node) { slot(node, count); });
-        count.i++;
-      });
-    });
-  };
+  // Section headings are left alone. They still rise word by word as they arrive — that entrance is
+  // the word masks and has nothing to do with these letter boxes — but they no longer answer the
+  // pointer. A heading is not something you click, and rolling it over every time a reader's mouse
+  // crossed the page was the effect asking for attention it had not earned.
 })();
 
 /* motion — hero parallax and entrance reveals */
@@ -412,7 +404,6 @@ window.addEventListener('error', function (e) {
       targets.push(el);
     });
   });
-  if (window.cnptSlotHeadings) window.cnptSlotHeadings();
 
   var io = new IntersectionObserver(function (entries) {
     var batch = [];
