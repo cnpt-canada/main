@@ -417,6 +417,19 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .note-head strong{font-size:14px;font-weight:var(--w-title)}
 .note-title{display:inline-flex;align-items:center;height:20px;padding:0 9px;border-radius:var(--r-sm);font-size:11px;font-weight:var(--w-title)}
 .note-title-team{background:var(--signal-deep);color:#fff}
+/* A note the studio keeps to itself. It sits in the same thread as the rest, so it has to be
+   unmistakable at a glance and while it is being written — the mistake this guards against is a
+   working note going out as mail. */
+.note-title-internal{background:var(--line);color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg-3,var(--dim))}
+.note-internal{background:var(--raise);box-shadow:inset 2px 0 0 var(--dim)}
+.note-internal .note-text{color:var(--dim)}
+/* who the note is for, chosen before it is written */
+.note-add-foot{flex-wrap:wrap}
+.note-who{flex:1 1 14ch;min-width:0}
+.note-kind{flex:none}
+.note-kind .seg-btn{font-size:12px;padding:0 10px;height:28px}
+.note-add.is-internal{background:var(--panel);box-shadow:inset 2px 0 0 var(--dim)}
+.note-add.is-internal .note-who{color:var(--dim)}
 .note-title-owner{background:var(--line);color:var(--fg)}
 .note-text{margin-top:6px;font-size:14px;line-height:1.6;color:var(--soft);white-space:pre-wrap;overflow-wrap:anywhere}
 .note-remove{opacity:0;transition:opacity .15s}

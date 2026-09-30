@@ -4,16 +4,19 @@ import { db, run } from './db.js';
 import { isAdmin } from './users.js';
 
 export const PROCESS_COLUMNS = 'id,user_id,enquiry_id,stage,headline,image_path,created_at,updated_at';
-export const COMMENT_COLUMNS = 'id,owner_id,author_id,body,created_at';
+export const COMMENT_COLUMNS = 'id,owner_id,author_id,body,created_at,internal';
 export const MEETING_COLUMNS = 'id,user_id,starts_at,minutes,status,note,created_at,updated_at';
 
 export function loadProcess(userId) {
   return run(db().from('process').select(PROCESS_COLUMNS).eq('user_id', userId).maybeSingle());
 }
 
-export function loadComments(ownerId) {
-  return run(db().from('comments').select(COMMENT_COLUMNS).eq('owner_id', ownerId)
-    .order('created_at', { ascending: true }).limit(500));
+// A client is never sent the studio's own notes, so they are left out unless the caller asks for
+// them and is allowed to have them. The decision of who is allowed is made by the route.
+export function loadComments(ownerId, { includeInternal = false } = {}) {
+  let q = db().from('comments').select(COMMENT_COLUMNS).eq('owner_id', ownerId);
+  if (!includeInternal) q = q.eq('internal', false);
+  return run(q.order('created_at', { ascending: true }).limit(500));
 }
 
 export function loadMeetings(userId) {

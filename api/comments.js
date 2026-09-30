@@ -1,6 +1,8 @@
-// POST   /api/comments {body, owner_id?} → writes in a process thread. Clients write in their own;
+// POST   /api/comments {body, owner_id?, internal?} → writes in a process thread. Clients write in their own;
 //                                          admins write in any client's thread (owner_id), as Consultant.
 //                                          The other side is emailed, so a note is not left unread.
+//                                          internal: true keeps it inside the studio — the client never
+//                                          sees it and no mail goes out. Admins only.
 // DELETE /api/comments {id}               → removes a comment you wrote (admins can remove any).
 import { db, run } from './_lib/db.js';
 import { emailStudio } from './_lib/notify.js';
@@ -38,14 +40,21 @@ export default route(async (req, res) => {
     return fail(res, 403, 'not_your_thread');
   }
 
-  // who wrote last, so a run of notes from one person is one email rather than one each
+  // Who wrote last, so a run of notes from one person is one email rather than one each. Only notes
+  // that were actually sent count: a note the studio kept to itself never reached anyone, so it
+  // cannot be the reason the next one is held back.
   const previous = await run(db().from('comments').select('author_id,created_at')
-    .eq('owner_id', ownerId).order('created_at', { ascending: false }).limit(1).maybeSingle());
+    .eq('owner_id', ownerId).eq('internal', false)
+    .order('created_at', { ascending: false }).limit(1).maybeSingle());
 
-  const saved = await run(db().from('comments').insert({ owner_id: ownerId, author_id: user.id, body: text })
+  // a note the studio keeps to itself. A client asking for one is simply writing an ordinary note.
+  const internal = isAdmin(user) && body.internal === true;
+
+  const saved = await run(db().from('comments').insert({ owner_id: ownerId, author_id: user.id, body: text, internal })
     .select(COMMENT_COLUMNS).single());
-  // sent before the reply, the way a booking is: work left running after a response can be cut short
-  await tellTheOtherSide({ user, client, text, previous });
+  // sent before the reply, the way a booking is: work left running after a response can be cut short.
+  // Nothing goes out for a note the studio is keeping to itself.
+  if (!internal) await tellTheOtherSide({ user, client, text, previous });
   json(res, 200, { ok: true, comment: (await withAuthors([saved]))[0] });
 });
 

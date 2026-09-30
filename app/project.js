@@ -107,12 +107,14 @@ const clockOf = (iso) => new Date(iso).toLocaleTimeString('en-CA', { hour: 'nume
 // were saying instead of repeating their name and their face.
 function commentRow(comment, { canDelete, onDelete, runOn = false }) {
   const who = comment.author || { name: 'Someone who left', email: '', title: '—' };
-  return h('li', { class: runOn ? 'note note-run' : 'note', 'data-id': comment.id },
+  const kind = (runOn ? 'note note-run' : 'note') + (comment.internal ? ' note-internal' : '');
+  return h('li', { class: kind, 'data-id': comment.id },
     runOn ? h('span', { class: 'note-gutter', 'aria-hidden': 'true' }) : avatar(who),
     h('div', { class: 'note-body' },
       runOn ? null : h('p', { class: 'note-head' },
         h('strong', {}, who.name || who.email || 'Someone'),
         h('span', { class: `note-title note-title-${who.title === 'Consultant' ? 'team' : 'owner'}` }, who.title),
+        comment.internal ? h('span', { class: 'note-title note-title-internal' }, 'Internal') : null,
         h('time', { class: 'sub', datetime: comment.created_at, title: new Date(comment.created_at).toLocaleString('en-CA') }, ago(comment.created_at))),
       h('p', { class: 'note-text' }, comment.body),
       runOn ? h('time', { class: 'note-when', datetime: comment.created_at }, clockOf(comment.created_at)) : null),
@@ -123,7 +125,11 @@ const daySeparator = (iso) => h('li', { class: 'notes-day', role: 'separator' },
 
 // The thread under the process: everything written so far, and a box to add to it.
 // `onSend(text)` should save and return the new comment; `onDelete(comment)` removes one.
-export function commentThread({ comments, me, onSend, onDelete, readOnly = false, placeholder = 'Write a note…' }) {
+// `canWriteInternal` offers the studio the choice of keeping a note to itself. `internalOnly` takes
+// the choice away and keeps every note inside — what the enquiry panel wants, where the surrounding
+// screen is plainly internal and a note that emailed the client would be a surprise.
+export function commentThread({ comments, me, onSend, onDelete, readOnly = false, placeholder = 'Write a note…',
+  canWriteInternal = false, internalOnly = false }) {
   const list = h('ul', { class: 'notes' });
   const canRemove = (c) => !readOnly && (me?.role === 'admin' || c.author?.id === me?.id);
   const rowFor = (c, runOn) => commentRow(c, { canDelete: canRemove(c), onDelete, runOn });
@@ -131,7 +137,8 @@ export function commentThread({ comments, me, onSend, onDelete, readOnly = false
   const rows = () => comments.flatMap((c, i) => {
     const prev = comments[i - 1];
     const newDay = !prev || dayKey(prev.created_at) !== dayKey(c.created_at);
-    const runOn = !newDay && prev.author?.id != null && prev.author.id === c.author?.id;
+    const runOn = !newDay && prev.author?.id != null && prev.author.id === c.author?.id
+      && Boolean(prev.internal) === Boolean(c.internal);
     return [newDay ? daySeparator(c.created_at) : null, rowFor(c, runOn)].filter(Boolean);
   });
   const draw = () => list.replaceChildren(...(comments.length
@@ -142,20 +149,45 @@ export function commentThread({ comments, me, onSend, onDelete, readOnly = false
 
   const field = h('textarea', { class: 'textarea note-field', rows: '2', maxlength: String(MAX_COMMENT), placeholder, 'aria-label': 'Write a note' });
   const send = h('button', { class: 'btn btn-primary btn-sm', type: 'submit', disabled: true }, 'Post', icon('arrow-right'));
+
+  // who the note is for, decided before it is written rather than after
+  let internal = internalOnly;
+  const who = h('span', { class: 'sub note-who' });
+  const choice = canWriteInternal && !internalOnly
+    ? h('div', { class: 'seg note-kind', role: 'group', 'aria-label': 'Who this note is for' },
+      ...[['Send to client', false], ['Keep internal', true]].map(([label, value]) => {
+        const b = h('button', { class: 'seg-btn', type: 'button', 'aria-pressed': String(internal === value) }, label);
+        b.addEventListener('click', () => {
+          internal = value;
+          for (const other of choice.children) other.setAttribute('aria-pressed', String(other === b));
+          form.classList.toggle('is-internal', internal);
+          say();
+        });
+        return b;
+      }))
+    : null;
+  // said from the writer's own side: a client is writing to the studio, the studio is writing to a
+  // client, and neither should be told about "the client" as though they were someone else
+  const say = () => {
+    who.textContent = internal ? 'Kept inside cnpt · the client never sees this'
+      : canWriteInternal ? 'The client sees this, and is emailed · ⌘↩ to send'
+        : 'Everyone on this project can see it · ⌘↩ to send';
+  };
+  say();
+
   const sync = () => { send.disabled = !field.value.trim(); };
   field.addEventListener('input', sync);
   field.addEventListener('keydown', (ev) => {
     if ((ev.metaKey || ev.ctrlKey) && ev.key === 'Enter') { ev.preventDefault(); form.requestSubmit(); }
   });
-  const form = h('form', { class: 'note-add' }, field,
-    h('div', { class: 'note-add-foot' },
-      h('span', { class: 'sub' }, 'Everyone on this project can see it · ⌘↩ to send'), send));
+  const form = h('form', { class: internalOnly ? 'note-add is-internal' : 'note-add' }, field,
+    h('div', { class: 'note-add-foot' }, who, choice, send));
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const text = field.value.trim();
     if (!text) return;
     send.disabled = true;
-    const added = await onSend(text);
+    const added = await onSend(text, { internal });
     if (added) {
       const first = comments.length === 0;
       const prev = comments[comments.length - 1];

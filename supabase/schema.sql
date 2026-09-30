@@ -84,6 +84,9 @@ create table if not exists public.comments (
   created_at timestamptz not null default now()
 );
 create index if not exists comments_owner_idx on public.comments (owner_id, created_at);
+-- A note the studio writes to itself. The client never receives it and is never told about it, so
+-- the enquiry panel can carry working notes without them turning into mail to the client.
+alter table public.comments add column if not exists internal boolean not null default false;
 
 -- meetings a client books on the calendar; the cnpt team confirms or declines
 create table if not exists public.meetings (

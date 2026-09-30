@@ -209,6 +209,7 @@ function enquiryBody(e) {
       h('p', { class: 'hint' }, 'Senders with an account see this status on their account page.')),
     section('Estimated cost', costEditor(e)),
     section('Message', h('p', { class: 'msg' }, e.message)),
+    enquiryNotes(e),
     e.tags.length && section('Fields', tagList(e.tags)),
     section('Focal', e.focus ? focalBar(e.focus) : h('p', { class: 'sub' }, 'Not set.')),
     e.consultants.length && section(e.consultants.length > 1 ? 'Consultants' : 'Consultant', consultantList(e.consultants)),
@@ -221,6 +222,53 @@ function enquiryBody(e) {
     ])),
     dangerZone('Delete this enquiry', 'It goes for good, and disappears from the client’s account too.', () => removeEnquiry(e))
   ];
+}
+
+// The studio's notes on this enquiry, kept in the client's own thread so there is one conversation
+// per client rather than one per form. Everything written here stays inside cnpt.
+function enquiryNotes(e) {
+  if (!e.user_id) {
+    return section('Notes',
+      h('p', { class: 'sub' }, 'This came from the website without an account, so there is no thread to '
+        + 'write in. Reply by email, or ask them to sign in and the thread opens.'));
+  }
+  const thread = h('div', { class: 'loading' }, 'Loading…');
+  const box = section('Notes', thread);
+
+  // loaded when the panel is opened, not with the list: most enquiries are never opened
+  (async () => {
+    let notes = [];
+    try {
+      notes = (await api(`/api/process?as=${e.user_id}&internal=1`)).comments;
+    } catch {
+      thread.replaceChildren(h('p', { class: 'sub' }, 'The thread could not be loaded.'));
+      return;
+    }
+    thread.replaceChildren(commentThread({
+      comments: notes, me: state.me, internalOnly: true,
+      placeholder: 'A note for the team about this enquiry\u2026',
+      onSend: async (text, { internal } = {}) => {
+        try {
+          return (await api('/api/comments', { method: 'POST', body: { owner_id: e.user_id, body: text, internal } })).comment;
+        } catch (err) {
+          flash(errorText(err), true);
+          return null;
+        }
+      },
+      onDelete: async (comment) => {
+        try {
+          await api('/api/comments', { method: 'DELETE', body: { id: comment.id } });
+          const i = notes.findIndex((c) => c.id === comment.id);
+          if (i > -1) notes.splice(i, 1);
+          thread.querySelector(`[data-id="${comment.id}"]`)?.remove();
+        } catch (err) {
+          flash(errorText(err), true);
+        }
+      }
+    }));
+    thread.classList.remove('loading');
+  })();
+  return box;
 }
 
 function renderDraftDetail(o) {
@@ -585,10 +633,10 @@ function renderProcessDetail() {
         h('div', { class: 'detail-actions' },
           h('button', { class: 'btn btn-primary btn-sm', type: 'button', onclick: () => saveProcess(p, { headline: headline.value.trim() }) }, 'Save'))),
       section('Notes', commentThread({
-        comments: state.comments, me: state.me,
-        onSend: async (text) => {
+        comments: state.comments, me: state.me, canWriteInternal: true,
+        onSend: async (text, { internal } = {}) => {
           try {
-            return (await api('/api/comments', { method: 'POST', body: { owner_id: p.user_id, body: text } })).comment;
+            return (await api('/api/comments', { method: 'POST', body: { owner_id: p.user_id, body: text, internal } })).comment;
           } catch (err) {
             flash(errorText(err), true);
             return null;
@@ -754,7 +802,8 @@ function route() {
 // The thread for the client whose process is open, kept out of the list request so it stays small.
 async function loadComments(userId) {
   try {
-    state.comments = (await api(`/api/process?as=${userId}`)).comments;
+    // the workspace sees the studio's own notes; "view as user" on /account deliberately does not
+    state.comments = (await api(`/api/process?as=${userId}&internal=1`)).comments;
   } catch {
     state.comments = [];
   }
