@@ -196,7 +196,7 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 .value-body p{font-size:16px;line-height:1.65;color:var(--fg-3)}
 .tags{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:20px;font-size:13px;font-weight:var(--w-title);color:var(--fg-5)}
 .tags span{position:relative}
-.tags span + span::before{content:"·";position:absolute;left:-11px}
+.tags span:not(:last-child)::after{content:"·";position:absolute;right:-11px}
 
 /* practices — accordion rows */
 .acc-list{margin-top:52px}
@@ -829,7 +829,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 @media(hover:hover){
   .sum-list li:hover .acc-mk{transform:scale(1.32)}
 }
-.sum-list p{margin-top:8px;font-size:15px;line-height:1.6;color:var(--fg-4)}
+.sum-list p{margin-top:8px;font-size:15px;line-height:1.6;color:var(--fg-4);max-width:62ch}
 .sum-stages{display:flex;flex-wrap:wrap;gap:8px 30px;margin-top:30px;font-family:var(--mono);
   font-size:13px;letter-spacing:.03em;color:var(--fg-3);font-variant-numeric:tabular-nums}
 .sum-stages b{margin-right:9px;font-weight:var(--w-title);letter-spacing:-0.02em;color:var(--fg)}
@@ -842,18 +842,9 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .sum-stages{gap:6px 22px}
 }
 
-/* a picture that is not here yet: the brand colour, with the mark standing on it. The mark takes the
-   page's own ink — dark while the page is dark, white while it is light — so a row of them reads as
-   part of the theme rather than as holes in it. */
-.ph{position:relative;display:flex;align-items:center;justify-content:center;aspect-ratio:16/9;
-  overflow:hidden;background:var(--signal)}
-.ph .wm{width:clamp(78px,27%,150px);height:auto;color:var(--ink);
-  transition:transform .6s var(--ease-ref),color .45s var(--ease-theme)}
-:root[data-theme="light"] .ph .wm{color:#fff}
-.ph-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:52px}
-@media(hover:hover){.ph:hover .wm{transform:scale(1.06)}}
-@media(max-width:900px){.ph-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}}
-@media(max-width:620px){.ph-grid{grid-template-columns:minmax(0,1fr);gap:14px;margin-top:36px}}
+/* the way out to a client's own site, sitting under the row it belongs to. Qualified, because
+   `.sum-list p` is a class plus a type and would otherwise keep its own 8px. */
+.sum-list .work-link{margin-top:18px}
 
 /* the marks of the clients so far. It is the hero band again, so it rides on .ticker and adds only
    what differs. Each mark carries its own trailing space instead of the row using `gap`: with `gap`
