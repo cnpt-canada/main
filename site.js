@@ -527,14 +527,27 @@ window.addEventListener('error', function (e) {
     })(h1);
     h1.classList.add('is-var');
 
-    // Medium is narrower than the peak, so words would hop between lines while the weight changes,
-    // and a locked line cannot wrap out of trouble: pin the breaks where they fall at the heaviest
-    // the headline ever gets, and pin them again whenever the width changes.
+    // A heavier letter is a wider letter: across this headline the difference between Medium and the
+    // peak is some 240px, so a letter near the end of a line was being shoved sideways by every
+    // letter in front of it as the pointer went past. The weight is meant to follow the pointer; the
+    // words are meant to stay where they are.
+    //
+    // So each letter is given the advance it has at rest and keeps it. The glyph thickens inside a
+    // box that never changes, and nothing moves. The spaces between words are not letters and never
+    // carry a weight of their own, so they were always still.
+    //
+    // Line breaks are pinned at the same time, because a locked line cannot wrap out of trouble.
     var words = Array.prototype.slice.call(h1.querySelectorAll('.wd'));
     function lockLines() {
       Array.prototype.forEach.call(h1.querySelectorAll('br.wl'), function (br) { br.remove(); });
       h1.classList.remove('lines-locked');
-      var saved = letters.map(function (l) { var w = l.el.style.fontWeight; l.el.style.fontWeight = PEAK; return w; });
+      // back to the resting weight, and to natural widths, so both are measured as the reader sees them
+      var saved = letters.map(function (l) {
+        var w = l.el.style.fontWeight;
+        l.el.style.fontWeight = '';
+        l.el.style.width = '';
+        return w;
+      });
       var top = null;
       words.forEach(function (wd) {
         var t = Math.round(wd.getBoundingClientRect().top);
@@ -545,7 +558,12 @@ window.addEventListener('error', function (e) {
         }
         top = t;
       });
-      letters.forEach(function (l, i) { l.el.style.fontWeight = saved[i]; });
+      // measure every letter before writing any width back, or each write would lay the line out again
+      var widths = letters.map(function (l) { return l.el.getBoundingClientRect().width; });
+      letters.forEach(function (l, i) {
+        l.el.style.width = widths[i].toFixed(2) + 'px';
+        l.el.style.fontWeight = saved[i];
+      });
       h1.classList.add('lines-locked');
     }
     lockLines();

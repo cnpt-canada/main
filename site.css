@@ -917,5 +917,10 @@ nav .nav-sheet .wrap{display:block;height:auto}
 /* hero headline weight follows the mouse (site.js). Geist's own weight axis carries it, so the headline
    keeps the same font and only its weight moves; the class marks that the effect has taken over. */
 .hero h1.is-var{font-weight:var(--w-display)}
-.hero h1.lines-locked{white-space:nowrap} /* site.js pins the ExtraBold line breaks with <br>s */
+/* Each letter is a box that keeps the advance it has at rest, so a letter thickening under the
+   pointer grows inside its own place instead of shoving the rest of the line sideways. site.js
+   measures the widths and writes them on; the glyph sits in the middle and is free to bleed past
+   the edges, which is what makes the ink look as though it is flooding in. */
+.hero h1 .wt{display:inline-block;text-align:center}
+.hero h1.lines-locked{white-space:nowrap} /* site.js pins the line breaks with <br>s */
 .hero h1:not([data-rv]) .wd{overflow:visible} /* once the words have risen, nothing clips a letter */
