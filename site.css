@@ -859,7 +859,10 @@ nav .nav-sheet .wrap{display:block;height:auto}
    what differs. Each mark carries its own trailing space instead of the row using `gap`: with `gap`
    there is one space fewer than there are marks, and half the track would stop being exactly the
    first set — which is what the -50% turn relies on. */
-.logos{margin-top:56px}
+.logos{margin-top:56px;
+  --fade:min(150px,14%);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 var(--fade),#000 calc(100% - var(--fade)),transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 var(--fade),#000 calc(100% - var(--fade)),transparent)}
 .logos-track{align-items:center}
 .motion .logos-track{animation-duration:58s}
 .logos svg{display:block;flex:none;width:auto;margin-right:clamp(64px,9vw,130px);
