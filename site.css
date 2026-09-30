@@ -220,14 +220,21 @@ h2{font-size:var(--t-h2);font-weight:var(--w-display);letter-spacing:-0.04em;lin
 .mk-ux{width:89px}
 .mk-df{width:68px}
 /* Once site.js has brought the artwork into the page, each letterform is a shape of its own and can
-   move on its own clock. Until then the mark is still drawn, just as one piece. */
-.acc-mk :is(path,circle,rect,ellipse,polygon){transform-box:fill-box;transform-origin:50% 60%}
-/* The mark writes itself: each letterform rises into place a beat after the one before it, in
-   reading order. The row uses this twice — once as it arrives on the page, and again under the
-   pointer, so the mark is drawn rather than merely enlarged. */
-@keyframes mk-in{from{opacity:0;transform:translateY(26%) scale(.78)}}
+   move on its own clock. Until then the mark is still drawn, just as one piece.
+   Everything grows from the foot of its own shape, so a letter rises out of its baseline. */
+.acc-mk :is(path,circle,rect,ellipse,polygon){transform-box:fill-box;transform-origin:50% 100%}
+/* The mark builds itself the way the shapes were drawn: a point opens along the baseline into a
+   line, and the line floods upward until it is the letter. Each letterform does it a beat after the
+   one before, in reading order. The row uses this twice — once as it arrives on the page, and again
+   under the pointer, so the mark is made rather than merely enlarged. */
+@keyframes mk-fill{
+  0%{opacity:0;transform:scale(.05,.05)}
+  14%{opacity:1;transform:scale(.24,.05)}
+  46%{opacity:1;transform:scale(1,.05)}
+  100%{opacity:1;transform:scale(1,1)}
+}
 .motion :is(.acc,.sum-list li).in .acc-mk.is-live :is(path,circle,rect,ellipse,polygon){
-  animation:mk-in .72s var(--ease-spring) calc(var(--d,0ms) + 240ms + var(--i,0) * 130ms) backwards}
+  animation:mk-fill .95s var(--ease-ref) calc(var(--d,0ms) + 220ms + var(--i,0) * 170ms) backwards}
 .acc-name .kor{display:block;font-size:13.5px;font-weight:var(--w-title);color:var(--fg-5);margin-top:8px}
 .acc-seg{font-size:12px;font-weight:var(--w-title);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-5);white-space:nowrap}
 /* each practice carries its own mark: what the row is about, beside who it is for */
@@ -578,7 +585,7 @@ h2 .sl{--sl-step:15ms}
      it. The wordmark beside them keeps its size. */
   .acc-row:hover .acc-mk{transform:scale(1.32)}
   .motion :is(.acc-row,.sum-list li):hover .acc-mk.is-live :is(path,circle,rect,ellipse,polygon){
-    animation:mk-in .52s var(--ease-spring) calc(var(--i,0) * 130ms) backwards}
+    animation:mk-fill .78s var(--ease-ref) calc(var(--i,0) * 150ms) backwards}
   .acc-row:hover .acc-name{transform:translateX(8px)}
   .acc-row:hover .acc-ic::before,.acc-row:hover .acc-ic::after{background:var(--fill)}
   .acc-row:hover .acc-seg{color:var(--fg-2)}
