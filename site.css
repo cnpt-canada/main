@@ -855,6 +855,26 @@ nav .nav-sheet .wrap{display:block;height:auto}
 @media(max-width:900px){.ph-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}}
 @media(max-width:620px){.ph-grid{grid-template-columns:minmax(0,1fr);gap:14px;margin-top:36px}}
 
+/* the marks of the clients so far. It is the hero band again, so it rides on .ticker and adds only
+   what differs. Each mark carries its own trailing space instead of the row using `gap`: with `gap`
+   there is one space fewer than there are marks, and half the track would stop being exactly the
+   first set — which is what the -50% turn relies on. */
+.logos{margin-top:56px}
+.logos-track{align-items:center}
+.motion .logos-track{animation-duration:58s}
+.logos svg{display:block;flex:none;width:auto;margin-right:clamp(64px,9vw,130px);
+  color:var(--fg-3);transition:color .45s var(--ease-out)}
+.logo-mkpk{height:24px}
+/* a square mark reads far smaller than a wordmark set to the same height — the wordmark is six
+   times as wide — so the slab is given a third more height to sit level with it */
+.logo-kh{height:32px}
+@media(hover:hover){.logos:hover svg{color:var(--fg-2)}}
+@media(max-width:620px){
+  .logos{margin-top:38px}
+  .logo-mkpk{height:19px}
+  .logo-kh{height:25px}
+}
+
 /* client works */
 /* one case study per row, full width, running down the page; covers have square corners */
 .works{display:grid;grid-template-columns:minmax(0,1fr);gap:72px;margin-top:44px}
