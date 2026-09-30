@@ -7,9 +7,50 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
 <title>CNPT Concept Canada</title>
 <meta name="description" content="cnpt is a design consultancy in Toronto: design solutions, concept development and market-entry experience.">
+<link rel="canonical" href="https://cnpt.ca/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="cnpt">
+<meta property="og:locale" content="en_CA">
+<meta property="og:url" content="https://cnpt.ca/">
+<meta property="og:title" content="cnpt — a design consultancy in Toronto">
+<meta property="og:description" content="cnpt is a design consultancy in Toronto: design solutions, concept development and market-entry experience.">
+<meta property="og:image" content="https://cnpt.ca/og-card.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The cnpt wordmark over a portrait lit in the studio’s pink">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#141414">
 <link rel="stylesheet" href="/site.css">
 <link rel="preload" href="/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<!-- What the studio is, for anything that reads a page rather than looks at one. A data block, not
+     a script: nothing here executes, so the page's script-src stays closed. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  "@id": "https://cnpt.ca/#studio",
+  "name": "cnpt",
+  "alternateName": "Concept Canada",
+  "url": "https://cnpt.ca/",
+  "logo": "https://cnpt.ca/og-card.jpg",
+  "image": "https://cnpt.ca/og-card.jpg",
+  "email": "info@cnpt.ca",
+  "description": "A design consultancy in Toronto working across information systems, human experience and physical environments.",
+  "address": { "@type": "PostalAddress", "addressLocality": "Toronto", "addressRegion": "ON", "addressCountry": "CA" },
+  "areaServed": { "@type": "Country", "name": "Canada" },
+  "knowsLanguage": ["en", "ko"],
+  "founder": [
+    { "@type": "Person", "name": "Michael (Joongmin) Park" },
+    { "@type": "Person", "name": "Brandon Siow" },
+    { "@type": "Person", "name": "Kenny Huang" }
+  ],
+  "makesOffer": [
+    { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Logo and brand identity" } },
+    { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Web design" } },
+    { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Physical hands-on" } }
+  ]
+}
+</script>
 <script src="/site-head.js"></script>
 <script src="/site.js" defer></script>
 </head>

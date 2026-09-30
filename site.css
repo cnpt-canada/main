@@ -179,9 +179,11 @@ body{counter-reset:sec}
 .sec-head{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr);gap:16px 44px;
   align-items:start;margin-bottom:52px;padding-top:20px;border-top:var(--hair) solid var(--line)}
 .sec-head p{font-size:var(--t-body);color:var(--fg-3);max-width:46ch;font-weight:var(--w-body)}
-h2{font-size:var(--t-h2);font-weight:var(--w-display);letter-spacing:-0.04em;line-height:.97;max-width:20ch}
+/* A section heading. On an inner page the first one is the page's own h1, which is a matter of
+   what the page means rather than how big it is, so both are set the same. */
+h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-spacing:-0.04em;line-height:.97;max-width:20ch}
 .lede{font-size:var(--t-lede);line-height:1.55;color:var(--fg-2);max-width:58ch;margin-top:22px}
-.eyebrow + h2{margin-top:26px}
+.eyebrow + :is(h1,h2){margin-top:26px}
 
 /* what we do — three value rows: icon, title, description + tags */
 .values{margin-top:56px}
@@ -316,9 +318,9 @@ h2{font-size:var(--t-h2);font-weight:var(--w-display);letter-spacing:-0.04em;lin
 .dl span{font-size:15px;color:var(--fg-4);line-height:1.5}
 
 /* focus */
-h2 em{font-style:normal;color:var(--signal)}
+:is(h1,h2) em{font-style:normal;color:var(--signal)}
 /* a heading that only has half the page to itself takes the step below the full-width one */
-.entry h2,.cta-grid h2{font-size:clamp(28px,3.6vw,52px);letter-spacing:-0.036em}
+.entry :is(h1,h2),.cta-grid :is(h1,h2){font-size:clamp(28px,3.6vw,52px);letter-spacing:-0.036em}
 .focus{display:grid;grid-template-columns:repeat(2,1fr);gap:0 64px;margin-top:52px}
 .focus-item{position:relative;padding:28px 0 44px}
 /* icon on the left, number pinned to the right */
@@ -391,7 +393,7 @@ h2 em{font-style:normal;color:var(--signal)}
 /* cta band */
 .cta{position:relative;isolation:isolate;background:var(--ink);color:#fff;padding:96px 0}
 .cta::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--signal)}
-.cta h2{max-width:20ch}
+.cta :is(h1,h2){max-width:20ch}
 .cta p{font-size:17px;color:rgba(255,255,255,.88);max-width:52ch;margin-top:22px;line-height:1.6}
 .cta-row{display:flex;flex-wrap:wrap;align-items:center;gap:16px 30px;margin-top:40px}
 /* on the pink band the signal button would vanish into its own colour, so the two swap over */
@@ -702,7 +704,7 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
   .hero-foot{margin-top:44px;padding-top:26px}
   .hero-line{margin-right:22px}
   .sec-head{gap:12px 16px;margin-bottom:28px}
-  .eyebrow + h2{margin-top:20px}
+  .eyebrow + :is(h1,h2){margin-top:20px}
   .acc-list,.track,.focus{margin-top:32px}
   .acc-row{padding:22px 0}
   .acc-inner{padding-bottom:26px}

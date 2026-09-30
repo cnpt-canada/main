@@ -1,0 +1,11 @@
+# cnpt.ca
+# The signed-in workspace is nobody's search result; the public pages are.
+User-agent: *
+Allow: /
+Disallow: /signin
+Disallow: /onboarding
+Disallow: /account
+Disallow: /admin
+Disallow: /api/
+
+Sitemap: https://cnpt.ca/sitemap.xml

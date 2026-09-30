@@ -388,7 +388,7 @@ window.addEventListener('error', function (e) {
     ['.hero-foot', 'line', 760],
     ['.hero-foot .ticker', 'up', 880],
     ['.eyebrow', 'clip'],
-    ['.sec h2, .cta h2', 'split'],
+    ['.sec h1, .sec h2, .cta h1, .cta h2', 'split'],
     ['.sec-head p, .prac-note, .lede, .cta-grid > div > p, .cta-row, .cta-form, .works-note', 'up'],
     ['.acc, .fgrid > *, .work, .sum-list li', 'up'],
     ['.value, .step, .dl, .focus-item, .member, .pack', 'rule'],
