@@ -170,7 +170,24 @@ begin
   end if;
 end $$;
 
+-- The documentation: the eleven sections a client writes about their company, in their own time.
+-- Named for what it is, and to keep it clear of the short "brief" column on onboarding above.
+-- Answers are kept as one jsonb object keyed by question id rather than as a column each, so the
+-- question set can change without a migration every time. The API bounds the size; postgres only
+-- has to know it is an object.
+create table if not exists public.documentation (
+  id           bigserial primary key,
+  user_id      bigint not null unique references public.users (id) on delete cascade,
+  answers      jsonb not null default '{}'::jsonb
+                 check (jsonb_typeof(answers) = 'object' and pg_column_size(answers) <= 131072),
+  submitted_at timestamptz,                                   -- handed over; it stays editable after
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+create index if not exists documentation_user_idx on public.documentation (user_id);
+
 alter table public.users enable row level security;
+alter table public.documentation enable row level security;
 alter table public.enquiries enable row level security;
 alter table public.onboarding enable row level security;
 alter table public.process enable row level security;

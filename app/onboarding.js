@@ -291,7 +291,15 @@ function done() {
     state.preview
       ? h('a', { class: 'btn btn-primary btn-lg', href: '/admin#onboarding' }, 'Back to the workspace')
       : h('a', { class: 'btn btn-primary btn-lg', href: state.firstRun ? '/account#process' : `/account#enquiries${state.enquiryId ? `/${state.enquiryId}` : ''}` },
-        state.firstRun ? 'Go to your project' : 'See your enquiry', icon('arrow-right'))));
+        state.firstRun ? 'Go to your project' : 'See your enquiry', icon('arrow-right')),
+    // The documentation is the next thing, but it is an afternoon's writing rather than a step of this
+    // flow, so it is offered here and waits in the workspace until they want it.
+    state.preview || !state.firstRun ? null : h('div', { class: 'onb-next' },
+      h('h2', {}, 'When you have more time'),
+      h('p', {}, 'There is a longer document waiting in your workspace — eleven short sections about your '
+        + 'company, your product and where you want to be read. It saves itself as you write, so you can '
+        + 'do it in pieces. The more of it we have, the less of the first call is spent on questions.'),
+      h('a', { class: 'link-out', href: '/account#docs' }, h('span', {}, 'Open it'), icon('arrow-right')))));
   $('step-h').focus();
 }
 

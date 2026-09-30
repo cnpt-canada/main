@@ -625,6 +625,51 @@ a.reading{transition:border-color .2s ease,background-color .2s ease}
 @media(hover:hover){a.reading:hover{border-color:var(--line);background:var(--raise)}}
 a.reading:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 
+/* the hand-off at the end of the welcome flow: what is worth doing next, without making it a step */
+.onb-next{max-width:56ch;margin-top:clamp(28px,5vh,44px);padding-top:clamp(22px,4vh,32px);border-top:1px solid var(--rule)}
+.onb-next h2{font-size:15px;font-weight:var(--w-title);letter-spacing:-0.018em;color:var(--fg)}
+.onb-next p{margin:9px 0 16px;font-size:14px;line-height:1.65;color:var(--dim)}
+.onb-next .link-out{display:inline-flex;align-items:center;gap:9px;font-size:14px;font-weight:var(--w-title);color:var(--fg)}
+.onb-next .link-out .ic{width:13px;height:13px}
+
+/* The documentation. Eleven sections is more than anyone writes in one sitting, so the page is built to
+   be left: the count and the section index stay in view, each answer says when it saved itself, and
+   nothing is sent until the client says so. */
+.doc-main{display:grid;gap:24px}
+.doc-top{display:flex;justify-content:flex-end;min-height:18px}
+.doc-status{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
+  transition:color .2s ease}
+.doc-status.is-ok{color:var(--dim)}
+.doc-status.is-bad{color:var(--signal-ink)}
+.doc-section .card-head h2{display:flex;align-items:baseline;gap:12px;font-size:17px;font-weight:var(--w-title);letter-spacing:-0.02em}
+.doc-no{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--signal-ink)}
+.doc-body{display:grid;gap:22px}
+.doc-note{margin:-4px 0 0}
+.doc-q{display:grid;gap:7px}
+.doc-label{font-size:14px;font-weight:var(--w-title);line-height:1.45;color:var(--fg)}
+/* the example sits under the question, not inside the box, so it is still readable once you type */
+.doc-hint{font-size:12.5px;line-height:1.5;color:var(--muted)}
+.doc-field{width:100%;resize:vertical}
+/* how the studio reads it back */
+.doc-answer{font-size:14px;line-height:1.65;color:var(--soft);white-space:pre-wrap;overflow-wrap:anywhere}
+.doc-answer.is-blank{font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.doc-send{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;
+  padding:18px 20px;border:1px solid var(--rule);border-radius:var(--r-card);background:var(--panel)}
+.doc-send .sub{max-width:52ch;margin:0}
+.doc-progress{display:block}
+.doc-bar{display:block;height:4px;margin:11px 0 8px;border-radius:var(--r-sm);background:var(--sel);overflow:hidden}
+.doc-bar span{display:block;height:100%;background:var(--signal);transition:width .35s var(--ease-out,ease)}
+.doc-index ol{list-style:none;margin:0;padding:0}
+.doc-index li{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  padding:9px 20px;border-bottom:1px solid var(--rule);font-size:13px}
+.doc-index li:last-child{border-bottom:0}
+.doc-index a{display:flex;align-items:baseline;gap:10px;color:var(--soft)}
+.doc-index li.is-done a{color:var(--fg)}
+.doc-index-i{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted)}
+.doc-index-n{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--muted);flex:none}
+.doc-index li.is-done .doc-index-n{color:var(--signal-ink)}
+@media(hover:hover){.doc-index a:hover{color:var(--fg)}}
+
 /* what the client is holding up, and where to do it */
 .card-waiting{border-color:var(--line)}
 .waiting{list-style:none;margin:0;padding:0}

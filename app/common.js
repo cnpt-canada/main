@@ -309,6 +309,7 @@ export function mountShell(user, page, { query = '' } = {}) {
     // the project first, because that is what a client comes here for; the papers behind it last
     group('Account',
       item(`/account${query}#process`, 'account:process', 'Your project', 'folder'),
+      item(`/account${query}#docs`, 'account:docs', 'Your documentation', 'file'),
       item(`/account${query}#meeting`, 'account:meeting', 'Meetings', 'calendar'),
       item(`/account${query}#enquiries`, 'account:enquiries', 'Enquiries', 'message'),
       item(`/account${query}#profile`, 'account:profile', 'Profile', 'user')),

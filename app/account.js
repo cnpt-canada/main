@@ -2,6 +2,7 @@
 // in the same workspace frame as /admin. Profile also shows the client's project at a glance.
 // Admins can open /account?as=<id> to see a member's account exactly as they do ("view as user", read-only).
 import { clockAt, commentThread, dayAt, meetingCalendar, MEETING_LENGTHS, processThumbnail, slotText, stageTracker, STAGES, stageIndex } from '/app/project.js';
+import { renderDocs } from '/app/documentation.js';
 import {
   DEFAULT_FOCUS, ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
   api, avatar, badge, consultantList, dataTable, estimateBlock, flash, fmtCost, fmtDate, fmtDateTime, focalBar, h, icon, keepFocus, kv,
@@ -9,14 +10,14 @@ import {
 } from '/app/common.js';
 
 const $ = (id) => document.getElementById(id);
-const VIEWS = { process: 'Your project', meeting: 'Meetings', enquiries: 'Enquiries', profile: 'Profile' };
+const VIEWS = { process: 'Your project', docs: 'Your documentation', meeting: 'Meetings', enquiries: 'Enquiries', profile: 'Profile' };
 const STATUS_NOTES = {
   new: 'Received. Someone from the cnpt team will read it shortly.',
   in_review: 'The cnpt team is reading it and will reply by email.',
   replied: 'The cnpt team has replied by email. Check your inbox, and your spam folder just in case.',
   closed: 'This enquiry is closed. You can send a new one any time.'
 };
-const state = { enquiries: [], sort: { key: 'created_at', dir: -1 }, open: null, viewingAs: null,
+const state = { enquiries: [], sort: { key: 'created_at', dir: -1 }, open: null, viewingAs: null, docsAnswered: null,
   me: null, project: null, comments: [], meetings: [], busy: [], imageUrl: null, projectLoaded: false, picked: null, members: null,
   onboarding: null };
 let shell;
@@ -213,14 +214,17 @@ const asQuery = () => (state.viewingAs ? `?as=${encodeURIComponent(state.viewing
 // Loads the process, its thread and the meetings the first time one of those views is opened.
 async function loadProject() {
   if (state.projectLoaded) return;
-  // both at once: neither needs the other, and each is its own trip to the server
-  const [data, times] = await Promise.all([
+  // all at once: none needs another, and each is its own trip to the server. The brief is only
+  // counted here — the rail says how far along it is, and the documentation page loads it itself.
+  const [data, times, docs] = await Promise.all([
     api(`/api/process${asQuery()}`),
-    state.viewingAs ? null : api('/api/meetings').catch(() => null)
+    state.viewingAs ? null : api('/api/meetings').catch(() => null),
+    state.viewingAs ? null : api('/api/documentation').catch(() => null)
   ]);
   Object.assign(state, {
     project: data.process, imageUrl: data.image_url, comments: data.comments, meetings: data.meetings, projectLoaded: true,
-    busy: times?.busy ?? []
+    busy: times?.busy ?? [],
+    docsAnswered: docs ? Object.values(docs.documentation?.answers || {}).filter((v) => v && v.trim()).length : null
   });
 }
 
@@ -251,6 +255,14 @@ function waitingOn() {
     items.push(step > 1
       ? { text: `Finish telling us about your project — you are on step ${step} of 5.`, href: '/onboarding', action: 'Continue' }
       : { text: 'Tell us about your project — five short steps, about two minutes.', href: '/onboarding', action: 'Start now' });
+  }
+  // the documentation, while it is still mostly blank: the studio can only work from what it has
+  if (!state.viewingAs && state.docsAnswered != null && state.docsAnswered < 8) {
+    items.push({
+      text: state.docsAnswered
+        ? `Your documentation is ${state.docsAnswered} answers in. The rest shapes what we build.`
+        : 'Write your documentation — eleven short sections, saved as you go.',
+      href: '#docs', action: state.docsAnswered ? 'Continue' : 'Start' });
   }
   const asked = state.meetings.filter((m) => m.status === 'requested' && Date.parse(m.starts_at) > Date.now());
   if (asked.length) {
@@ -477,6 +489,7 @@ function route() {
       $(view === 'process' ? 'process-body' : 'meeting-body').replaceChildren(h('p', { class: 'loading' }, 'This could not be loaded. Please refresh the page.'));
     });
   }
+  if (view === 'docs') renderDocs($('docs-body'), { viewingAs: state.viewingAs });
   if (view === 'profile') renderViewAs();   // the member list is only fetched once, and only for an admin
 
   const previous = state.open;
