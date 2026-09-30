@@ -273,11 +273,13 @@ window.addEventListener('error', function (e) {
     return found;
   }
 
-  // the labels you click, and the titles of the things you point at
+  // The labels you click, and the titles of the things you point at — and nothing else. The effect
+  // was reaching into reading matter, where it has no business: a standfirst ran to sixty-one
+  // letters, and ten footer links carried it on every page. Sentences are for reading, not for
+  // answering the pointer, so what is left is the actions, the way-throughs, and the titles.
   var labels = '.navlinks .nav-link, .nav-sheet a, .nav-actions .btn, .hero-cta .btn, .cta-row .btn,' +
-    ' .link-out span, .fcol a, .acc-name .kor, .works-note a,' +
-    ' .value h3, .focus-item h3, .pack h3, .step h3, .sum-list h3, .member h3, .work h3,' +
-    ' .sec-head p';
+    ' .link-out span,' +
+    ' .value h3, .focus-item h3, .pack h3, .step h3, .member h3, .work h3';
   Array.prototype.forEach.call(document.querySelectorAll(labels), function (el) {
     var count = { i: 0 };
     textIn(el).forEach(function (node) { slot(node, count); });

@@ -503,10 +503,9 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
    sits on its bottom edge rather than its baseline, hence bottom / the descender padding. */
 .sl{position:relative;display:inline-block;overflow:hidden;vertical-align:middle;line-height:1.02;
   padding:.2em 0;margin:-.2em 0;top:-.065em;--sl-step:22ms}
-/* the longer the line, the quicker the step, so a whole sentence still reads as one pass rather than
-   as a queue */
+/* a heading is the longest thing that still rolls, so it takes the quicker step and reads as one
+   pass rather than as a queue */
 h2 .sl{--sl-step:15ms}
-.sec-head p .sl{--sl-step:11ms}
 .sl > span{display:block;transition:transform .42s var(--ease-ref) calc(var(--i,0) * var(--sl-step))}
 /* the waiting copy has to clear the padding under the box as well as the line itself, or it shows
    through in the space kept for the descenders */
@@ -514,11 +513,11 @@ h2 .sl{--sl-step:15ms}
 /* a label answers when you point at it; a title answers when you point at the row it belongs to */
 @media(hover:hover){
   :is(a,button):hover .sl > span:first-child,
-  :is(.value,.focus-item,.pack,.step,.member,.sum-list li,.work):hover .sl > span:first-child,
-  :is(.sec-head,h2):hover .sl > span:first-child{transform:translateY(calc(-100% - .24em))}
+  :is(.value,.focus-item,.pack,.step,.member,.work):hover .sl > span:first-child,
+  h2:hover .sl > span:first-child{transform:translateY(calc(-100% - .24em))}
   :is(a,button):hover .sl > span + span,
-  :is(.value,.focus-item,.pack,.step,.member,.sum-list li,.work):hover .sl > span + span,
-  :is(.sec-head,h2):hover .sl > span + span{transform:translateY(0)}
+  :is(.value,.focus-item,.pack,.step,.member,.work):hover .sl > span + span,
+  h2:hover .sl > span + span{transform:translateY(0)}
 }
 :is(a,button):focus-visible .sl > span:first-child{transform:translateY(calc(-100% - .24em))}
 :is(a,button):focus-visible .sl > span + span{transform:translateY(0)}
