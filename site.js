@@ -396,7 +396,7 @@ window.addEventListener('error', function (e) {
     ['.eyebrow', 'clip'],
     ['.sec h2, .cta h2', 'split'],
     ['.sec-head p, .prac-note, .lede, .cta-grid > div > p, .cta-row, .cta-form, .works-note', 'up'],
-    ['.acc, .fgrid > *, .work', 'up'],
+    ['.acc, .fgrid > *, .work, .sum-list li', 'up'],
     ['.value, .step, .dl, .focus-item, .member, .pack', 'rule'],
     ['.cta', 'cta'],
     ['.fbottom', 'fade']
@@ -607,4 +607,39 @@ window.addEventListener('error', function (e) {
     document.documentElement.addEventListener('mouseleave', function () { mouseX = mouseY = -1e4; kick(); });
     window.addEventListener('scroll', kick, { passive: true }); // scrolling can carry the headline out from under the pointer
   }
+})();
+
+/* the practice marks, brought into the page so their letters can move on their own.
+   A <use> keeps its artwork in a shadow tree that the page's CSS cannot reach, so the two letterforms
+   in cnpt ai / ux / df could only ever move as one lump. This swaps each reference for the artwork
+   itself — the sprite is already in the browser's cache from every other icon on the page — and
+   numbers the shapes so the stylesheet can start them one after the other. If the sprite cannot be
+   read the marks are left exactly as they were, drawn by the <use> that is already there. */
+(function () {
+  var marks = document.querySelectorAll('.acc-mk');
+  if (!marks.length || !window.fetch || !window.DOMParser) return;
+
+  fetch('/site-icons.svg').then(function (r) {
+    return r.ok ? r.text() : Promise.reject(new Error('sprite ' + r.status));
+  }).then(function (text) {
+    var sprite = new DOMParser().parseFromString(text, 'image/svg+xml');
+    if (sprite.querySelector('parsererror')) return;
+    Array.prototype.forEach.call(marks, function (svg) {
+      var use = svg.querySelector('use');
+      if (!use) return;
+      var href = use.getAttribute('href') || use.getAttribute('xlink:href') || '';
+      var symbol = sprite.getElementById(href.slice(href.indexOf('#') + 1));
+      if (!symbol) return;
+      var frag = document.createDocumentFragment();
+      Array.prototype.forEach.call(symbol.childNodes, function (node) {
+        frag.appendChild(document.importNode(node, true));
+      });
+      svg.replaceChild(frag, use);
+      // the shapes are the letters: number them so they can move in reading order
+      Array.prototype.forEach.call(svg.querySelectorAll('path,circle,rect,ellipse,polygon'), function (shape, i) {
+        shape.style.setProperty('--i', i);
+      });
+      svg.classList.add('is-live');
+    });
+  }).catch(function () { /* the <use> already drew it */ });
 })();

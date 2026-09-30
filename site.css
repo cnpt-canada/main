@@ -206,16 +206,30 @@ h2{font-size:var(--t-h2);font-weight:var(--w-display);letter-spacing:-0.04em;lin
   display:grid;grid-template-columns:minmax(0,1fr) auto;gap:44px;align-items:center;
   transition:opacity .5s var(--ease-out);-webkit-tap-highlight-color:transparent;
 }.acc-row:focus-visible{outline:2px solid var(--signal);outline-offset:6px;border-radius:4px}
-/* the practice signs itself: its own mark, then the wordmark, set to the same height so the two read
-   as one line of writing. The gap is wide enough that the mark can grow on hover without reaching the
-   wordmark, since a transform takes no room of its own. */
-.acc-lockup{display:flex;align-items:center;gap:15px;color:var(--fg)}
-.acc-wm{display:block;width:74px;height:auto;flex:none}
-.acc-mk{display:block;flex:none;height:30px;width:auto;
-  transform-origin:50% 50%;transition:transform .4s var(--ease-spring)}
-.mk-ai{width:46px}
-.mk-ux{width:64px}
-.mk-df{width:49px}
+/* The practice signs itself: its own mark, then the wordmark. The mark is set well above the
+   wordmark's own height, because the mark is the name and cnpt is the surname. The gap is wide
+   enough that it can grow on hover without reaching the wordmark, since a transform takes no room.
+   Widths are each mark's own, kept to its artwork's proportions rather than a shared box. */
+.acc-lockup{display:flex;align-items:center;gap:26px;color:var(--fg)}
+.acc-wm{display:block;width:78px;height:auto;flex:none}
+/* the letterforms sit flush against the top of their own viewBox, and an svg clips to it, so a
+   letter that lifts would have its head shorn off. Nothing else is drawn near it. */
+.acc-mk{display:block;flex:none;height:42px;width:auto;overflow:visible;
+  transform-origin:50% 50%;transition:transform .45s var(--ease-spring)}
+.mk-ai{width:64px}
+.mk-ux{width:89px}
+.mk-df{width:68px}
+/* Once site.js has brought the artwork into the page, each letterform is a shape of its own and can
+   move on its own clock. Until then the mark is still drawn, just as one piece. */
+.acc-mk :is(path,circle,rect,ellipse,polygon){transform-box:fill-box;transform-origin:50% 60%}
+/* the mark writes itself as the row arrives: each letterform rises into place a beat after the one
+   before it, the same reading order the wave under the pointer follows */
+@keyframes mk-in{from{opacity:0;transform:translateY(26%) scale(.78)}}
+/* the wave runs inside a mark that is itself growing, so the two scales multiply: kept gentle so the
+   widest mark still clears the wordmark at the peak of both */
+@keyframes mk-wave{45%{transform:translateY(-10%) scale(1.09)}}
+.motion :is(.acc,.sum-list li).in .acc-mk.is-live :is(path,circle,rect,ellipse,polygon){
+  animation:mk-in .72s var(--ease-spring) calc(var(--d,0ms) + 240ms + var(--i,0) * 130ms) backwards}
 .acc-name .kor{display:block;font-size:13.5px;font-weight:var(--w-title);color:var(--fg-5);margin-top:8px}
 .acc-seg{font-size:12px;font-weight:var(--w-title);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-5);white-space:nowrap}
 /* each practice carries its own mark: what the row is about, beside who it is for */
@@ -562,8 +576,11 @@ h2 .sl{--sl-step:15ms}
   .stage-opt:hover input:not(:checked) + span{box-shadow:inset 0 0 0 var(--hair) #fff}
   .btn-send:not(:disabled):hover{color:#fff}
   .acc-list:has(.acc-row:hover) .acc-row:not(:hover){opacity:.45}
-  /* the row leans in: the practice's own mark grows, the wordmark beside it keeps its size */
-  .acc-row:hover .acc-mk{transform:scale(1.18)}
+  /* the row leans in: the practice's own mark grows, the wordmark beside it keeps its size, and a
+     wave runs through the letterforms in reading order */
+  .acc-row:hover .acc-mk{transform:scale(1.32)}
+  .motion :is(.acc-row,.sum-list li):hover .acc-mk.is-live :is(path,circle,rect,ellipse,polygon){
+    animation:mk-wave .62s var(--ease-spring) calc(var(--i,0) * 110ms)}
   .acc-row:hover .acc-name{transform:translateX(8px)}
   .acc-row:hover .acc-ic::before,.acc-row:hover .acc-ic::after{background:var(--fill)}
   .acc-row:hover .acc-seg{color:var(--fg-2)}
@@ -632,9 +649,9 @@ h2 .sl{--sl-step:15ms}
   .acc-list,.track,.focus{margin-top:40px}
   .navlinks,.nav-actions{gap:20px}
   .acc-row{grid-template-columns:minmax(0,1fr) auto;gap:18px 16px;padding:26px 0}
-  .acc-wm{width:64px}
-  .acc-mk{height:26px}
-  .mk-ai{width:40px} .mk-ux{width:55px} .mk-df{width:42px}
+  .acc-wm{width:68px}
+  .acc-mk{height:34px}
+  .mk-ai{width:52px} .mk-ux{width:72px} .mk-df{width:55px}
   .acc-right{gap:14px}
   .acc-inner{padding-left:0;padding-bottom:30px}
   /* timeline turns vertical: icons on the right, rule running down between them */
@@ -805,7 +822,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .sum-list li:has(.sum-sign){align-items:start}
 .sum-sign{line-height:1}
 @media(hover:hover){
-  .sum-list li:hover .acc-mk{transform:scale(1.18)}
+  .sum-list li:hover .acc-mk{transform:scale(1.32)}
 }
 .sum-list p{margin-top:8px;font-size:15px;line-height:1.6;color:var(--fg-4)}
 .sum-stages{display:flex;flex-wrap:wrap;gap:8px 30px;margin-top:30px;font-family:var(--mono);
