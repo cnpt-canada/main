@@ -210,8 +210,7 @@ export function commentThread({ comments, me, onSend, onDelete, readOnly = false
 
 /* ---------- picking a time ---------- */
 
-const SLOT_MINUTES = 30;
-const DAYS_AHEAD = 30;                       // how far out a client may book
+const DAYS_AHEAD = 60;                       // how far out a client may book
 
 const isWeekend = (date) => ['Sat', 'Sun'].includes(inToronto(date, { weekday: 'short' }));
 
@@ -231,219 +230,143 @@ export function firstWeekday(date) {
 const overlaps = (aFrom, aMins, bFrom, bMins) =>
   aFrom < bFrom + bMins * 60000 && bFrom < aFrom + aMins * 60000;
 
-/* One wheel of the dial.
- *
- * A column that scrolls, with a snap point on every row and half a wheel of padding at each end so
- * the first and last rows can reach the middle. The browser does the momentum and the snapping; the
- * only thing here is reading back which row the scroll came to rest on, and drawing the rows further
- * from the middle fainter and smaller so the column reads as a drum rather than a list.
- *
- * It is also a listbox: the column takes focus, the arrow keys move it, and Home and End go to the
- * ends — a wheel you can only flick is a wheel a keyboard cannot use.
- */
-function wheel({ label, onChange }) {
-  const list = h('ul', { class: 'wheel-list' });
-  const box = h('div', { class: 'wheel', role: 'listbox', tabindex: '0', 'aria-label': label }, list);
-  let rows = [];
-  let index = 0;
-  let settle = null;
-  let quiet = false;                       // true while we are the ones moving it
-
-  // offsetHeight, not getBoundingClientRect: the rows carry a scale and the rect reports it
-  const rowHeight = () => rows[0]?.el.offsetHeight || 42;
-
-  // how far each row sits from the middle, as a fraction of a row
-  function shade() {
-    const mid = box.scrollTop + box.clientHeight / 2;
-    for (const r of rows) {
-      const d = Math.abs((r.el.offsetTop + r.el.offsetHeight / 2) - mid) / rowHeight();
-      r.el.style.opacity = String(Math.max(0.3, 1 - d * 0.3));
-      r.el.style.transform = `scale(${Math.max(0.8, 1 - d * 0.08)})`;
-    }
-  }
-
-  function readBack() {
-    if (!rows.length) return;
-    const i = Math.min(rows.length - 1, Math.max(0, Math.round(box.scrollTop / rowHeight())));
-    if (i === index) return;
-    index = i;
-    mark();
-    onChange?.(rows[i].value, i);
-  }
-
-  function mark() {
-    rows.forEach((r, i) => {
-      r.el.classList.toggle('is-on', i === index);
-      r.el.setAttribute('aria-selected', String(i === index));
-    });
-    box.setAttribute('aria-activedescendant', rows[index]?.el.id || '');
-  }
-
-  box.addEventListener('scroll', () => {
-    shade();
-    if (quiet) return;
-    clearTimeout(settle);
-    settle = setTimeout(readBack, 90);
-  }, { passive: true });
-
-  box.addEventListener('keydown', (ev) => {
-    const step = { ArrowDown: 1, ArrowUp: -1, PageDown: 3, PageUp: -3 }[ev.key];
-    const to = ev.key === 'Home' ? 0 : ev.key === 'End' ? rows.length - 1 : step ? index + step : null;
-    if (to === null) return;
-    ev.preventDefault();
-    go(Math.min(rows.length - 1, Math.max(0, to)), true);
-  });
-
-  // moving the wheel ourselves must not read back as the person having moved it
-  function go(i, tell) {
-    if (!rows.length) return;
-    index = Math.min(rows.length - 1, Math.max(0, i));
-    quiet = true;
-    box.scrollTo({ top: index * rowHeight(), behavior: 'auto' });
-    mark();
-    shade();
-    requestAnimationFrame(() => { quiet = false; });
-    if (tell) onChange?.(rows[index].value, index);
-  }
-
-  return {
-    el: box,
-    get value() { return rows[index]?.value; },
-    get index() { return index; },
-    // `items` is [{ value, label, sub, off }]; `keep` is the value to stay on if it is still there
-    fill(items, keep) {
-      const was = keep !== undefined ? keep : rows[index]?.value;
-      list.replaceChildren();
-      rows = items.map((it, i) => {
-        const el = h('li', {
-          class: it.off ? 'wheel-opt is-off' : 'wheel-opt',
-          id: `${box.id || label.toLowerCase()}-opt-${i}`,
-          role: 'option',
-          'aria-disabled': it.off ? 'true' : null
-        }, h('span', {}, it.label), it.sub ? h('small', {}, it.sub) : null);
-        el.addEventListener('click', () => go(i, true));
-        list.appendChild(el);
-        return { el, value: it.value, off: Boolean(it.off) };
-      });
-      let i = rows.findIndex((r) => r.value === was && !r.off);
-      if (i < 0) i = rows.findIndex((r) => !r.off);
-      go(i < 0 ? 0 : i, false);
-      return rows[index]?.value;
-    },
-    set(value) {
-      const i = rows.findIndex((r) => r.value === value);
-      if (i >= 0) go(i, false);
-    },
-    disabled(i) { return rows[i]?.off; }
-  };
+// Which calendar date a moment falls on in Toronto, as plain numbers.
+function dateParts(d) {
+  const p = torontoFormat({ year: 'numeric', month: '2-digit', day: '2-digit' })
+    .formatToParts(d).reduce((a, x) => ({ ...a, [x.type]: x.value }), {});
+  return { y: Number(p.year), m: Number(p.month), d: Number(p.day) };
 }
+const sameDate = (a, b) => a.y === b.y && a.m === b.m && a.d === b.d;
+// Noon UTC is the same calendar day in Toronto whichever way the clocks have gone, so the month grid
+// can be laid out with plain arithmetic and only the booked instant goes through slotOn.
+const atNoon = (y, m, d) => new Date(Date.UTC(y, m - 1, d, 12));
+const daysInMonth = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+const mondayFirst = (y, m) => (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
 
-/* The dial: a day, an hour and a minute, each on its own wheel.
+/* The booker: a month to choose a day from, and that day's free hours as buttons beside it.
  *
- * Every combination is checked against the same three rules the server applies — the time has not
- * passed, nothing else is booked over it, and the meeting finishes before the day closes — and a row
- * that fails is greyed rather than hidden, so the shape of a day stays the same as you move through
- * it and a full morning reads as full rather than as missing.
+ * This is the shape every booking site has settled on, and it is the one that suits a mouse: a day
+ * is one click, an hour is one click, and both are visible at once, so a client can see that Tuesday
+ * is full without first selecting Tuesday. Times run on the hour — a studio call is booked by the
+ * hour, and offering half past as well doubles the buttons to say the same thing.
  *
- * `onPick({ startsAt, minutes })` runs whenever the three wheels settle on something bookable, and
- * `onPick(null)` when they settle on something that is not.
+ * Every slot is checked against the same three rules the server applies: not in the past, nothing
+ * booked over it, and finished before the day closes. `onPick({ startsAt, minutes })` runs when a
+ * time is chosen, and `onPick(null)` when the choice is cleared by changing day or length.
  */
-export function timeDial({ busy = [], mine = [], minutes = 30, onPick, from = new Date() }) {
-  let length = MEETING_LENGTHS.includes(minutes) ? minutes : SLOT_MINUTES;
+export function timePicker({ busy = [], minutes = 30, onPick, from = new Date() }) {
+  let length = MEETING_LENGTHS.includes(minutes) ? minutes : 30;
   let taken = busy;
+  let day = firstWeekday(from);              // the day on show
+  let chosen = null;                         // the hour chosen on it, as a Date
+  let month = dateParts(day);                // which month the grid is showing
 
-  const days = [];
-  for (let d = firstWeekday(from), i = 0; i < DAYS_AHEAD; i++, d = nextWeekday(d, 1)) days.push(d);
+  const lastDay = new Date(Date.now() + DAYS_AHEAD * 86400000);
 
-  const free = (at, mins) => at.getTime() >= Date.now()
-    && at.getTime() + mins * 60000 <= slotOn(at, CLOSE_HOUR, 0).getTime()
-    && !taken.some((m) => overlaps(at.getTime(), mins, Date.parse(m.starts_at), m.minutes));
+  const free = (at) => at.getTime() >= Date.now()
+    && at.getTime() + length * 60000 <= slotOn(at, CLOSE_HOUR, 0).getTime()
+    && at.getTime() <= lastDay.getTime()
+    && !taken.some((m) => overlaps(at.getTime(), length, Date.parse(m.starts_at), m.minutes));
 
-  // a day is bookable if any half hour in it is
-  const dayOpen = (d) => {
-    for (let hh = OPEN_HOUR; hh < CLOSE_HOUR; hh++) {
-      for (const mm of [0, 30]) if (free(slotOn(d, hh, mm), length)) return true;
-    }
-    return false;
+  const hoursOf = (d) => {
+    const out = [];
+    for (let hh = OPEN_HOUR; hh < CLOSE_HOUR; hh++) out.push(slotOn(d, hh, 0));
+    return out;
   };
-  const hourOpen = (d, hh) => [0, 30].some((mm) => free(slotOn(d, hh, mm), length));
+  const dayHasRoom = (d) => !isWeekend(d) && hoursOf(d).some(free);
 
-  const dayWheel = wheel({ label: 'Day', onChange: () => { fillHours(); settled(); } });
-  const hourWheel = wheel({ label: 'Hour', onChange: () => { fillMinutes(); settled(); } });
-  const minWheel = wheel({ label: 'Minute', onChange: settled });
+  const grid = h('div', { class: 'cal-grid', role: 'grid' });
+  const monthName = h('p', { class: 'cal-month' });
+  const back = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Previous month' }, icon('arrow-left'));
+  const forward = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Next month' }, icon('arrow-right'));
+  const times = h('div', { class: 'times-list' });
+  const timesHead = h('p', { class: 'times-head' });
 
-  // the date it is in Toronto, not the first day that can be booked: on a Sunday those differ, and
-  // calling Monday 'Today' sends a client to the wrong day
-  const ymd = (d) => inToronto(d, { year: 'numeric', month: '2-digit', day: '2-digit' });
-  const today = ymd(new Date());
-  function fillDays() {
-    dayWheel.fill(days.map((d) => ({
-      value: d.getTime(),
-      label: ymd(d) === today ? 'Today' : inToronto(d, { weekday: 'short', day: 'numeric' }),
-      sub: inToronto(d, { month: 'short' }),
-      off: !dayOpen(d)
-    })));
-  }
-  function fillHours() {
-    const d = new Date(dayWheel.value);
-    const hrs = [];
-    for (let hh = OPEN_HOUR; hh < CLOSE_HOUR; hh++) {
-      hrs.push({ value: hh, label: String(hh).padStart(2, '0'), off: !hourOpen(d, hh) });
+  const monthStep = (step) => {
+    const m = month.m + step;
+    month = { y: month.y + Math.floor((m - 1) / 12), m: ((m - 1 + 12) % 12) + 1, d: 1 };
+    drawMonth();
+  };
+  back.addEventListener('click', () => monthStep(-1));
+  forward.addEventListener('click', () => monthStep(1));
+
+  function drawMonth() {
+    monthName.textContent = inToronto(atNoon(month.y, month.m, 1), { month: 'long', year: 'numeric' });
+    // a month with nothing left in it is behind us, and a month past the horizon has nothing in it yet
+    const firstOfMonth = atNoon(month.y, month.m, 1).getTime();
+    back.disabled = firstOfMonth <= atNoon(dateParts(new Date()).y, dateParts(new Date()).m, 1).getTime();
+    forward.disabled = firstOfMonth >= atNoon(dateParts(lastDay).y, dateParts(lastDay).m, 1).getTime();
+
+    const cells = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+      .map((d) => h('span', { class: 'cal-dow', 'aria-hidden': 'true' }, d));
+    for (let i = 0; i < mondayFirst(month.y, month.m); i++) cells.push(h('span', { class: 'cal-pad' }));
+
+    const today = dateParts(new Date());
+    for (let d = 1; d <= daysInMonth(month.y, month.m); d++) {
+      const at = slotOn(atNoon(month.y, month.m, d), OPEN_HOUR, 0);
+      const room = dayHasRoom(at);
+      const here = dateParts(at);
+      const b = h('button', {
+        class: 'cal-day' + (sameDate(here, dateParts(day)) ? ' is-on' : '') + (sameDate(here, today) ? ' is-today' : ''),
+        type: 'button', disabled: !room || null,
+        'aria-label': inToronto(at, { weekday: 'long', month: 'long', day: 'numeric' }) + (room ? '' : ' — nothing free'),
+        'aria-pressed': String(sameDate(here, dateParts(day)))
+      }, String(d));
+      if (room) b.addEventListener('click', () => { day = at; chosen = null; drawMonth(); drawTimes(); onPick?.(null); });
+      cells.push(b);
     }
-    hourWheel.fill(hrs);
-  }
-  function fillMinutes() {
-    const d = new Date(dayWheel.value);
-    const hh = hourWheel.value;
-    minWheel.fill([0, 30].map((mm) => ({
-      value: mm, label: String(mm).padStart(2, '0'), off: !free(slotOn(d, hh, mm), length)
-    })));
+    grid.replaceChildren(...cells);
   }
 
-  function at() {
-    if (dayWheel.value === undefined || hourWheel.value === undefined || minWheel.value === undefined) return null;
-    return slotOn(new Date(dayWheel.value), hourWheel.value, minWheel.value);
-  }
-  function settled() {
-    const when = at();
-    onPick?.(when && free(when, length) ? { startsAt: when.toISOString(), minutes: length } : null);
+  function drawTimes() {
+    timesHead.textContent = inToronto(day, { weekday: 'long', month: 'long', day: 'numeric' });
+    const open = hoursOf(day);
+    const any = open.some(free);
+    times.replaceChildren(...(any ? open.map((at) => {
+      const ok = free(at);
+      const b = h('button', {
+        class: 'time-slot' + (chosen && chosen.getTime() === at.getTime() ? ' is-on' : ''),
+        type: 'button', disabled: !ok || null, 'aria-pressed': String(Boolean(chosen) && chosen.getTime() === at.getTime())
+      }, clockAt(at));
+      if (ok) b.addEventListener('click', () => {
+        chosen = at;
+        drawTimes();
+        onPick?.({ startsAt: at.toISOString(), minutes: length });
+      });
+      return b;
+    }) : [h('p', { class: 'sub times-none' }, 'Nothing free on this day. Try another.')]));
   }
 
-  const el = h('div', { class: 'dial' },
-    h('div', { class: 'dial-band', 'aria-hidden': 'true' }),
-    h('div', { class: 'dial-cols' },
-      dayWheel.el,
-      h('div', { class: 'dial-sep', 'aria-hidden': 'true' }, hourWheel.el, h('span', { class: 'dial-colon' }, ':'), minWheel.el)));
-
-  fillDays();
-  fillHours();
-  fillMinutes();
-  // the first paint happens before the wheels have a height, so the rows are shaded once they do
-  requestAnimationFrame(() => { dayWheel.set(dayWheel.value); hourWheel.set(hourWheel.value); minWheel.set(minWheel.value); settled(); });
+  drawMonth();
+  drawTimes();
 
   return {
-    el,
+    el: h('div', { class: 'booker' },
+      h('div', { class: 'booker-cal' },
+        h('div', { class: 'cal-head' }, back, monthName, forward),
+        grid),
+      h('div', { class: 'booker-times' }, timesHead, times)),
     setLength(mins) {
-      length = MEETING_LENGTHS.includes(mins) ? mins : SLOT_MINUTES;
-      fillDays(); fillHours(); fillMinutes(); settled();
+      length = MEETING_LENGTHS.includes(mins) ? mins : 30;
+      // the hour that was chosen may not hold a longer meeting
+      if (chosen && !free(chosen)) chosen = null;
+      drawMonth(); drawTimes();
+      onPick?.(chosen ? { startsAt: chosen.toISOString(), minutes: length } : null);
     },
-    // move the dial onto an existing meeting, for rescheduling
+    // open on an existing meeting, for rescheduling
     show(startsAt) {
-      if (!el.isConnected) { requestAnimationFrame(() => this.show(startsAt)); return; }
       const when = new Date(startsAt);
-      const day = days.find((d) => inToronto(d, { day: 'numeric', month: 'short' }) === inToronto(when, { day: 'numeric', month: 'short' }));
-      if (day) dayWheel.set(day.getTime());
-      fillHours();
-      hourWheel.set(Number(inToronto(when, { hour: '2-digit', hour12: false })));
-      fillMinutes();
-      minWheel.set(when.getMinutes() < 30 ? 0 : 30);
-      settled();
-      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      day = slotOn(when, OPEN_HOUR, 0);
+      month = dateParts(day);
+      const hour = slotOn(when, Number(inToronto(when, { hour: '2-digit', hour12: false })), 0);
+      chosen = free(hour) ? hour : null;
+      drawMonth(); drawTimes();
+      onPick?.(chosen ? { startsAt: chosen.toISOString(), minutes: length } : null);
     },
-    update({ busy: nextBusy, mine: nextMine }) {
+    update({ busy: nextBusy }) {
       if (nextBusy) taken = nextBusy;
-      if (nextMine) mine = nextMine;
-      fillDays(); fillHours(); fillMinutes(); settled();
+      if (chosen && !free(chosen)) chosen = null;
+      drawMonth(); drawTimes();
     }
   };
 }

@@ -1,7 +1,7 @@
 // /account — the client's enquiries (with fields, the focal split, consultants and the estimate) and profile,
 // in the same workspace frame as /admin. Profile also shows the client's project at a glance.
 // Admins can open /account?as=<id> to see a member's account exactly as they do ("view as user", read-only).
-import { clockAt, commentThread, dayAt, MEETING_LENGTHS, processThumbnail, slotText, stageTracker, STAGES, stageIndex, timeDial } from '/app/project.js';
+import { clockAt, commentThread, dayAt, MEETING_LENGTHS, processThumbnail, slotText, stageTracker, STAGES, stageIndex, timePicker } from '/app/project.js';
 import { renderDocs } from '/app/documentation.js';
 import {
   DEFAULT_FOCUS, ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
@@ -409,12 +409,12 @@ async function cancelMeeting(m) {
   }
 }
 
-// Moving a meeting is calling it off and asking for another time, so the dial is loaded with the old
-// one and the client picks the new one. Saying that plainly beats a silent reschedule they cannot check.
+// Moving a meeting is calling it off and asking for another time, so the booker opens on the old one
+// and the client picks the new one. Saying that plainly beats a silent reschedule they cannot check.
 function moveMeeting(m) {
   state.moving = m;
   flash('Pick the new time, then ask for it. The old one is called off once the new one is in.');
-  renderMeeting();                     // the dial is placed on the old time as it is built, below
+  renderMeeting();                     // the booker is opened on the old time once it is built, below
 }
 
 function renderMeeting() {
@@ -438,7 +438,7 @@ function renderMeeting() {
 
   if (state.viewingAs) return body.replaceChildren(booked);
 
-  const when = h('p', { class: 'pick-when is-empty' }, 'Turn the dial');
+  const when = h('p', { class: 'pick-when is-empty' }, 'Pick a day, then a time');
   const sub = h('p', { class: 'sub' }, 'Weekdays, 09:00–18:00 Toronto time. Times already taken are greyed out.');
   const note = h('input', { class: 'input', id: 'meeting-note', type: 'text', maxlength: '500',
     placeholder: 'e.g. Where the concept should go next' });
@@ -448,19 +448,19 @@ function renderMeeting() {
     class: 'seg-btn', type: 'button', 'aria-pressed': String(mins === 30), 'data-len': mins,
     onclick: (ev) => {
       for (const b of lengths.children) b.setAttribute('aria-pressed', String(b === ev.currentTarget));
-      dial.setLength(mins);
+      picker.setLength(mins);
     }
   }, mins === 30 ? '30 min' : '1 hour')));
 
-  const dial = timeDial({
-    // the meeting being moved does not block itself, or the dial would open on a time it calls taken
+  const picker = timePicker({
+    // the meeting being moved does not block itself, or the booker would call its own hour taken
     busy: state.moving
       ? state.busy.filter((x) => Date.parse(x.starts_at) !== Date.parse(state.moving.starts_at))
       : state.busy,
     mine: liveMeetings(),
     onPick: (picked) => {
       state.picked = picked;
-      when.textContent = picked ? slotText(picked.startsAt, picked.minutes) : 'That time is not free';
+      when.textContent = picked ? slotText(picked.startsAt, picked.minutes) : 'Now pick a time';
       when.classList.toggle('is-empty', !picked);
       book.disabled = !picked;
     }
@@ -515,10 +515,10 @@ function renderMeeting() {
     h('section', { class: 'card col-12', 'aria-labelledby': 'cal-h' },
       h('div', { class: 'card-head card-head-row' },
         h('h2', { id: 'cal-h' }, state.moving ? 'Pick a new time' : 'Book a time'), lengths),
-      h('div', { class: 'card-body dial-body' }, dial.el, form)));
+      h('div', { class: 'card-body book-body' }, picker.el, form)));
 
-  // only once the wheels are in the document and have a height can they be turned to a given time
-  if (state.moving) dial.show(state.moving.starts_at);
+  // opened on the meeting being moved, once the booker is in the document
+  if (state.moving) picker.show(state.moving.starts_at);
 }
 
 /* ---------- views ---------- */

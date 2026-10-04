@@ -439,45 +439,53 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .note-field{min-height:66px}
 .note-add-foot{display:flex;align-items:center;justify-content:space-between;gap:12px}
 
-/* The dial: three wheels, the way a time is picked on a phone.
-   Each column scrolls with a snap point on every row and half a wheel of padding at each end, so the
-   first and last rows can reach the middle. The band across the centre says which row counts; the
-   mask fades the ends so the column reads as a drum turning rather than a list running off an edge.
-   The opacity and scale of each row are set as it scrolls, in app/project.js. */
-.dial{position:relative;--row:42px;--rows:5;display:grid;justify-content:center}
-.dial-cols{display:flex;align-items:stretch;gap:8px}
-.dial-cols > .wheel:first-child{min-width:104px}
-.dial-sep{display:flex;align-items:stretch;gap:0}
-.dial-colon{display:flex;align-items:center;font-size:17px;font-weight:var(--w-title);color:var(--fg-3)}
-.wheel{height:calc(var(--row) * var(--rows));min-width:58px;overflow-y:auto;overscroll-behavior:contain;
-  scroll-snap-type:y mandatory;scrollbar-width:none;outline:none;
-  -webkit-mask-image:linear-gradient(transparent,#000 17%,#000 83%,transparent);
-  mask-image:linear-gradient(transparent,#000 17%,#000 83%,transparent)}
-.wheel::-webkit-scrollbar{display:none}
-.wheel:focus-visible{border-radius:var(--r-sm);box-shadow:0 0 0 2px var(--signal)}
-.wheel-list{list-style:none;margin:0;padding:calc(var(--row) * ((var(--rows) - 1) / 2)) 0}
-.wheel-opt{display:flex;align-items:baseline;justify-content:center;gap:5px;height:var(--row);
-  scroll-snap-align:center;cursor:pointer;user-select:none;
-  font-size:17px;font-weight:var(--w-title);letter-spacing:-0.02em;color:var(--fg);
-  font-variant-numeric:tabular-nums;white-space:nowrap;
-  transition:color .15s ease}
-.wheel-opt small{font-size:12px;font-weight:var(--w-body);color:var(--fg-3)}
-/* a time that is gone or already taken: still in its place, so the shape of a day does not change */
-.wheel-opt.is-off{color:var(--fg-3);cursor:default;text-decoration:line-through;text-decoration-thickness:1px}
-.wheel-opt.is-off small{text-decoration:none}
-.dial-band{position:absolute;left:0;right:0;top:50%;height:var(--row);transform:translateY(-50%);
-  border-top:1px solid var(--line);border-bottom:1px solid var(--line);pointer-events:none}
-@media(prefers-reduced-motion:reduce){.wheel{scroll-behavior:auto}}
+/* The booker: a month on the left, that day's free hours on the right. Both are visible at once, so
+   a client can see that a day is full without first selecting it. */
+.booker{display:grid;grid-template-columns:minmax(0,300px) minmax(0,392px);gap:0 40px;align-items:start;justify-content:start}
+.booker-cal{display:grid;gap:14px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cal-month{font-size:14.5px;font-weight:var(--w-title);letter-spacing:-0.014em}
+.cal-head .icon-btn:disabled{opacity:.3;cursor:default}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;justify-items:stretch}
+.cal-dow{display:flex;align-items:center;justify-content:center;height:26px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3)}
+.cal-pad{display:block}
+/* a day you can book: a plain target, lit under the pointer, filled once it is the one on show */
+.cal-day{display:flex;align-items:center;justify-content:center;aspect-ratio:1;min-height:36px;padding:0;
+  border:0;border-radius:var(--r-sm);background:none;color:var(--fg);cursor:pointer;
+  font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;
+  transition:background-color .15s ease,color .15s ease,box-shadow .15s ease}
+.cal-day:disabled{color:var(--fg-3);opacity:.4;cursor:default}
+/* today is marked under the number, so it does not compete with the day you have chosen */
+.cal-day.is-today{box-shadow:inset 0 -2px 0 var(--fg-3)}
+.cal-day.is-on{background:var(--fill);color:var(--on-fill);box-shadow:none}
+.cal-day:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+@media(hover:hover){.cal-day:not(:disabled):not(.is-on):hover{background:var(--hover)}}
 
-/* what the dial is set to, and what happens next */
-.dial-body{display:grid;gap:22px;justify-items:center;padding-top:8px}
-.pick{display:grid;gap:14px;justify-items:center;text-align:center;width:100%;max-width:440px}
+.booker-times{display:grid;gap:12px;min-width:0}
+.times-head{font-size:14.5px;font-weight:var(--w-title);letter-spacing:-0.014em}
+.times-list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.time-slot{display:flex;align-items:center;justify-content:center;height:42px;padding:0 10px;
+  border:0;border-radius:var(--r-sm);background:none;box-shadow:inset 0 0 0 1px var(--line);
+  color:var(--fg);cursor:pointer;font-family:var(--font);font-size:14px;font-weight:var(--w-title);
+  letter-spacing:-0.012em;font-variant-numeric:tabular-nums;
+  transition:background-color .15s ease,color .15s ease,box-shadow .15s ease}
+.time-slot:disabled{color:var(--fg-3);box-shadow:inset 0 0 0 1px var(--rule);cursor:default;text-decoration:line-through}
+.time-slot.is-on{background:var(--fill);color:var(--on-fill);box-shadow:none}
+.time-slot:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+@media(hover:hover){.time-slot:not(:disabled):not(.is-on):hover{box-shadow:inset 0 0 0 1px var(--fg)}}
+.times-none{grid-column:1 / -1}
+
+/* what is picked, and what happens next */
+.book-body{display:grid;gap:26px}
+.pick{display:grid;gap:14px;max-width:560px}
 .pick-when{font-size:16px;font-weight:var(--w-title);letter-spacing:-0.02em}
 .pick-when.is-empty{color:var(--fg-3)}
 .pick-head .sub{display:block;margin-top:4px}
-.pick .field{display:grid;gap:6px;width:100%;text-align:left}
+.pick .field{display:grid;gap:6px;width:100%}
 .pick label{font-size:13px;font-weight:var(--w-title);color:var(--fg-2)}
 .pick label .sub{font-weight:var(--w-title)}
+.pick .btn{justify-self:start}
 .pick-moving{font-size:13px;color:var(--fg-2)}
 .pick-moving .link{font-size:13px}
 
@@ -502,9 +510,13 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .been[open] summary::before{transform:rotate(90deg)}
 .been[open] summary{margin-bottom:12px}
 @media(hover:hover){.been summary:hover{color:var(--fg)}}
+
+@media(max-width:900px){
+  .booker{grid-template-columns:minmax(0,1fr);gap:26px}
+  .booker-cal{max-width:340px}
+}
 @media(max-width:719px){
-  .dial{--row:40px}
-  .wheel{min-width:54px}
+  .times-list{grid-template-columns:repeat(3,minmax(0,1fr))}
   .note{grid-template-columns:auto minmax(0,1fr);padding:10px 2px}
   .note-remove{display:none}
 }
