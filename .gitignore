@@ -3,3 +3,6 @@ node_modules/
 .env.*
 !.env.example
 .vercel/
+
+# headless Chrome output from the local verification harness
+chrome.log
