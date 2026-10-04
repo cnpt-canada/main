@@ -549,19 +549,19 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
   .track:has(.step:hover) .step:not(:hover) > :not(.dot),
   .track:has(.step:hover) .step:not(:hover) .dot svg{opacity:.45}
   .step:hover .dot{color:var(--fg)}
-  .step-last:hover .dot{color:var(--signal)}
+  .step-last:hover .dot{color:var(--fg)}
   .step:hover p{color:var(--fg-2)}
   /* same as the process: rules light together down to the hovered row; text and icons respond per row */
   :is(.value:hover, .value:has(~ .value:hover))::before{background:var(--fg-2)}
   .values:has(.value:hover) .value:not(:hover) > *{opacity:.45}
   .value:hover .value-ic{color:var(--fg)}
-  .value-core:hover .value-ic{color:var(--signal)}
+  .value-core:hover .value-ic{color:var(--fg)}
   .dl:hover b{color:var(--fg)}
   .dl:hover span{color:var(--fg-2)}
   /* packages answer hover like the focus items */
   .pack:hover::before{background:var(--fg-2)}
   .packs:has(.pack:hover) .pack:not(:hover) > *{opacity:.45}
-  .pack:hover .pack-ic{color:var(--signal)}
+  .pack:hover .pack-ic{color:var(--fg)}
   .pack:hover > p{color:var(--fg-2)}
   /* every section mark answers the pointer with the reference's overshoot: it lifts and comes back */
   .value-ic,.focus-ic,.pack-ic,.step .dot{transition:transform .4s var(--ease-spring),color .5s var(--ease-out)}
@@ -569,7 +569,7 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
   /* focus items: the hovered item's rule lights and its icon takes the signal colour; the others dim */
   .focus-item:hover::before{background:var(--fg-2)}
   .focus:has(.focus-item:hover) .focus-item:not(:hover) > *{opacity:.45}
-  .focus-item:hover .focus-ic{color:var(--signal)}
+  .focus-item:hover .focus-ic{color:var(--fg)}
   .focus-item:hover p{color:var(--fg-2)}
   /* a ruled row steps into its own rule when you point at it, the way the reference's contact rows
      do. The row keeps its width and only its contents inset, so nothing beside it moves. */
@@ -739,7 +739,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .nav-ic svg{display:block;width:100%;height:100%;overflow:visible;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .nav-ic svg *{transform-box:fill-box;transform-origin:center}
 .nav-ic [pathLength]{stroke-dasharray:1 2}
-.nav-sheet .ic-go{color:var(--signal)}
+.nav-sheet .ic-go{color:var(--fg-3)}
 .navlinks .nav-link{position:relative;padding-left:22px;margin-left:-18px}
 .navlinks .nav-link:first-child{margin-left:-22px} /* the row centres on the words; the first icon sits just outside it */
 .navlinks .nav-ic{position:absolute;left:0;top:50%;width:16px;height:16px;margin-top:-8px;opacity:0;
