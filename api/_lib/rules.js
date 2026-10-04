@@ -34,6 +34,8 @@ export const TALENT_CATEGORIES = [
 export const MAX_TALENT_NAME = 120;
 export const MAX_TALENT_LINKS = 300;
 export const MAX_TALENT_MESSAGE = 1000;
+// the short note on the home page: a question, not a brief
+export const MAX_CONTACT_MESSAGE = 1200;
 
 export const MAX_MESSAGE = 500;
 export const MAX_TAGS = 5;
@@ -58,14 +60,20 @@ export function cleanConsultants(value) {
   return [...new Set(value)];
 }
 
-// A meeting slot: on the half hour, in the future, on a weekday inside the studio's hours, not too far ahead.
-// Returns the start as an ISO string, or an error code.
+// Which calendar date a moment falls on in Toronto, as "2026-10-07".
+const torontoDate = (d) => new Intl.DateTimeFormat('en-CA',
+  { timeZone: MEETING_TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+
+// A meeting slot: on the half hour, from tomorrow onwards, on a weekday inside the studio's hours,
+// not too far ahead. Returns the start as an ISO string, or an error code.
 export function checkSlot(startsAt, minutes, now = new Date()) {
   if (!MEETING_MINUTES.includes(minutes)) return { error: 'invalid_minutes' };
   const start = new Date(startsAt);
   if (Number.isNaN(start.getTime())) return { error: 'invalid_slot' };
   if (start.getTime() % (30 * 60 * 1000) !== 0) return { error: 'invalid_slot' };      // half-hour boundaries only
   if (start.getTime() < now.getTime()) return { error: 'past_slot' };
+  // a request is confirmed by hand, so the same day cannot be answered in time
+  if (torontoDate(start) === torontoDate(now)) return { error: 'same_day' };
   if (start.getTime() > now.getTime() + MEETING_DAYS_AHEAD * 86400000) return { error: 'too_far' };
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: MEETING_TZ, weekday: 'short', hour: 'numeric', minute: 'numeric', hour12: false })
     .formatToParts(start).reduce((a, p) => ({ ...a, [p.type]: p.value }), {});

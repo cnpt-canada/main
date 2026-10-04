@@ -472,6 +472,7 @@ function renderMeeting() {
     : null;
 
   const form = h('form', { class: 'pick' },
+    h('p', { class: 'pick-label' }, state.moving ? 'The new time' : 'Your request'),
     moving,
     h('div', { class: 'pick-head', role: 'status' }, when, sub),
     h('div', { class: 'field' },
@@ -505,7 +506,11 @@ function renderMeeting() {
       renderMeeting();
       flash(moved ? 'Meeting moved. We will confirm by email.' : 'Meeting requested. We will confirm by email.');
     } catch (err) {
-      flash(err.message === 'slot_taken' ? 'Someone just took that slot. Please pick another.' : 'That time could not be booked. Please try again.', true);
+      flash({
+        slot_taken: 'Someone just took that slot. Please pick another.',
+        same_day: 'We need a day’s notice. Please pick tomorrow or later.',
+        past_slot: 'That time has gone. Please pick another.'
+      }[err.message] || 'That time could not be booked. Please try again.', true);
       book.disabled = false;
     }
   });

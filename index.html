@@ -108,45 +108,54 @@
     </div>
     <h2>Three practices, four stages, <em>one team.</em></h2>
     <p class="lede">A project can use one practice or all three. Whichever it uses, it runs through the same four stages, and each stage ends with something you can act on without us.</p>
-    <ol class="sum-list">
-      <li>
-        <div>
-          <h3 class="sum-sign">
-            <span class="acc-lockup">
-              <svg class="acc-mk mk-ai" viewBox="0 0 81 53" aria-hidden="true"><use href="/site-icons.svg#m-ai"/></svg>
-              <svg class="acc-wm" viewBox="0 0 140 32" aria-hidden="true"><use href="/site-icons.svg#cnpt"/></svg>
-              <span class="sr-only">cnpt ai</span>
-            </span>
-          </h3>
-          <p>Information system design</p>
-        </div>
+    <ul class="pracs">
+      <li class="prac">
+        <span class="acc-lockup">
+          <svg class="acc-mk mk-ai" viewBox="0 0 81 53" aria-hidden="true"><use href="/site-icons.svg#m-ai"/></svg>
+          <svg class="acc-wm" viewBox="0 0 140 32" aria-hidden="true"><use href="/site-icons.svg#cnpt"/></svg>
+          <span class="sr-only">cnpt ai</span>
+        </span>
+        <p>Information system design</p>
       </li>
-      <li>
-        <div>
-          <h3 class="sum-sign">
-            <span class="acc-lockup">
-              <svg class="acc-mk mk-ux" viewBox="0 0 83 39" aria-hidden="true"><use href="/site-icons.svg#m-ux"/></svg>
-              <svg class="acc-wm" viewBox="0 0 140 32" aria-hidden="true"><use href="/site-icons.svg#cnpt"/></svg>
-              <span class="sr-only">cnpt ux</span>
-            </span>
-          </h3>
-          <p>Human-centred design</p>
-        </div>
+      <li class="prac">
+        <span class="acc-lockup">
+          <svg class="acc-mk mk-ux" viewBox="0 0 83 39" aria-hidden="true"><use href="/site-icons.svg#m-ux"/></svg>
+          <svg class="acc-wm" viewBox="0 0 140 32" aria-hidden="true"><use href="/site-icons.svg#cnpt"/></svg>
+          <span class="sr-only">cnpt ux</span>
+        </span>
+        <p>Human-centred design</p>
       </li>
-      <li>
-        <div>
-          <h3 class="sum-sign">
-            <span class="acc-lockup">
-              <svg class="acc-mk mk-df" viewBox="0 0 86 53" aria-hidden="true"><use href="/site-icons.svg#m-df"/></svg>
-              <svg class="acc-wm" viewBox="0 0 140 32" aria-hidden="true"><use href="/site-icons.svg#cnpt"/></svg>
-              <span class="sr-only">cnpt df</span>
-            </span>
-          </h3>
-          <p>Design fabrication</p>
-        </div>
+      <li class="prac">
+        <span class="acc-lockup">
+          <svg class="acc-mk mk-df" viewBox="0 0 86 53" aria-hidden="true"><use href="/site-icons.svg#m-df"/></svg>
+          <svg class="acc-wm" viewBox="0 0 140 32" aria-hidden="true"><use href="/site-icons.svg#cnpt"/></svg>
+          <span class="sr-only">cnpt df</span>
+        </span>
+        <p>Design fabrication</p>
       </li>
-    </ol>
-    <p class="sum-stages"><span><b>Frame</b>2–3 weeks</span><span><b>Concept</b>3–5 weeks</span><span><b>System</b>6–12 weeks</span><span><b>Entry</b>4–8 weeks</span></p>
+    </ul>
+    <!-- The four stages as one line: dotted while the work is being framed, solid once there is a
+         concept, fanned into three strands and gathered again while a system is built, and in the
+         brand colour at entry. The viewBox is 1200x72 and each stage owns 300 of it, so the labels
+         below line up with the segment they name. -->
+    <div class="track-line">
+      <svg viewBox="0 0 1200 128" aria-hidden="true">
+        <path class="tl-frame" d="M0 64H300"/>
+        <path class="tl-concept" d="M300 64H600"/>
+        <g class="tl-system">
+          <path d="M600 64C670 64 700 8 750 8s80 56 150 56"/>
+          <path d="M600 64h300"/>
+          <path d="M600 64c70 0 100 56 150 56s80-56 150-56"/>
+        </g>
+        <path class="tl-entry" d="M900 64H1200"/>
+      </svg>
+      <ol class="track-stages">
+        <li><b>Frame</b><span>2–3 weeks</span></li>
+        <li><b>Concept</b><span>3–5 weeks</span></li>
+        <li><b>System</b><span>6–12 weeks</span></li>
+        <li><b>Entry</b><span>4–8 weeks</span></li>
+      </ol>
+    </div>
     <p class="sum-note">Three packages to start from: logo and brand identity, web design, and physical hands-on.</p>
     <div class="sum-more">
       <a class="link-out" href="/about" data-cursor="Three practices"><span>About</span><svg viewBox="0 0 10 10" aria-hidden="true"><use href="/site-icons.svg#arrow-ur"/></svg></a>
@@ -230,6 +239,26 @@
       <a class="btn btn-signal btn-lg" href="/signin" data-cursor="Let’s talk">Start a project</a>
       <a class="link-out" href="mailto:info@cnpt.ca" data-cursor="Email us"><span>info@cnpt.ca</span></a>
     </div>
+    <!-- The short way in: no account, no onboarding, just an address and a line. It reaches the same
+         inbox as everything else, with the sender set as reply-to. -->
+    <form class="cta-note" id="contact-form" action="/api/contact" method="post" novalidate>
+      <p class="cta-note-head">Or just ask. <span>We reply within two working days.</span></p>
+      <div class="composer">
+        <div class="composer-head">
+          <label for="cf-message">Your question <span class="req" aria-hidden="true">*</span></label>
+          <span class="count" id="cf-count">0 / 1200</span>
+        </div>
+        <textarea id="cf-message" name="message" rows="3" maxlength="1200" required aria-describedby="cf-count" placeholder="What you are building, and what you need from us."></textarea>
+        <div class="composer-foot">
+          <label for="cf-email">Email <span class="req" aria-hidden="true">*</span></label>
+          <input id="cf-email" type="email" name="email" maxlength="254" autocomplete="email" required placeholder="you@email.com">
+          <button class="btn btn-send" type="submit" disabled>Send<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 8 8 2M3 2h5v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+      </div>
+      <!-- honeypot: hidden from people, filled in by bots -->
+      <div class="hp" aria-hidden="true"><label>Website<input type="text" name="company_website" tabindex="-1" autocomplete="off"></label></div>
+      <div class="form-status" role="status"></div>
+    </form>
   </div>
 </section>
 

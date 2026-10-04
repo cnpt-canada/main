@@ -92,6 +92,67 @@ window.addEventListener('error', function (e) {
   });
 })();
 
+/* the short note under the contact heading: an address and a line, no account */
+(function () {
+  var form = document.getElementById('contact-form');
+  if (!form) return;
+  var message = form.elements.message;
+  var email = form.elements.email;
+  var count = form.querySelector('.count');
+  var status = form.querySelector('.form-status');
+  var button = form.querySelector('.btn-send');
+  var max = +message.getAttribute('maxlength');
+  var sending = false;
+
+  function isComplete() {
+    return Boolean(message.value.trim()) && Boolean(email.value.trim()) && email.checkValidity();
+  }
+  function sync() {
+    count.textContent = message.value.length + ' / ' + max;
+    count.classList.toggle('is-near', message.value.length >= max - 120);
+    button.disabled = sending || !isComplete();
+  }
+  form.addEventListener('input', sync);
+  window.addEventListener('pageshow', sync);
+  sync();
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (sending || !isComplete()) return;
+    sending = true;
+    form.classList.add('is-sending');
+    sync();
+    status.textContent = 'Sending…';
+    fetch(form.action, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: email.value.trim(),
+        message: message.value.trim(),
+        company_website: form.elements.company_website.value
+      })
+    })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (data) {
+          if (!r.ok || !data.ok) throw new Error(data.error || 'HTTP ' + r.status);
+        });
+      })
+      .then(function () {
+        form.reset();
+        status.textContent = 'Thank you. We will come back to you within two working days.';
+      })
+      .catch(function () {
+        // nothing is stored behind this form, so a failure has to say where else to write
+        status.textContent = 'That could not be sent. Please email info@cnpt.ca instead.';
+      })
+      .then(function () {
+        sending = false;
+        form.classList.remove('is-sending');
+        sync();
+      });
+  });
+})();
+
 /* dark or light: the switch beside "Start a project", remembered on this browser */
 (function () {
   var button = document.querySelector('.theme-btn');

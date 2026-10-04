@@ -221,10 +221,11 @@ function nextWeekday(from, step) {
   return at;
 }
 
-// The first working day on or after `date` — today, unless today is the weekend.
+// The first day a meeting can be asked for: tomorrow at the earliest, and the next weekday after
+// that if tomorrow is the weekend. A request is confirmed by hand, so the same day cannot be
+// answered in time -- the server refuses it too.
 export function firstWeekday(date) {
-  const at = slotOn(date, OPEN_HOUR, 0);
-  return isWeekend(at) ? nextWeekday(at, 1) : at;
+  return nextWeekday(slotOn(date, OPEN_HOUR, 0), 1);
 }
 
 const overlaps = (aFrom, aMins, bFrom, bMins) =>
@@ -237,6 +238,8 @@ function dateParts(d) {
   return { y: Number(p.year), m: Number(p.month), d: Number(p.day) };
 }
 const sameDate = (a, b) => a.y === b.y && a.m === b.m && a.d === b.d;
+const asNumber = (p) => p.y * 10000 + p.m * 100 + p.d;
+const earlierThan = (a, b) => asNumber(a) < asNumber(b);
 // Noon UTC is the same calendar day in Toronto whichever way the clocks have gone, so the month grid
 // can be laid out with plain arithmetic and only the booked instant goes through slotOn.
 const atNoon = (y, m, d) => new Date(Date.UTC(y, m - 1, d, 12));
@@ -263,7 +266,8 @@ export function timePicker({ busy = [], minutes = 30, onPick, from = new Date() 
 
   const lastDay = new Date(Date.now() + DAYS_AHEAD * 86400000);
 
-  const free = (at) => at.getTime() >= Date.now()
+  const opensOn = dateParts(firstWeekday(new Date()));
+  const free = (at) => !earlierThan(dateParts(at), opensOn)
     && at.getTime() + length * 60000 <= slotOn(at, CLOSE_HOUR, 0).getTime()
     && at.getTime() <= lastDay.getTime()
     && !taken.some((m) => overlaps(at.getTime(), length, Date.parse(m.starts_at), m.minutes));

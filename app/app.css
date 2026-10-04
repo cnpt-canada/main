@@ -439,9 +439,11 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .note-field{min-height:66px}
 .note-add-foot{display:flex;align-items:center;justify-content:space-between;gap:12px}
 
-/* The booker: a month on the left, that day's free hours on the right. Both are visible at once, so
-   a client can see that a day is full without first selecting it. */
-.booker{display:grid;grid-template-columns:minmax(0,300px) minmax(0,392px);gap:0 40px;align-items:start;justify-content:start}
+/* The booker: a month, that day's free hours, and what you are asking for -- in that order across
+   the page, because that is the order it happens in. Both halves of the picker are visible at once,
+   so a client can see that a day is full without first selecting it. */
+.book-body{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:0 44px;align-items:start}
+.booker{display:grid;grid-template-columns:minmax(0,286px) minmax(0,300px);gap:0 36px;align-items:start}
 .booker-cal{display:grid;gap:14px}
 .cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .cal-month{font-size:14.5px;font-weight:var(--w-title);letter-spacing:-0.014em}
@@ -455,16 +457,17 @@ th[aria-sort] .th-sort .ic{opacity:1}
   border:0;border-radius:var(--r-sm);background:none;color:var(--fg);cursor:pointer;
   font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;
   transition:background-color .15s ease,color .15s ease,box-shadow .15s ease}
-.cal-day:disabled{color:var(--fg-3);opacity:.4;cursor:default}
+.cal-day:disabled{color:var(--fg-3);opacity:.14;cursor:default}
 /* today is marked under the number, so it does not compete with the day you have chosen */
-.cal-day.is-today{box-shadow:inset 0 -2px 0 var(--fg-3)}
+.cal-day.is-today:not(:disabled){box-shadow:inset 0 -2px 0 var(--fg-3)}
 .cal-day.is-on{background:var(--fill);color:var(--on-fill);box-shadow:none}
 .cal-day:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 @media(hover:hover){.cal-day:not(:disabled):not(.is-on):hover{background:var(--hover)}}
 
 .booker-times{display:grid;gap:12px;min-width:0}
 .times-head{font-size:14.5px;font-weight:var(--w-title);letter-spacing:-0.014em}
-.times-list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+/* nine hours in three rows of three: no row left holding one button on its own */
+.times-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .time-slot{display:flex;align-items:center;justify-content:center;height:42px;padding:0 10px;
   border:0;border-radius:var(--r-sm);background:none;box-shadow:inset 0 0 0 1px var(--line);
   color:var(--fg);cursor:pointer;font-family:var(--font);font-size:14px;font-weight:var(--w-title);
@@ -477,8 +480,8 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .times-none{grid-column:1 / -1}
 
 /* what is picked, and what happens next */
-.book-body{display:grid;gap:26px}
-.pick{display:grid;gap:14px;max-width:560px}
+.pick{display:grid;align-content:start;gap:14px;max-width:420px}
+.pick-label{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3)}
 .pick-when{font-size:16px;font-weight:var(--w-title);letter-spacing:-0.02em}
 .pick-when.is-empty{color:var(--fg-3)}
 .pick-head .sub{display:block;margin-top:4px}
@@ -511,12 +514,16 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .been[open] summary{margin-bottom:12px}
 @media(hover:hover){.been summary:hover{color:var(--fg)}}
 
+/* the request drops under the picker before the picker itself has to stack */
+@media(max-width:1180px){
+  .book-body{grid-template-columns:minmax(0,1fr);gap:30px}
+  .pick{max-width:none}
+}
 @media(max-width:900px){
   .booker{grid-template-columns:minmax(0,1fr);gap:26px}
   .booker-cal{max-width:340px}
 }
 @media(max-width:719px){
-  .times-list{grid-template-columns:repeat(3,minmax(0,1fr))}
   .note{grid-template-columns:auto minmax(0,1fr);padding:10px 2px}
   .note-remove{display:none}
 }
