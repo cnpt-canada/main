@@ -208,11 +208,10 @@ export function commentThread({ comments, me, onSend, onDelete, readOnly = false
   return h('div', { class: 'thread' }, list, form);
 }
 
-/* ---------- calendar ---------- */
+/* ---------- picking a time ---------- */
 
 const SLOT_MINUTES = 30;
-const SLOTS_PER_DAY = ((CLOSE_HOUR - OPEN_HOUR) * 60) / SLOT_MINUTES;
-const DAYS_ON_SHOW = 5;
+const DAYS_AHEAD = 30;                       // how far out a client may book
 
 const isWeekend = (date) => ['Sat', 'Sun'].includes(inToronto(date, { weekday: 'short' }));
 
@@ -229,186 +228,222 @@ export function firstWeekday(date) {
   return isWeekend(at) ? nextWeekday(at, 1) : at;
 }
 
-// Five working days across, 09:00–18:00 in half hours, starting with today. Tap a slot to place the
-// meeting, drag down the same day to make it an hour. The days are built once and repainted in place, so a
-// drag never loses the cell under the pointer. `busy` greys out what is gone, `mine` marks the times this
-// person already booked, and anything longer than half an hour is drawn as one block rather than two.
-// `onPick({ startsAt, minutes })` runs whenever the block moves.
-export function meetingCalendar({ busy = [], mine = [], minutes = 30, onPick, from = new Date() }) {
-  const today = firstWeekday(from);
-  let firstDay = today;
-  let picked = null;
-  let length = minutes;
-  let cells = [];
-  const byEl = new Map(); // which cell a button belongs to, for the hit test during a drag
+const overlaps = (aFrom, aMins, bFrom, bMins) =>
+  aFrom < bFrom + bMins * 60000 && bFrom < aFrom + aMins * 60000;
 
-  const grid = h('div', { class: 'cal-grid' });
-  const title = h('p', { class: 'cal-title' });
-  const back = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Earlier days' }, icon('arrow-left'));
-  const forward = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Later days' }, icon('arrow-right'));
-  const shift = (step) => {
-    let at = firstDay;
-    for (let i = 0; i < DAYS_ON_SHOW; i++) at = nextWeekday(at, step);
-    firstDay = at.getTime() < today.getTime() ? today : at;
-    build();
-  };
-  back.addEventListener('click', () => shift(-1));
-  forward.addEventListener('click', () => shift(1));
+/* One wheel of the dial.
+ *
+ * A column that scrolls, with a snap point on every row and half a wheel of padding at each end so
+ * the first and last rows can reach the middle. The browser does the momentum and the snapping; the
+ * only thing here is reading back which row the scroll came to rest on, and drawing the rows further
+ * from the middle fainter and smaller so the column reads as a drum rather than a list.
+ *
+ * It is also a listbox: the column takes focus, the arrow keys move it, and Home and End go to the
+ * ends — a wheel you can only flick is a wheel a keyboard cannot use.
+ */
+function wheel({ label, onChange }) {
+  const list = h('ul', { class: 'wheel-list' });
+  const box = h('div', { class: 'wheel', role: 'listbox', tabindex: '0', 'aria-label': label }, list);
+  let rows = [];
+  let index = 0;
+  let settle = null;
+  let quiet = false;                       // true while we are the ones moving it
 
-  const overlaps = (aFrom, aMins, bFrom, bMins) =>
-    aFrom < bFrom + bMins * 60000 && bFrom < aFrom + aMins * 60000;
-  const takenBy = (list, at, mins) => list.some((m) => overlaps(at.getTime(), mins, Date.parse(m.starts_at), m.minutes));
-  const isTaken = (at, mins) => takenBy(busy, at, mins);
-  // The booking covering this half hour, so a longer one can be drawn as a single block.
-  const coverAt = (list, time) => list.find((m) => time >= Date.parse(m.starts_at) && time < Date.parse(m.starts_at) + m.minutes * 60000);
+  // offsetHeight, not getBoundingClientRect: the rows carry a scale and the rect reports it
+  const rowHeight = () => rows[0]?.el.offsetHeight || 42;
 
-  // Can a meeting of `mins` start here? It has to be free, ahead of now, and finish before the day closes.
-  function canPlace(at, mins) {
-    if (at.getTime() < Date.now() || isTaken(at, mins)) return false;
-    const closes = slotOn(at, CLOSE_HOUR, 0);
-    return at.getTime() + mins * 60000 <= closes.getTime();
-  }
-
-  function place(at, mins) {
-    const want = MEETING_LENGTHS.includes(mins) ? mins : SLOT_MINUTES;
-    const fits = canPlace(at, want) ? want : canPlace(at, SLOT_MINUTES) ? SLOT_MINUTES : null;
-    if (fits === null) return;
-    if (picked && Date.parse(picked.startsAt) === at.getTime() && picked.minutes === fits) return;
-    picked = { startsAt: at.toISOString(), minutes: fits };
-    length = fits;
-    paint();
-    onPick?.(picked);
-  }
-
-  // Updates the cells that are already on screen; never rebuilds them. A drag repaints on every step,
-  // so each cell remembers how it was last left and the ones that have not changed are skipped.
-  // An hour covers two cells: the first carries the label, and the run classes close the seam between
-  // them so what you see is a single block.
-  function paint() {
-    const now = Date.now();
-    const pickFrom = picked ? Date.parse(picked.startsAt) : 0;
-    const pickTo = picked ? pickFrom + picked.minutes * 60000 : 0;
-    const step = SLOT_MINUTES * 60000;
-    for (const cell of cells) {
-      const { el, at } = cell;
-      const time = at.getTime();
-      const past = time < now;                                  // a meeting cannot start in the past, as the server also says
-      const mineAt = coverAt(mine, time);
-      const busyAt = mineAt || coverAt(busy, time);
-      const inPick = Boolean(picked) && time >= pickFrom && time < pickTo;
-      // where this cell sits inside the block it belongs to
-      const run = inPick
-        ? { from: pickFrom, minutes: picked.minutes }
-        : mineAt ? { from: Date.parse(mineAt.starts_at), minutes: mineAt.minutes } : null;
-      const runStart = Boolean(run) && time === run.from;
-      const runEnd = Boolean(run) && time + step >= run.from + run.minutes * 60000;
-      const label = !runStart ? '' : inPick ? `${picked.minutes} min` : 'Yours';
-      const state = `${past ? 'p' : ''}${busyAt ? 'b' : ''}${mineAt ? 'm' : ''}${inPick ? 'k' : ''}${runStart ? 's' : ''}${runEnd ? 'e' : ''}|${label}`;
-      if (state === cell.state) continue;
-      cell.state = state;
-      el.disabled = past || Boolean(busyAt);
-      el.classList.toggle('is-past', past && !busyAt);
-      el.classList.toggle('is-taken', Boolean(busyAt) && !mineAt);
-      el.classList.toggle('is-mine', Boolean(mineAt));
-      el.classList.toggle('is-picked', inPick);
-      el.classList.toggle('is-run-start', runStart);
-      el.classList.toggle('is-run-end', runEnd);
-      el.classList.toggle('is-span2', runStart && !runEnd);     // the label is centred over both halves
-      el.setAttribute('aria-pressed', String(inPick));
-      el.setAttribute('aria-label', `${cell.when}${mineAt ? ', yours' : busyAt ? ', already taken' : past ? ', past' : ''}`);
-      el.firstChild.textContent = label;
-      el.firstChild.hidden = !label;
+  // how far each row sits from the middle, as a fraction of a row
+  function shade() {
+    const mid = box.scrollTop + box.clientHeight / 2;
+    for (const r of rows) {
+      const d = Math.abs((r.el.offsetTop + r.el.offsetHeight / 2) - mid) / rowHeight();
+      r.el.style.opacity = String(Math.max(0.3, 1 - d * 0.3));
+      r.el.style.transform = `scale(${Math.max(0.8, 1 - d * 0.08)})`;
     }
   }
 
-  function build() {
-    const days = [firstDay];
-    while (days.length < DAYS_ON_SHOW) days.push(nextWeekday(days[days.length - 1], 1));
-    title.textContent = `${inToronto(days[0], { month: 'long', day: 'numeric' })} – ${inToronto(days[DAYS_ON_SHOW - 1], { month: 'long', day: 'numeric', year: 'numeric' })}`;
-    back.disabled = firstDay.getTime() <= today.getTime();      // today is as far back as the calendar goes
-    cells = [];
-    byEl.clear();
-    const rows = [h('div', { class: 'cal-corner', 'aria-hidden': 'true' }),
-      ...days.map((d) => {
-        const isToday = d.getTime() === today.getTime();
-        return h('div', { class: isToday ? 'cal-day is-today' : 'cal-day' },
-          h('strong', {}, isToday ? 'Today' : inToronto(d, { weekday: 'short' })),
-          h('span', {}, isToday ? inToronto(d, { weekday: 'short', day: 'numeric' }) : inToronto(d, { day: 'numeric' })));
-      })];
-    for (let i = 0; i < SLOTS_PER_DAY; i++) {
-      const hour = OPEN_HOUR + Math.floor(i / 2);
-      const minute = i % 2 ? 30 : 0;
-      rows.push(h('div', { class: minute ? 'cal-time cal-time-half' : 'cal-time' }, minute ? '' : `${String(hour).padStart(2, '0')}:00`));
-      days.forEach((day, column) => {
-        const at = slotOn(day, hour, minute);
-        const el = h('button', { class: 'cal-slot', type: 'button', 'data-at': at.toISOString(), 'data-day': String(column) },
-          h('span', { class: 'cal-block', hidden: true }));
-        rows.push(el);
-        cells.push({ el, at, column, when: `${dayAt(at)}, ${clockAt(at)}`, state: null });
-        byEl.set(el, cells[cells.length - 1]);
-      });
-    }
-    grid.replaceChildren(...rows);
-    paint();
+  function readBack() {
+    if (!rows.length) return;
+    const i = Math.min(rows.length - 1, Math.max(0, Math.round(box.scrollTop / rowHeight())));
+    if (i === index) return;
+    index = i;
+    mark();
+    onChange?.(rows[i].value, i);
   }
 
-  // One set of listeners on the grid, so repainting can never take them away mid-drag.
-  const cellAt = (target) => byEl.get(target?.closest?.('.cal-slot'));
-  grid.addEventListener('pointerdown', (ev) => {
-    const from = cellAt(ev.target);
-    if (ev.button !== 0 || !from || from.el.disabled) return;
+  function mark() {
+    rows.forEach((r, i) => {
+      r.el.classList.toggle('is-on', i === index);
+      r.el.setAttribute('aria-selected', String(i === index));
+    });
+    box.setAttribute('aria-activedescendant', rows[index]?.el.id || '');
+  }
+
+  box.addEventListener('scroll', () => {
+    shade();
+    if (quiet) return;
+    clearTimeout(settle);
+    settle = setTimeout(readBack, 90);
+  }, { passive: true });
+
+  box.addEventListener('keydown', (ev) => {
+    const step = { ArrowDown: 1, ArrowUp: -1, PageDown: 3, PageUp: -3 }[ev.key];
+    const to = ev.key === 'Home' ? 0 : ev.key === 'End' ? rows.length - 1 : step ? index + step : null;
+    if (to === null) return;
     ev.preventDefault();
-    grid.setPointerCapture(ev.pointerId);
-    place(from.at, length);
-    // A pointer can report several positions between two frames. Only the latest one matters, and
-    // working it out once a frame keeps the block following the finger instead of running behind it.
-    let at = null, waiting = 0;
-    const step = () => {
-      waiting = 0;
-      const point = at;
-      if (!point) return;
-      const over = cellAt(document.elementFromPoint(point.x, point.y));
-      if (!over || over.column !== from.column) return;           // stay in the day you started in
-      const mins = Math.round((over.at.getTime() - from.at.getTime()) / 60000) + SLOT_MINUTES;
-      place(from.at, mins >= 60 ? 60 : SLOT_MINUTES);
-    };
-    const move = (e) => {
-      at = { x: e.clientX, y: e.clientY };
-      if (!waiting) waiting = requestAnimationFrame(step);
-    };
-    const up = () => {
-      if (waiting) cancelAnimationFrame(waiting);
-      step(); // the pointer may have moved since the last frame; finish where it actually is
-      grid.removeEventListener('pointermove', move);
-      grid.removeEventListener('pointerup', up);
-      grid.removeEventListener('pointercancel', up);
-    };
-    grid.addEventListener('pointermove', move);
-    grid.addEventListener('pointerup', up);
-    grid.addEventListener('pointercancel', up);
+    go(Math.min(rows.length - 1, Math.max(0, to)), true);
   });
-  grid.addEventListener('keydown', (ev) => {
-    const cell = cellAt(ev.target);
-    if (!cell || (ev.key !== 'Enter' && ev.key !== ' ')) return;
-    ev.preventDefault();
-    place(cell.at, length);
-  });
-  build();
+
+  // moving the wheel ourselves must not read back as the person having moved it
+  function go(i, tell) {
+    if (!rows.length) return;
+    index = Math.min(rows.length - 1, Math.max(0, i));
+    quiet = true;
+    box.scrollTo({ top: index * rowHeight(), behavior: 'auto' });
+    mark();
+    shade();
+    requestAnimationFrame(() => { quiet = false; });
+    if (tell) onChange?.(rows[index].value, index);
+  }
 
   return {
-    el: h('div', { class: 'cal' },
-      h('div', { class: 'cal-head' }, back, title, forward),
-      grid,
-      h('p', { class: 'hint' }, 'Tap a time to place your meeting, or drag down to make it an hour. Weekdays, 09:00–18:00 Toronto time.')),
-    setLength(mins) {
-      length = mins;
-      if (picked) place(new Date(picked.startsAt), mins);
+    el: box,
+    get value() { return rows[index]?.value; },
+    get index() { return index; },
+    // `items` is [{ value, label, sub, off }]; `keep` is the value to stay on if it is still there
+    fill(items, keep) {
+      const was = keep !== undefined ? keep : rows[index]?.value;
+      list.replaceChildren();
+      rows = items.map((it, i) => {
+        const el = h('li', {
+          class: it.off ? 'wheel-opt is-off' : 'wheel-opt',
+          id: `${box.id || label.toLowerCase()}-opt-${i}`,
+          role: 'option',
+          'aria-disabled': it.off ? 'true' : null
+        }, h('span', {}, it.label), it.sub ? h('small', {}, it.sub) : null);
+        el.addEventListener('click', () => go(i, true));
+        list.appendChild(el);
+        return { el, value: it.value, off: Boolean(it.off) };
+      });
+      let i = rows.findIndex((r) => r.value === was && !r.off);
+      if (i < 0) i = rows.findIndex((r) => !r.off);
+      go(i < 0 ? 0 : i, false);
+      return rows[index]?.value;
     },
-    clear() { picked = null; paint(); },
-    refresh({ busy: nextBusy = busy, mine: nextMine = mine } = {}) {
-      busy = nextBusy;
-      mine = nextMine;
-      paint();
+    set(value) {
+      const i = rows.findIndex((r) => r.value === value);
+      if (i >= 0) go(i, false);
+    },
+    disabled(i) { return rows[i]?.off; }
+  };
+}
+
+/* The dial: a day, an hour and a minute, each on its own wheel.
+ *
+ * Every combination is checked against the same three rules the server applies — the time has not
+ * passed, nothing else is booked over it, and the meeting finishes before the day closes — and a row
+ * that fails is greyed rather than hidden, so the shape of a day stays the same as you move through
+ * it and a full morning reads as full rather than as missing.
+ *
+ * `onPick({ startsAt, minutes })` runs whenever the three wheels settle on something bookable, and
+ * `onPick(null)` when they settle on something that is not.
+ */
+export function timeDial({ busy = [], mine = [], minutes = 30, onPick, from = new Date() }) {
+  let length = MEETING_LENGTHS.includes(minutes) ? minutes : SLOT_MINUTES;
+  let taken = busy;
+
+  const days = [];
+  for (let d = firstWeekday(from), i = 0; i < DAYS_AHEAD; i++, d = nextWeekday(d, 1)) days.push(d);
+
+  const free = (at, mins) => at.getTime() >= Date.now()
+    && at.getTime() + mins * 60000 <= slotOn(at, CLOSE_HOUR, 0).getTime()
+    && !taken.some((m) => overlaps(at.getTime(), mins, Date.parse(m.starts_at), m.minutes));
+
+  // a day is bookable if any half hour in it is
+  const dayOpen = (d) => {
+    for (let hh = OPEN_HOUR; hh < CLOSE_HOUR; hh++) {
+      for (const mm of [0, 30]) if (free(slotOn(d, hh, mm), length)) return true;
+    }
+    return false;
+  };
+  const hourOpen = (d, hh) => [0, 30].some((mm) => free(slotOn(d, hh, mm), length));
+
+  const dayWheel = wheel({ label: 'Day', onChange: () => { fillHours(); settled(); } });
+  const hourWheel = wheel({ label: 'Hour', onChange: () => { fillMinutes(); settled(); } });
+  const minWheel = wheel({ label: 'Minute', onChange: settled });
+
+  // the date it is in Toronto, not the first day that can be booked: on a Sunday those differ, and
+  // calling Monday 'Today' sends a client to the wrong day
+  const ymd = (d) => inToronto(d, { year: 'numeric', month: '2-digit', day: '2-digit' });
+  const today = ymd(new Date());
+  function fillDays() {
+    dayWheel.fill(days.map((d) => ({
+      value: d.getTime(),
+      label: ymd(d) === today ? 'Today' : inToronto(d, { weekday: 'short', day: 'numeric' }),
+      sub: inToronto(d, { month: 'short' }),
+      off: !dayOpen(d)
+    })));
+  }
+  function fillHours() {
+    const d = new Date(dayWheel.value);
+    const hrs = [];
+    for (let hh = OPEN_HOUR; hh < CLOSE_HOUR; hh++) {
+      hrs.push({ value: hh, label: String(hh).padStart(2, '0'), off: !hourOpen(d, hh) });
+    }
+    hourWheel.fill(hrs);
+  }
+  function fillMinutes() {
+    const d = new Date(dayWheel.value);
+    const hh = hourWheel.value;
+    minWheel.fill([0, 30].map((mm) => ({
+      value: mm, label: String(mm).padStart(2, '0'), off: !free(slotOn(d, hh, mm), length)
+    })));
+  }
+
+  function at() {
+    if (dayWheel.value === undefined || hourWheel.value === undefined || minWheel.value === undefined) return null;
+    return slotOn(new Date(dayWheel.value), hourWheel.value, minWheel.value);
+  }
+  function settled() {
+    const when = at();
+    onPick?.(when && free(when, length) ? { startsAt: when.toISOString(), minutes: length } : null);
+  }
+
+  const el = h('div', { class: 'dial' },
+    h('div', { class: 'dial-band', 'aria-hidden': 'true' }),
+    h('div', { class: 'dial-cols' },
+      dayWheel.el,
+      h('div', { class: 'dial-sep', 'aria-hidden': 'true' }, hourWheel.el, h('span', { class: 'dial-colon' }, ':'), minWheel.el)));
+
+  fillDays();
+  fillHours();
+  fillMinutes();
+  // the first paint happens before the wheels have a height, so the rows are shaded once they do
+  requestAnimationFrame(() => { dayWheel.set(dayWheel.value); hourWheel.set(hourWheel.value); minWheel.set(minWheel.value); settled(); });
+
+  return {
+    el,
+    setLength(mins) {
+      length = MEETING_LENGTHS.includes(mins) ? mins : SLOT_MINUTES;
+      fillDays(); fillHours(); fillMinutes(); settled();
+    },
+    // move the dial onto an existing meeting, for rescheduling
+    show(startsAt) {
+      if (!el.isConnected) { requestAnimationFrame(() => this.show(startsAt)); return; }
+      const when = new Date(startsAt);
+      const day = days.find((d) => inToronto(d, { day: 'numeric', month: 'short' }) === inToronto(when, { day: 'numeric', month: 'short' }));
+      if (day) dayWheel.set(day.getTime());
+      fillHours();
+      hourWheel.set(Number(inToronto(when, { hour: '2-digit', hour12: false })));
+      fillMinutes();
+      minWheel.set(when.getMinutes() < 30 ? 0 : 30);
+      settled();
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    },
+    update({ busy: nextBusy, mine: nextMine }) {
+      if (nextBusy) taken = nextBusy;
+      if (nextMine) mine = nextMine;
+      fillDays(); fillHours(); fillMinutes(); settled();
     }
   };
 }

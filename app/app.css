@@ -439,56 +439,72 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .note-field{min-height:66px}
 .note-add-foot{display:flex;align-items:center;justify-content:space-between;gap:12px}
 
-/* the calendar: five working days across starting today, half hours down, a block where you tap */
-.cal{display:grid;gap:12px}
-.cal-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.cal-title{font-size:14px;font-weight:var(--w-title);letter-spacing:-0.012em}
-.cal-grid{--cal-h:26px;--cal-gap:2px;display:grid;grid-template-columns:54px repeat(5,minmax(0,1fr));gap:var(--cal-gap);max-height:440px;overflow:auto}
-.cal-corner,.cal-day{position:sticky;top:0;z-index:1;background:var(--ink)}
-.cal-day{display:grid;justify-items:center;gap:1px;padding:6px 0 8px}
-.cal-day strong{font-size:12px;font-weight:var(--w-title)}
-.cal-day span{font-size:12px;color:var(--fg-3)}
-.cal-day.is-today strong{color:var(--fg)}
-.cal-time{padding-right:8px;font-size:11px;color:var(--fg-3);text-align:right;transform:translateY(-5px)}
-.cal-slot{position:relative;height:var(--cal-h);padding:0;border:0;border-radius:var(--r-sm);background:var(--raise);cursor:pointer;
-  overflow:visible;transition:background-color .12s}
-.cal-slot:disabled{cursor:default}
-/* a time that has gone by: nothing to reach for, so it sinks into the page */
-.cal-slot.is-past{background:#070706;box-shadow:inset 0 0 0 1px #0F0F0E;opacity:.4}
-.cal-slot.is-taken{background:repeating-linear-gradient(45deg,var(--raise),var(--raise) 3px,var(--panel) 3px,var(--panel) 7px)}
-@media(hover:hover){.cal-slot:not(:disabled):hover{background:var(--line)}}
-.cal-slot.is-mine{background:rgb(230 0 69 / .3);color:#fff}
-.cal-slot.is-mine .cal-block{font-size:10px;font-weight:var(--w-title);color:rgb(255 255 255 / .9)}
-.cal-slot.is-picked{background:var(--fill)}
-.cal-slot:focus-visible{outline:2px solid var(--fg);outline-offset:1px;z-index:2}
-/* z-index keeps the label above the strip that bridges the gap between two cells of the same block */
-.cal-block{position:absolute;inset:0;z-index:1;display:grid;place-items:center;font-size:11px;font-weight:var(--w-title);color:var(--fg)}
-/* an hour is two half-hour cells: only the ends of the run are rounded, its colour crosses the gap between
-   them, and the label is centred over the whole block — so it reads as one meeting, not two */
-.cal-slot.is-picked:not(.is-run-start),.cal-slot.is-mine:not(.is-run-start){border-top-left-radius:0;border-top-right-radius:0}
-.cal-slot.is-picked:not(.is-run-end),.cal-slot.is-mine:not(.is-run-end){border-bottom-left-radius:0;border-bottom-right-radius:0}
-.cal-slot.is-picked:not(.is-run-end)::after,.cal-slot.is-mine:not(.is-run-end)::after{content:"";position:absolute;
-  left:0;right:0;top:100%;height:var(--cal-gap);background:inherit}
-.cal-slot.is-span2{z-index:1}
-.cal-slot.is-span2 .cal-block{bottom:calc(-1 * (var(--cal-h) + var(--cal-gap)))}
+/* The dial: three wheels, the way a time is picked on a phone.
+   Each column scrolls with a snap point on every row and half a wheel of padding at each end, so the
+   first and last rows can reach the middle. The band across the centre says which row counts; the
+   mask fades the ends so the column reads as a drum turning rather than a list running off an edge.
+   The opacity and scale of each row are set as it scrolls, in app/project.js. */
+.dial{position:relative;--row:42px;--rows:5;display:grid;justify-content:center}
+.dial-cols{display:flex;align-items:stretch;gap:8px}
+.dial-cols > .wheel:first-child{min-width:104px}
+.dial-sep{display:flex;align-items:stretch;gap:0}
+.dial-colon{display:flex;align-items:center;font-size:17px;font-weight:var(--w-title);color:var(--fg-3)}
+.wheel{height:calc(var(--row) * var(--rows));min-width:58px;overflow-y:auto;overscroll-behavior:contain;
+  scroll-snap-type:y mandatory;scrollbar-width:none;outline:none;
+  -webkit-mask-image:linear-gradient(transparent,#000 17%,#000 83%,transparent);
+  mask-image:linear-gradient(transparent,#000 17%,#000 83%,transparent)}
+.wheel::-webkit-scrollbar{display:none}
+.wheel:focus-visible{border-radius:var(--r-sm);box-shadow:0 0 0 2px var(--signal)}
+.wheel-list{list-style:none;margin:0;padding:calc(var(--row) * ((var(--rows) - 1) / 2)) 0}
+.wheel-opt{display:flex;align-items:baseline;justify-content:center;gap:5px;height:var(--row);
+  scroll-snap-align:center;cursor:pointer;user-select:none;
+  font-size:17px;font-weight:var(--w-title);letter-spacing:-0.02em;color:var(--fg);
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+  transition:color .15s ease}
+.wheel-opt small{font-size:12px;font-weight:var(--w-body);color:var(--fg-3)}
+/* a time that is gone or already taken: still in its place, so the shape of a day does not change */
+.wheel-opt.is-off{color:var(--fg-3);cursor:default;text-decoration:line-through;text-decoration-thickness:1px}
+.wheel-opt.is-off small{text-decoration:none}
+.dial-band{position:absolute;left:0;right:0;top:50%;height:var(--row);transform:translateY(-50%);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);pointer-events:none}
+@media(prefers-reduced-motion:reduce){.wheel{scroll-behavior:auto}}
 
-/* what you picked, in its own panel between the calendar and your meetings */
-.pick{display:grid;gap:14px}
+/* what the dial is set to, and what happens next */
+.dial-body{display:grid;gap:22px;justify-items:center;padding-top:8px}
+.pick{display:grid;gap:14px;justify-items:center;text-align:center;width:100%;max-width:440px}
 .pick-when{font-size:16px;font-weight:var(--w-title);letter-spacing:-0.02em}
 .pick-when.is-empty{color:var(--fg-3)}
 .pick-head .sub{display:block;margin-top:4px}
-.pick-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px}
-.pick-row .field{flex:1 1 260px;display:grid;gap:6px;min-width:0}
-.pick-row label{font-size:13px;font-weight:var(--w-title);color:var(--fg-2)}
-.pick-row label .sub{font-weight:var(--w-title)}
+.pick .field{display:grid;gap:6px;width:100%;text-align:left}
+.pick label{font-size:13px;font-weight:var(--w-title);color:var(--fg-2)}
+.pick label .sub{font-weight:var(--w-title)}
+.pick-moving{font-size:13px;color:var(--fg-2)}
+.pick-moving .link{font-size:13px}
+
+/* the meetings themselves, which is what the page is for */
 .bookings{list-style:none;margin:0;padding:0}
-.booking{display:flex;align-items:center;gap:12px;padding:14px 20px;border-top:1px solid var(--rule)}
-.booking:first-child{border-top:0}
-.booking > div{flex:1 1 auto;min-width:0}
-.booking-when{font-size:13.5px;font-weight:var(--w-title)}
-.booking.is-past{opacity:.55}
+.booking{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px 16px;
+  padding:16px 0;border-top:1px solid var(--rule)}
+.booking:first-child{border-top:0;padding-top:0}
+.booking-main{flex:1 1 320px;min-width:0}
+.booking-when{font-size:14.5px;font-weight:var(--w-title);letter-spacing:-0.014em}
+.booking-soon{margin-left:10px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3)}
+.booking-note{display:block;margin-top:4px}
+.booking-why{display:block;margin-top:4px;color:var(--fg-3)}
+.booking-side{display:flex;align-items:center;gap:10px;flex:none}
+.booking-acts{display:flex;gap:6px}
+.booking.is-past{opacity:.5}
+/* the ones already behind you, folded away rather than taking the same room as the ones ahead */
+.been{margin-top:22px;border-top:1px solid var(--rule);padding-top:14px}
+.been summary{cursor:pointer;font-size:13px;font-weight:var(--w-title);color:var(--fg-3);list-style:none}
+.been summary::-webkit-details-marker{display:none}
+.been summary::before{content:"\203A";display:inline-block;margin-right:8px;transition:transform .2s ease}
+.been[open] summary::before{transform:rotate(90deg)}
+.been[open] summary{margin-bottom:12px}
+@media(hover:hover){.been summary:hover{color:var(--fg)}}
 @media(max-width:719px){
-  .cal-grid{--cal-h:30px;grid-template-columns:44px repeat(5,minmax(0,1fr))}
+  .dial{--row:40px}
+  .wheel{min-width:54px}
   .note{grid-template-columns:auto minmax(0,1fr);padding:10px 2px}
   .note-remove{display:none}
 }

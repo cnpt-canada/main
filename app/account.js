@@ -1,7 +1,7 @@
 // /account — the client's enquiries (with fields, the focal split, consultants and the estimate) and profile,
 // in the same workspace frame as /admin. Profile also shows the client's project at a glance.
 // Admins can open /account?as=<id> to see a member's account exactly as they do ("view as user", read-only).
-import { clockAt, commentThread, dayAt, meetingCalendar, MEETING_LENGTHS, processThumbnail, slotText, stageTracker, STAGES, stageIndex } from '/app/project.js';
+import { clockAt, commentThread, dayAt, MEETING_LENGTHS, processThumbnail, slotText, stageTracker, STAGES, stageIndex, timeDial } from '/app/project.js';
 import { renderDocs } from '/app/documentation.js';
 import {
   DEFAULT_FOCUS, ENQUIRY_STATUSES, FUNDING_STAGES, LABELS,
@@ -18,7 +18,7 @@ const STATUS_NOTES = {
   closed: 'This enquiry is closed. You can send a new one any time.'
 };
 const state = { enquiries: [], sort: { key: 'created_at', dir: -1 }, open: null, viewingAs: null, docsAnswered: null,
-  me: null, project: null, comments: [], meetings: [], busy: [], imageUrl: null, projectLoaded: false, picked: null, members: null,
+  me: null, project: null, comments: [], meetings: [], busy: [], imageUrl: null, projectLoaded: false, picked: null, moving: null, members: null,
   onboarding: null };
 let shell;
 
@@ -342,30 +342,58 @@ function renderProcess() {
   body.replaceChildren(statusStrip(), thread, rail);
 }
 
-/* ---------- book a meeting ---------- */
+/* ---------- meetings ---------- */
 
 const liveMeetings = () => state.meetings.filter((m) => m.status === 'requested' || m.status === 'confirmed');
 
-function meetingRow(m) {
-  const past = Date.parse(m.starts_at) + m.minutes * 60000 <= Date.now();
+const isOver = (m) => Date.parse(m.starts_at) + m.minutes * 60000 <= Date.now();
+
+const STATUS = {
+  confirmed: ['replied', 'Confirmed', 'The team has this in the diary.'],
+  requested: ['new', 'Waiting on the team', 'Usually confirmed within a working day.'],
+  declined: ['closed', 'Declined', 'Pick another time and we will take it from there.'],
+  cancelled: ['closed', 'Called off', null]
+};
+
+// How long until it, in words, so a client can see at a glance what is close.
+function countdown(startsAt) {
+  const mins = Math.round((Date.parse(startsAt) - Date.now()) / 60000);
+  if (mins < 0) return null;
+  if (mins < 60) return `in ${mins} min`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `in ${hrs} hour${hrs === 1 ? '' : 's'}`;
+  const days = Math.round(hrs / 24);
+  return days === 1 ? 'tomorrow' : `in ${days} days`;
+}
+
+/* One booked meeting. A client could see these before, in a list at the foot of the page under a
+ * calendar tall enough to push them off the screen, and the only thing they could do was call one
+ * off. The meeting now leads the page, says what state it is in and why, and can be moved. */
+function meetingRow(m, { onMove } = {}) {
+  const past = isOver(m);
+  const [tone, label, why] = STATUS[m.status] || ['closed', m.status, null];
+  const soon = past ? null : countdown(m.starts_at);
+  const canAct = !state.viewingAs && !past && (m.status === 'requested' || m.status === 'confirmed');
   return h('li', { class: past ? 'booking is-past' : 'booking' },
-    h('div', {},
-      h('p', { class: 'booking-when' }, slotText(m.starts_at, m.minutes)),
-      m.note ? h('p', { class: 'sub' }, m.note) : null),
-    badge(m.status === 'confirmed' ? 'replied' : m.status === 'requested' ? 'new' : 'closed',
-      m.status === 'confirmed' ? 'Confirmed' : m.status === 'requested' ? 'Waiting' : m.status === 'declined' ? 'Declined' : 'Cancelled'),
-    !state.viewingAs && !past && (m.status === 'requested' || m.status === 'confirmed')
-      ? h('button', { class: 'btn btn-ghost btn-xs', type: 'button', onclick: () => cancelMeeting(m) }, 'Cancel')
-      : null);
+    h('div', { class: 'booking-main' },
+      h('p', { class: 'booking-when' }, slotText(m.starts_at, m.minutes),
+        soon ? h('span', { class: 'booking-soon' }, soon) : null),
+      m.note ? h('p', { class: 'sub booking-note' }, m.note) : null,
+      !past && why ? h('p', { class: 'sub booking-why' }, why) : null),
+    h('div', { class: 'booking-side' },
+      badge(tone, label),
+      canAct
+        ? h('div', { class: 'booking-acts' },
+          h('button', { class: 'btn btn-ghost btn-xs', type: 'button', onclick: () => onMove?.(m) }, 'Move'),
+          h('button', { class: 'btn btn-ghost btn-xs', type: 'button', onclick: () => cancelMeeting(m) }, 'Cancel'))
+        : null));
 }
 
 // Soonest first while they are still ahead; everything already over goes underneath, most recent first.
 function meetingsInOrder() {
-  const now = Date.now();
-  const over = (m) => Date.parse(m.starts_at) + m.minutes * 60000 <= now;
-  const ahead = state.meetings.filter((m) => !over(m)).sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at));
-  const done = state.meetings.filter(over).sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at));
-  return [...ahead, ...done];
+  const ahead = state.meetings.filter((m) => !isOver(m)).sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at));
+  const done = state.meetings.filter(isOver).sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at));
+  return { ahead, done };
 }
 
 async function cancelMeeting(m) {
@@ -381,74 +409,101 @@ async function cancelMeeting(m) {
   }
 }
 
+// Moving a meeting is calling it off and asking for another time, so the dial is loaded with the old
+// one and the client picks the new one. Saying that plainly beats a silent reschedule they cannot check.
+function moveMeeting(m) {
+  state.moving = m;
+  flash('Pick the new time, then ask for it. The old one is called off once the new one is in.');
+  renderMeeting();                     // the dial is placed on the old time as it is built, below
+}
+
 function renderMeeting() {
   const body = $('meeting-body');
-  const mine = h('section', { class: 'card col-12', 'aria-labelledby': 'mine-h' },
-    h('div', { class: 'card-head' }, h('h2', { id: 'mine-h' }, 'Your meetings')),
-    state.meetings.length
-      ? h('ul', { class: 'bookings' }, meetingsInOrder().map(meetingRow))
-      : h('div', { class: 'empty-note' }, h('p', {}, state.viewingAs ? 'No meetings booked.' : 'Nothing booked yet. Pick a time above.')));
+  const { ahead, done } = meetingsInOrder();
 
-  if (state.viewingAs) return body.replaceChildren(mine);
+  // What is booked comes first: it is the thing a client opens this page to check.
+  const booked = h('section', { class: 'card col-12', 'aria-labelledby': 'mine-h' },
+    h('div', { class: 'card-head card-head-row' },
+      h('h2', { id: 'mine-h' }, 'Your meetings'),
+      ahead.length ? h('span', { class: 'sub' }, `${ahead.length} coming up`) : null),
+    h('div', { class: 'card-body' },
+      ahead.length
+        ? h('ul', { class: 'bookings' }, ahead.map((m) => meetingRow(m, { onMove: moveMeeting })))
+        : h('p', { class: 'sub' }, state.viewingAs ? 'Nothing booked.' : 'Nothing booked yet. Pick a time below.'),
+      done.length
+        ? h('details', { class: 'been' },
+          h('summary', {}, `${done.length} that ${done.length === 1 ? 'has' : 'have'} been and gone`),
+          h('ul', { class: 'bookings' }, done.map((m) => meetingRow(m))))
+        : null));
 
-  // the time you picked, in a panel of its own between the calendar and the meetings you already have
-  const when = h('p', { class: 'pick-when is-empty' }, 'No time picked yet');
-  const sub = h('p', { class: 'sub' }, 'Tap a time on the calendar above. Weekdays, 09:00–18:00 Toronto time.');
+  if (state.viewingAs) return body.replaceChildren(booked);
+
+  const when = h('p', { class: 'pick-when is-empty' }, 'Turn the dial');
+  const sub = h('p', { class: 'sub' }, 'Weekdays, 09:00–18:00 Toronto time. Times already taken are greyed out.');
   const note = h('input', { class: 'input', id: 'meeting-note', type: 'text', maxlength: '500',
     placeholder: 'e.g. Where the concept should go next' });
-  const book = h('button', { class: 'btn btn-primary btn-sm', type: 'submit', disabled: true }, 'Request this time', icon('arrow-right'));
-  const clear = h('button', { class: 'btn btn-ghost btn-sm', type: 'button', hidden: true }, 'Clear');
+  const book = h('button', { class: 'btn btn-primary btn-sm', type: 'submit', disabled: true },
+    state.moving ? 'Move to this time' : 'Request this time', icon('arrow-right'));
   const lengths = h('div', { class: 'seg', role: 'group', 'aria-label': 'How long' }, MEETING_LENGTHS.map((mins) => h('button', {
     class: 'seg-btn', type: 'button', 'aria-pressed': String(mins === 30), 'data-len': mins,
     onclick: (ev) => {
       for (const b of lengths.children) b.setAttribute('aria-pressed', String(b === ev.currentTarget));
-      calendar.setLength(mins);
+      dial.setLength(mins);
     }
   }, mins === 30 ? '30 min' : '1 hour')));
 
-  const calendar = meetingCalendar({
-    busy: state.busy,
+  const dial = timeDial({
+    // the meeting being moved does not block itself, or the dial would open on a time it calls taken
+    busy: state.moving
+      ? state.busy.filter((x) => Date.parse(x.starts_at) !== Date.parse(state.moving.starts_at))
+      : state.busy,
     mine: liveMeetings(),
     onPick: (picked) => {
       state.picked = picked;
-      when.textContent = slotText(picked.startsAt, picked.minutes);
-      when.classList.remove('is-empty');
-      sub.textContent = 'The cnpt team confirms it by email, usually within a working day.';
-      book.disabled = false;
-      clear.hidden = false;
-      // an hour that does not fit before the day closes is placed as half an hour; the control says so
-      for (const b of lengths.children) b.setAttribute('aria-pressed', String(Number(b.dataset.len) === picked.minutes));
+      when.textContent = picked ? slotText(picked.startsAt, picked.minutes) : 'That time is not free';
+      when.classList.toggle('is-empty', !picked);
+      book.disabled = !picked;
     }
   });
-  clear.addEventListener('click', () => {
-    calendar.clear();
-    state.picked = null;
-    when.textContent = 'No time picked yet';
-    when.classList.add('is-empty');
-    sub.textContent = 'Tap a time on the calendar above. Weekdays, 09:00–18:00 Toronto time.';
-    book.disabled = true;
-    clear.hidden = true;
-  });
+
+  const moving = state.moving
+    ? h('p', { class: 'pick-moving' }, 'Moving ', h('strong', {}, slotText(state.moving.starts_at, state.moving.minutes)), '. ',
+      h('button', { class: 'link', type: 'button', onclick: () => { state.moving = null; renderMeeting(); } }, 'Keep it where it is'))
+    : null;
 
   const form = h('form', { class: 'pick' },
+    moving,
     h('div', { class: 'pick-head', role: 'status' }, when, sub),
-    h('div', { class: 'pick-row' },
-      h('div', { class: 'field' },
-        h('label', { for: 'meeting-note' }, 'What would you like to talk about? ', h('span', { class: 'sub' }, '(optional)')),
-        note),
-      clear, book));
+    h('div', { class: 'field' },
+      h('label', { for: 'meeting-note' }, 'What would you like to talk about? ', h('span', { class: 'sub' }, '(optional)')),
+      note),
+    book);
+
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     if (!state.picked) return;
     book.disabled = true;
+    const moved = state.moving;
     try {
-      const { meeting } = await api('/api/meetings', { method: 'POST', body: { ...{ starts_at: state.picked.startsAt, minutes: state.picked.minutes }, note: note.value.trim() || undefined } });
+      const { meeting } = await api('/api/meetings', { method: 'POST',
+        body: { starts_at: state.picked.startsAt, minutes: state.picked.minutes, note: note.value.trim() || undefined } });
       state.meetings.push(meeting);
       state.busy.push({ starts_at: meeting.starts_at, minutes: meeting.minutes });
+      // the new time is in before the old one is let go, so a client is never left with neither
+      if (moved) {
+        try {
+          const { meeting: off } = await api('/api/meetings', { method: 'PATCH', body: { id: moved.id, status: 'cancelled' } });
+          Object.assign(moved, off);
+          state.busy = state.busy.filter((b) => Date.parse(b.starts_at) !== Date.parse(moved.starts_at));
+        } catch {
+          flash('The new time is booked, but the old one could not be called off. Please cancel it below.', true);
+        }
+      }
       state.picked = null;
+      state.moving = null;
       note.value = '';
       renderMeeting();
-      flash('Meeting requested. We will confirm by email.');
+      flash(moved ? 'Meeting moved. We will confirm by email.' : 'Meeting requested. We will confirm by email.');
     } catch (err) {
       flash(err.message === 'slot_taken' ? 'Someone just took that slot. Please pick another.' : 'That time could not be booked. Please try again.', true);
       book.disabled = false;
@@ -456,13 +511,14 @@ function renderMeeting() {
   });
 
   body.replaceChildren(
-    h('section', { class: 'card col-8', 'aria-labelledby': 'cal-h' },
-      h('div', { class: 'card-head card-head-row' }, h('h2', { id: 'cal-h' }, 'Pick a time'), lengths),
-      h('div', { class: 'card-body' }, calendar.el)),
-    h('section', { class: 'card col-4', 'aria-labelledby': 'pick-h' },
-      h('div', { class: 'card-head' }, h('h2', { id: 'pick-h' }, 'Your request')),
-      h('div', { class: 'card-body' }, form)),
-    mine);
+    booked,
+    h('section', { class: 'card col-12', 'aria-labelledby': 'cal-h' },
+      h('div', { class: 'card-head card-head-row' },
+        h('h2', { id: 'cal-h' }, state.moving ? 'Pick a new time' : 'Book a time'), lengths),
+      h('div', { class: 'card-body dial-body' }, dial.el, form)));
+
+  // only once the wheels are in the document and have a height can they be turned to a given time
+  if (state.moving) dial.show(state.moving.starts_at);
 }
 
 /* ---------- views ---------- */
