@@ -71,7 +71,7 @@ function progress(current) {
     const n = i + 1;
     const cls = n < current ? 'done' : n === current ? 'now' : null;
     return h('li', { class: cls, 'aria-current': n === current ? 'step' : null },
-      n < current ? icon('check') : h('span', { class: 'onb-num' }, n), h('span', { class: 'onb-label' }, label));
+      n < current ? icon('check') : h('span', { class: 'onb-num' }), h('span', { class: 'onb-label' }, label));
   }));
 }
 

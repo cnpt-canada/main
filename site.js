@@ -207,90 +207,6 @@ window.addEventListener('error', function (e) {
   document.documentElement.addEventListener('mouseleave', hide);
 })();
 
-/* Letters that change places.
-
-   Every label you can click is rebuilt as one small box per character, each holding that character
-   twice: the one you see, and the same one waiting underneath. Pointing at the label sends the first
-   copy up out of its box and brings the second up behind it, each letter a few milliseconds after the
-   one before, so the word rolls over from the left. Nothing about the label's own width or position
-   changes, so nothing around it moves.
-
-   The letters are scenery: each label keeps a plain copy of its text for screen readers and the split
-   version is hidden from them. */
-(function () {
-  var root = document.documentElement;
-  if (!root.classList.contains('motion')) return;
-  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-
-  // `count` carries the running character index. One counter is shared by everything that belongs to
-  // the same label or heading, so a sentence rolls over left to right instead of all at once — even
-  // where the sentence has been cut into separate pieces beforehand, as the headings have.
-  function slot(node, count) {
-    var text = node.textContent;
-    if (!text.trim()) return;
-    var frag = document.createDocumentFragment();
-    var spoken = document.createElement('span');
-    spoken.className = 'sr-only';
-    spoken.textContent = text;
-    frag.appendChild(spoken);
-
-    var run = document.createElement('span');
-    run.className = 'sl-run';
-    run.setAttribute('aria-hidden', 'true');
-    // A box per character, but the boxes of one word are held together: a line may break between
-    // words, as it always could, and never inside one.
-    text.split(/(\s+)/).forEach(function (part) {
-      if (!part) return;
-      if (/^\s+$/.test(part)) { run.appendChild(document.createTextNode(' ')); count.i++; return; }
-      var word = document.createElement('span');
-      word.className = 'sl-word';
-      part.split('').forEach(function (ch) {
-        var box = document.createElement('span');
-        box.className = 'sl';
-        box.style.setProperty('--i', count.i++);
-        var up = document.createElement('span');
-        var next = document.createElement('span');
-        up.textContent = next.textContent = ch;
-        box.appendChild(up);
-        box.appendChild(next);
-        word.appendChild(box);
-      });
-      run.appendChild(word);
-    });
-    frag.appendChild(run);
-    node.parentNode.replaceChild(frag, node);
-  }
-
-  // the text of a label, wherever it sits among the icons and arrows that keep it company
-  function textIn(el) {
-    var found = [];
-    (function walk(n) {
-      for (var c = n.firstChild; c; c = c.nextSibling) {
-        if (c.nodeType === 3) { if (c.textContent.trim()) found.push(c); }
-        else if (c.nodeType === 1 && c.tagName.toLowerCase() !== 'svg' && !c.classList.contains('sr-only')) walk(c);
-      }
-    })(el);
-    return found;
-  }
-
-  // The labels you click, and the titles of the things you point at — and nothing else. The effect
-  // was reaching into reading matter, where it has no business: a standfirst ran to sixty-one
-  // letters, and ten footer links carried it on every page. Sentences are for reading, not for
-  // answering the pointer, so what is left is the actions, the way-throughs, and the titles.
-  var labels = '.navlinks .nav-link, .nav-sheet a, .nav-actions .btn, .hero-cta .btn, .cta-row .btn,' +
-    ' .link-out span,' +
-    ' .value h3, .focus-item h3, .pack h3, .step h3, .member h3, .work h3';
-  Array.prototype.forEach.call(document.querySelectorAll(labels), function (el) {
-    var count = { i: 0 };
-    textIn(el).forEach(function (node) { slot(node, count); });
-  });
-
-  // Section headings are left alone. They still rise word by word as they arrive — that entrance is
-  // the word masks and has nothing to do with these letter boxes — but they no longer answer the
-  // pointer. A heading is not something you click, and rolling it over every time a reader's mouse
-  // crossed the page was the effect asking for attention it had not earned.
-})();
-
 /* motion — hero parallax and entrance reveals */
 (function () {
   var root = document.documentElement;
@@ -386,7 +302,7 @@ window.addEventListener('error', function (e) {
     ['.hero p', 'up', 480],
     ['.hero-cta .btn', 'up', 620, 80],
     ['.hero-foot', 'line', 760],
-    ['.hero-foot .ticker', 'up', 880],
+    ['.hero-foot .hero-what', 'up', 880],
     ['.eyebrow', 'clip'],
     ['.sec h1, .sec h2, .cta h1, .cta h2', 'split'],
     ['.sec-head p, .prac-note, .lede, .cta-grid > div > p, .cta-row, .cta-form, .works-note', 'up'],

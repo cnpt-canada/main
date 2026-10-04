@@ -91,7 +91,7 @@ function sectionCard(s, n) {
   const done = s.questions.filter((q) => (state.answers[q.id] || '').trim()).length;
   return h('section', { class: 'card doc-section', id: 'doc-' + s.id, 'aria-labelledby': 'h-' + s.id },
     h('div', { class: 'card-head card-head-row' },
-      h('h2', { id: 'h-' + s.id }, h('span', { class: 'doc-no' }, String(n).padStart(2, '0')), s.title),
+      h('h2', { id: 'h-' + s.id }, s.title),
       h('span', { class: 'sub' }, done + ' of ' + s.questions.length)),
     h('div', { class: 'card-body doc-body' },
       s.note ? h('p', { class: 'sub doc-note' }, s.note) : null,

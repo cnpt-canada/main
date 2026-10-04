@@ -73,7 +73,7 @@ export function stageTracker(stageKey) {
   return h('ol', { class: 'stage-track' }, STAGES.map((s, i) => h('li', {
     class: i < at ? 'done' : i === at ? 'now' : null, 'aria-current': i === at ? 'step' : null
   },
-  h('span', { class: 'stage-dot', 'aria-hidden': 'true' }, i < at ? icon('check') : String(i + 1)),
+  h('span', { class: 'stage-dot', 'aria-hidden': 'true' }, i < at ? icon('check') : null),
   h('span', { class: 'stage-text' }, h('strong', {}, s.label), h('span', { class: 'sub' }, s.note)))));
 }
 

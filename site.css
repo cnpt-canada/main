@@ -6,8 +6,8 @@
 @font-face{font-family:'Geist Mono';src:url(/fonts/geist-mono.woff2) format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
 :root{
   color-scheme:dark;
-  /* the same in both themes: the signal, and the near-black the pink band is drawn against */
-  --signal:#FF004D; --signal-deep:#E60045; --signal-text:#C2003C;
+  /* the same in both themes: one signal, spent on the action that starts a project */
+  --signal:#E60045;
   --ink:#0F0F0E; --paper:#FFFFFF;
   --nav-h:74px; --sec-pad:112px;
   --max:1440px; --pad:clamp(20px,4vw,56px); --hair:1px;
@@ -25,16 +25,13 @@
   /* dark: a dark grey rather than black, so type and rules have something to sit on */
   --bg:#141414;          /* the page */
   --bg-2:#1D1D1C;        /* a surface above it: a cover, a portrait, the video band */
-  /* three steps, not five: four greys three per cent apart read as one grey and carry no hierarchy */
-  --fg:#FFFFFF;          /* headings and anything that has to carry */
-  --fg-2:#C6C6C0;        /* type that answers the pointer, a lede, a role */
+  /* three greys, three names. Nothing on the page is a fourth. */
+  --fg:#FFFFFF;          /* headings, and anything that has to carry */
+  --fg-2:#C6C6C0;        /* a lede, a role, a line that answers the pointer */
   --fg-3:#8C8C86;        /* body copy, captions, the quietest line */
-  --fg-4:var(--fg-3);
-  --fg-5:var(--fg-3);
-  --signal-ink:#FF004D;  /* the signal, where it is set as type rather than a fill */
-  --line:#262624;        /* hairline between rows */
-  --line-2:#2F2F2D;      /* a rule you are meant to see */
-  --ink-border:#3A3A37;  /* the edge of a control */
+  --band:#0A0A09;        /* the contact band: the page, but darker */
+  --line:#2A2A28;        /* between rows */
+  --ink-border:#3A3A37;  /* around a control */
   --fill:#FFFFFF;        /* a chip that is filled in, and the type on it */
   --on-fill:#141414;
 }
@@ -45,11 +42,8 @@
   --fg:#121211;
   --fg-2:#3A3A35;
   --fg-3:#63635D;
-  --fg-4:var(--fg-3);
-  --fg-5:var(--fg-3);
-  --signal-ink:#C2003C;
-  --line:#DBDBD5;
-  --line-2:#CECEC7;
+  --band:#FFFFFF;
+  --line:#D7D7D1;
   --ink-border:#BFBFB8;
   --fill:#121211;
   --on-fill:#FFFFFF;
@@ -111,18 +105,16 @@ nav .wm-plain{display:none}
 /* drawn under the words rather than decorated onto them: a text decoration hangs off the baseline,
    and the boxes the letters roll in move that baseline */
 .link-out > span::after{content:"";position:absolute;left:0;right:0;bottom:-.42em;height:var(--hair);
-  background:var(--fg-5);transition:background-color .25s ease}
+  background:var(--fg-3);transition:background-color .25s ease}
 .link-out svg{display:block;width:11px;height:11px;transition:transform .25s var(--ease-out)}
-.cta .link-out{color:#fff}
-.cta .link-out > span::after{background:rgba(255,255,255,.6)}
 
 /* hero */
-.hero{padding:0 0 96px;overflow:hidden}
+.hero{padding:0;overflow:hidden}
 /* full-bleed band; the crop is placed so the video's own type lands in the middle of the band */
 .hero-video{display:block;width:100%;aspect-ratio:3/1;object-fit:cover;object-position:center 61%;
   background:var(--bg-2);margin-bottom:64px}
 .hero h1{font-size:var(--t-display);font-weight:var(--w-display);letter-spacing:-0.045em;line-height:.93;max-width:16ch}
-.hero h1 em{font-style:normal;color:var(--signal)}
+.hero h1 em{font-style:normal;color:inherit}
 .hero p{margin-top:30px;font-size:var(--t-lede);color:var(--fg-2);max-width:54ch;line-height:1.5}
 .hero-cta{display:flex;flex-wrap:wrap;align-items:center;gap:16px 30px;margin-top:44px}
 .hero-foot{position:relative;margin-top:96px;padding-top:34px}
@@ -143,7 +135,7 @@ nav .wm-plain{display:none}
    The device is the 2026 portfolio's; there the phrase carries a filled plate, here it is marked with
    a rule under it, the way every other way-through on this site is. */
 .kw{text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:4px;
-  text-decoration-color:var(--fg-5);color:var(--fg-2);cursor:default;
+  text-decoration-color:var(--fg-3);color:var(--fg-2);cursor:default;
   transition:color .26s ease,text-decoration-color .26s ease}
 .kw-note{display:inline-grid;grid-template-columns:0fr;opacity:0;vertical-align:baseline;
   transition:grid-template-columns .45s var(--ease-ref),opacity .24s ease}
@@ -156,29 +148,29 @@ nav .wm-plain{display:none}
 .kw.is-open{color:var(--fg);text-decoration-color:var(--fg)}
 .kw.is-open .kw-note{grid-template-columns:1fr;opacity:1}
 
-.hero-line{flex:none;margin-right:40px;font-size:14px;font-weight:var(--w-title);letter-spacing:-0.012em;color:var(--fg-2)}
-.hero-line b{margin-right:9px;font-weight:var(--w-title);color:var(--signal-ink)}
+/* what the studio does, said once and standing still */
+.hero-what{display:flex;flex-wrap:wrap;gap:10px 44px;list-style:none;color:var(--fg-2)}
 
 /* section shell */
 .sec{padding:var(--sec-pad) 0}
 .sec-join{padding-top:0}
-/* A section says its name the way an index does: its number, then the name, small and spaced in the
-   mono. The number counts itself, so a page can gain or lose a section without anyone renumbering. */
-body{counter-reset:sec}
+/* A section says its name: small, spaced, set in the mono so it reads as a label rather than as
+   something to read. */
 .eyebrow{display:block;font-family:var(--mono);font-size:var(--t-meta);font-weight:var(--w-title);
-  letter-spacing:.06em;text-transform:uppercase;color:var(--signal-ink);font-variant-numeric:tabular-nums}
-.eyebrow::before{counter-increment:sec;content:counter(sec,decimal-leading-zero) " / ";color:var(--fg-3)}
+  letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);font-variant-numeric:tabular-nums}
 /* every number and every small label is set in the mono: it tells the meta apart from the reading
    matter without spending another weight or another colour on it */
-.sum-no,.pack-no,.focus-no,.work-no,.work-soon,.pack-len,.step .len,.acc-seg,.member-spec dt,
-.fbottom,.tags,.acc-out,.count,.hero-line,.member-role,.work-body .work-client{
+.work-soon,.pack-len,.step .len,.acc-seg,.member-spec dt,
+.fbottom,.tags,.acc-out,.count,.hero-what,.member-role,.work-body .work-client{
   font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:.04em}
-.sum-no,.pack-no,.focus-no,.work-no,.work-soon,.pack-len,.step .len,.acc-seg,.member-spec dt,.hero-line{
+.work-soon,.pack-len,.step .len,.acc-seg,.member-spec dt,.hero-what{
   font-size:var(--t-meta);text-transform:uppercase;letter-spacing:.06em}
-/* the label sits in its own column beside the standfirst, and the rule above says a section starts */
-.sec-head{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr);gap:16px 44px;
-  align-items:start;margin-bottom:52px;padding-top:20px;border-top:var(--hair) solid var(--line)}
-.sec-head p{font-size:var(--t-body);color:var(--fg-3);max-width:46ch;font-weight:var(--w-body)}
+/* A running head: the rule says a section starts, then the label and the line that says what the
+   section covers, together on one line. It was a two-column grid, which left that line stranded in
+   the middle of the page above a heading that began again at the left margin. */
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;
+  margin-bottom:40px;padding-top:18px;border-top:var(--hair) solid var(--line)}
+.sec-head p{font-size:var(--t-body);color:var(--fg-3);max-width:58ch;font-weight:var(--w-body)}
 /* A section heading. On an inner page the first one is the page's own h1, which is a matter of
    what the page means rather than how big it is, so both are set the same. */
 h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-spacing:-0.04em;line-height:.97;max-width:20ch}
@@ -191,17 +183,17 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 /* centre the 48px icon on the title's first line (line-height 1.1) at every title size */
 .value-ic{display:block;margin-top:calc(var(--vt) * .55 - 24px);color:var(--fg-2)}
 .value-ic svg{display:block;width:48px;height:48px}
-.value-core .value-ic{color:var(--signal-deep)}
+.value-core .value-ic{color:var(--fg)}
 .value h3{font-size:var(--vt);font-weight:var(--w-title);letter-spacing:-0.028em;line-height:1.1}
 .value-body p{font-size:16px;line-height:1.65;color:var(--fg-3)}
-.tags{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:20px;font-size:13px;font-weight:var(--w-title);color:var(--fg-5)}
+.tags{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:20px;font-size:13px;font-weight:var(--w-title);color:var(--fg-3)}
 .tags span{position:relative}
 .tags span:not(:last-child)::after{content:"·";position:absolute;right:-11px}
 
 /* practices — accordion rows */
 .acc-list{margin-top:52px}
-.acc{border-top:var(--hair) solid var(--line-2)}
-.acc:last-of-type{border-bottom:var(--hair) solid var(--line-2)}
+.acc{border-top:var(--hair) solid var(--line)}
+.acc:last-of-type{border-bottom:var(--hair) solid var(--line)}
 .acc-row{
   width:100%;background:none;border:0;cursor:pointer;text-align:left;
   font-family:inherit;color:inherit;padding:34px 0;
@@ -240,14 +232,14 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 :root{--ease-morph:cubic-bezier(.5,0,.25,1)}
 .motion :is(.acc,.sum-list li).in .acc-mk.is-live :is(path,circle,rect,ellipse,polygon){
   animation:mk-morph 1.05s var(--ease-morph) calc(var(--d,0ms) + 220ms + var(--i,0) * 190ms) backwards}
-.acc-name .kor{display:block;font-size:13.5px;font-weight:var(--w-title);color:var(--fg-5);margin-top:8px}
-.acc-seg{font-size:12px;font-weight:var(--w-title);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-5);white-space:nowrap}
+.acc-name .kor{display:block;font-size:13.5px;font-weight:var(--w-title);color:var(--fg-3);margin-top:8px}
+.acc-seg{font-size:12px;font-weight:var(--w-title);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);white-space:nowrap}
 /* each practice carries its own mark: what the row is about, beside who it is for */
 .acc-right{display:flex;align-items:center;gap:18px}
 .acc-ic{position:relative;width:20px;height:20px}
 .acc-ic::before,.acc-ic::after{
   content:"";position:absolute;left:0;top:8.75px;width:20px;height:2.5px;
-  border-radius:var(--r-cap);background:var(--fg-5);transition:transform .3s ease,background .2s ease;
+  border-radius:var(--r-cap);background:var(--fg-3);transition:transform .3s ease,background .2s ease;
 }
 .acc-ic::after{transform:rotate(90deg)}
 .acc[data-open="true"] .acc-ic::before,
@@ -259,10 +251,10 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 .acc-inner{padding:0 0 40px 164px;opacity:0;transform:translateY(-6px);transition:opacity .3s ease .05s,transform .3s ease .05s}
 .acc[data-open="true"] .acc-inner{opacity:1;transform:none}
 .acc-inner p{font-size:15px;line-height:1.66;color:var(--fg-3);max-width:62ch}
-.acc-out{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:22px;font-size:12.5px;font-weight:var(--w-title);color:var(--fg-5)}
+.acc-out{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:22px;font-size:12.5px;font-weight:var(--w-title);color:var(--fg-3)}
 .acc-out span{position:relative}
 .acc-out span + span::before{content:"·";position:absolute;left:-11px}
-.prac-note{font-size:14px;color:var(--fg-5);margin-top:28px;max-width:64ch}
+.prac-note{font-size:14px;color:var(--fg-3);margin-top:28px;max-width:64ch}
 
 /* packages — three columns of work a client can commission by name. Each one is a ruled column:
    icon and number, the name, what it is, then the spec sheet of what is in it and how long it runs. */
@@ -272,16 +264,15 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 .pack-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .pack-ic{display:block;color:var(--fg-2);transition:color .5s var(--ease-out)}
 .pack-ic svg{display:block;width:48px;height:48px}
-.pack-no{display:block;font-size:13px;font-weight:var(--w-title);color:var(--signal-ink)}
 .pack h3{font-size:clamp(20px,2vw,26px);font-weight:var(--w-title);letter-spacing:-0.028em;line-height:1.1;margin-top:26px}
-.pack > p{font-size:15px;line-height:1.6;color:var(--fg-4);margin:12px 0 24px}
+.pack > p{font-size:15px;line-height:1.6;color:var(--fg-3);margin:12px 0 24px}
 /* what is in the package: one ruled line each, so it reads as a spec sheet rather than a run of chips.
    The slack sits above the list, so the spec sheets line up across the row however long the copy runs. */
 .pack-in{list-style:none;margin-top:auto}
 .pack-in li{padding:10px 0;border-top:var(--hair) solid var(--line);font-size:14px;font-weight:var(--w-title);color:var(--fg-2)}
 /* lengths sit at the foot of each column, so they share one line across the row */
-.pack-len{padding-top:20px;font-size:12.5px;font-weight:var(--w-title);color:var(--signal-ink)}
-.pack-len b{margin-right:9px;font-weight:var(--w-title);color:var(--fg-5)}
+.pack-len{padding-top:20px;font-size:12.5px;font-weight:var(--w-title);color:var(--fg-3)}
+.pack-len b{margin-right:9px;font-weight:var(--w-title);color:var(--fg-3)}
 /* the three marks breathe out of step with each other, the way the reference's marks do */
 .motion .pack-ic svg{animation:pack-breath 6s ease-in-out infinite}
 .motion .pack:nth-child(2) .pack-ic svg{animation-delay:-2s}
@@ -292,7 +283,7 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 @media(max-width:620px){.packs{grid-template-columns:minmax(0,1fr)}}
 
 /* hairline used by value rows, process steps, deliverables, focus items and team rows — drawn in by the "rule" reveal */
-.value::before,.step::before,.dl::before,.focus-item::before,.member::before,.pack::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--hair);background:var(--line-2);
+.value::before,.step::before,.dl::before,.focus-item::before,.member::before,.pack::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--hair);background:var(--line);
   transform-origin:left;transition:transform 1.2s var(--ease-io) var(--d,0ms),background-color .5s var(--ease-out)}
 
 /* process — a timeline: icon dots strung on one hairline */
@@ -304,21 +295,21 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 /* icons sit right-aligned on the rule; the black backing masks the line around them */
 .step .dot{position:relative;display:flex;width:max-content;margin:0 -12px 0 auto;padding:0 12px;background:var(--bg);color:var(--fg-2)}
 .step .dot svg{display:block;width:48px;height:48px}
-.step-last .dot{color:var(--signal-deep)}
+.step-last .dot{color:var(--fg)}
 .step h3{font-size:20px;font-weight:var(--w-title);letter-spacing:-0.024em;margin-top:28px}
-.step p{font-size:14.5px;line-height:1.6;color:var(--fg-4);margin-top:10px}
+.step p{font-size:14.5px;line-height:1.6;color:var(--fg-3);margin-top:10px}
 /* durations sit at the foot of each (equal-height) column, so they share one line across the row */
-.step .len{margin-top:auto;padding-top:18px;font-size:12.5px;font-weight:var(--w-title);color:var(--signal-ink)}
+.step .len{margin-top:auto;padding-top:18px;font-size:12.5px;font-weight:var(--w-title);color:var(--fg-3)}
 
 /* entry — deliverables read as a ruled spec sheet */
 .entry{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:72px;align-items:start}
-.deliver{border-bottom:var(--hair) solid var(--line-2)}
+.deliver{border-bottom:var(--hair) solid var(--line)}
 .dl{position:relative;display:grid;grid-template-columns:150px 1fr;gap:24px;align-items:baseline;padding:20px 0}
 .dl b{font-size:15px;font-weight:var(--w-title);letter-spacing:-0.012em}
-.dl span{font-size:15px;color:var(--fg-4);line-height:1.5}
+.dl span{font-size:15px;color:var(--fg-3);line-height:1.5}
 
 /* focus */
-:is(h1,h2) em{font-style:normal;color:var(--signal)}
+:is(h1,h2) em{font-style:normal;color:inherit}
 /* a heading that only has half the page to itself takes the step below the full-width one */
 .entry :is(h1,h2),.cta-grid :is(h1,h2){font-size:clamp(28px,3.6vw,52px);letter-spacing:-0.036em}
 .focus{display:grid;grid-template-columns:repeat(2,1fr);gap:0 64px;margin-top:52px}
@@ -327,9 +318,8 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 .focus-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .focus-ic{display:block;color:var(--fg-2);transition:color .5s var(--ease-out)}
 .focus-ic svg{display:block;width:48px;height:48px}
-.focus-no{display:block;font-size:13px;font-weight:var(--w-title);color:var(--signal-ink)}
 .focus-item h3{font-size:clamp(24px,2.8vw,34px);font-weight:var(--w-title);letter-spacing:-0.032em;line-height:1.05;margin-top:26px}
-.focus-item p{font-size:15px;line-height:1.6;color:var(--fg-4);max-width:40ch;margin-top:12px}
+.focus-item p{font-size:15px;line-height:1.6;color:var(--fg-3);max-width:40ch;margin-top:12px}
 
 /* team — one ruled column per person: portrait on top, then the name, what they do, and a small spec sheet.
    Stacking the card is what lets three sit across the page instead of two. */
@@ -341,21 +331,21 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 .member-photo{position:relative;display:flex;align-items:center;justify-content:center;aspect-ratio:1350/1764;
   overflow:hidden;background:var(--bg-2)}
 /* initials sit behind the photo and only show if the image file is missing */
-.member-init{font-size:clamp(40px,5vw,64px);font-weight:var(--w-title);letter-spacing:-0.035em;color:var(--fg-5)}  /* it only shows when the portrait does not load, so it has to be readable on its own */
+.member-init{font-size:clamp(40px,5vw,64px);font-weight:var(--w-title);letter-spacing:-0.035em;color:var(--fg-3)}  /* it only shows when the portrait does not load, so it has to be readable on its own */
 .member-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 20%;
   transition:transform .8s var(--ease-out)}
 .member h3{font-size:clamp(18px,1.45vw,21px);font-weight:var(--w-title);letter-spacing:-0.026em;line-height:1.15}
 .member-role{font-size:13px;color:var(--fg-3);margin-top:8px}
 /* a line or two on what each person does, under their role */
-.member-bio{margin-top:12px;font-size:13px;line-height:1.55;color:var(--fg-4)}
+.member-bio{margin-top:12px;font-size:13px;line-height:1.55;color:var(--fg-3)}
 .member-role span{white-space:nowrap}
 /* spec sheet: label | value rows */
 .member-spec > div{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px;align-items:baseline;
   padding:10px 0;border-top:var(--hair) solid var(--line)}
 .member-spec > div:last-child{padding-bottom:0}
-.member-spec dt{font-size:11.5px;font-weight:var(--w-title);color:var(--fg-5)}
+.member-spec dt{font-size:11.5px;font-weight:var(--w-title);color:var(--fg-3)}
 .member-spec dd{font-size:13px;line-height:1.5;color:var(--fg-2)}
-.member-spec dd span{color:var(--fg-4)}
+.member-spec dd span{color:var(--fg-3)}
 .member-spec a{display:inline-flex;align-items:center;gap:6px;transition:color .25s ease}
 .member-spec svg{display:block;width:10px;height:10px;flex:none}
 .member-spec a:focus-visible{outline:2px solid var(--signal);outline-offset:3px;border-radius:4px}
@@ -391,16 +381,11 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 }
 
 /* cta band */
-.cta{position:relative;isolation:isolate;background:var(--ink);color:#fff;padding:96px 0}
-.cta::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--signal)}
+.cta{position:relative;isolation:isolate;color:var(--fg);padding:96px 0}
+.cta::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--band)}
 .cta :is(h1,h2){max-width:20ch}
-.cta p{font-size:17px;color:rgba(255,255,255,.88);max-width:52ch;margin-top:22px;line-height:1.6}
+.cta p{font-size:17px;color:var(--fg-2);max-width:52ch;margin-top:22px;line-height:1.6}
 .cta-row{display:flex;flex-wrap:wrap;align-items:center;gap:16px 30px;margin-top:40px}
-/* on the pink band the signal button would vanish into its own colour, so the two swap over */
-.cta .btn-signal{background:#fff;color:var(--signal-text);--btn-fill:var(--ink)}
-.cta .btn-ghost{box-shadow:inset 0 0 0 var(--hair) rgba(255,255,255,.55);color:#fff;--btn-fill:#fff}
-.cta .eyebrow{color:#fff}
-.cta .eyebrow::before{color:rgba(255,255,255,.66)}
 /* copy on the left, the enquiry form on the right */
 .cta-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:64px;align-items:start}
 
@@ -410,55 +395,54 @@ button.btn{border:0;font-family:inherit;cursor:pointer}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .cta-form{position:relative;display:grid;gap:22px}
 .stage{border:0;min-width:0}
-.stage legend{font-size:13px;font-weight:var(--w-title);color:rgba(255,255,255,.88);margin-bottom:12px}
+.stage legend{font-size:13px;font-weight:var(--w-title);color:var(--fg-2);margin-bottom:12px}
 .stage-opts{display:flex;flex-wrap:wrap;gap:8px}
 .stage-opt{position:relative;display:block}
 /* the radio stays focusable and readable by screen readers; the chip is what people see */
 .stage-opt input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
 .stage-opt span{display:inline-flex;align-items:center;height:40px;padding:0 18px;border-radius:var(--r-sm);
-  font-size:14px;font-weight:var(--w-title);letter-spacing:-0.012em;color:#fff;box-shadow:inset 0 0 0 var(--hair) rgba(255,255,255,.6);
+  font-size:14px;font-weight:var(--w-title);letter-spacing:-0.012em;color:var(--fg);box-shadow:inset 0 0 0 var(--hair) var(--ink-border);
   transition:background-color .25s ease,color .25s ease,box-shadow .25s ease}
-.stage-opt input:checked + span{background:#fff;color:var(--signal-text);box-shadow:inset 0 0 0 var(--hair) #fff}
-.stage-opt input:focus-visible + span{outline:2px solid #fff;outline-offset:3px}
-/* the composer is drawn like the chips and outline buttons: transparent, a 1.5px white line, white type */
-.composer{border-radius:var(--r-sm);box-shadow:inset 0 0 0 var(--hair) rgba(255,255,255,.6);transition:box-shadow .25s ease}
-.composer:hover{box-shadow:inset 0 0 0 var(--hair) rgba(255,255,255,.85)}
-.composer:focus-within{box-shadow:inset 0 0 0 var(--hair) #fff}
-.composer textarea,.composer input{font-family:inherit;font-size:16px;font-weight:var(--w-body);letter-spacing:-0.004em;color:#fff;
-  background:none;border:0;outline:none;caret-color:#fff}
+.stage-opt input:checked + span{background:var(--fill);color:var(--on-fill);box-shadow:inset 0 0 0 var(--hair) var(--fill)}
+.stage-opt input:focus-visible + span{outline:2px solid var(--fg);outline-offset:3px}
+/* the composer is drawn like the chips and outline buttons: no fill, a hairline, the page's own ink */
+.composer{border-radius:var(--r-sm);box-shadow:inset 0 0 0 var(--hair) var(--ink-border);transition:box-shadow .25s ease}
+.composer:hover{box-shadow:inset 0 0 0 var(--hair) var(--fg-3)}
+.composer:focus-within{box-shadow:inset 0 0 0 var(--hair) var(--fg)}
+.composer textarea,.composer input{font-family:inherit;font-size:16px;font-weight:var(--w-body);letter-spacing:-0.004em;color:var(--fg);
+  background:none;border:0;outline:none;caret-color:var(--fg)}
 .composer textarea{display:block;width:100%;min-height:130px;padding:8px 22px 14px;line-height:1.55;resize:none}
-.composer ::placeholder{color:rgba(255,255,255,.62);opacity:1}
-.composer ::selection{background:#fff;color:var(--signal-text)}
+.composer ::placeholder{color:var(--fg-3);opacity:1}
 /* keep browser autofill from painting a light box inside the transparent field */
-.composer input:-webkit-autofill{-webkit-text-fill-color:#fff;box-shadow:0 0 0 1000px var(--signal) inset}
+.composer input:-webkit-autofill{-webkit-text-fill-color:var(--fg);box-shadow:0 0 0 1000px var(--band) inset}
 .composer-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:16px 22px 0}
-.composer-head label,.composer-foot label{font-size:12.5px;font-weight:var(--w-title);color:rgba(255,255,255,.88);white-space:nowrap;cursor:text}
-.req{color:#fff}
-.composer-foot{display:flex;align-items:center;gap:14px;padding:10px 10px 10px 22px;border-top:var(--hair) solid rgba(255,255,255,.35)}
+.composer-head label,.composer-foot label{font-size:12.5px;font-weight:var(--w-title);color:var(--fg-2);white-space:nowrap;cursor:text}
+.req{color:var(--fg)}
+.composer-foot{display:flex;align-items:center;gap:14px;padding:10px 10px 10px 22px;border-top:var(--hair) solid var(--ink-border)}
 .composer input{flex:1;min-width:0;height:40px}
-.count{font-size:12.5px;font-weight:var(--w-title);color:rgba(255,255,255,.75);font-variant-numeric:tabular-nums;white-space:nowrap}
-.count.is-near{color:#fff}
-/* Send matches the band's white button: white capsule, fills black on hover */
-.btn-send{gap:8px;background:#fff;color:var(--signal-text);--btn-fill:var(--ink)}
+.count{font-size:12.5px;font-weight:var(--w-title);color:var(--fg-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.count.is-near{color:var(--fg)}
+/* Send is this form's action, drawn as the filled neutral control */
+.btn-send{gap:8px;background:var(--fill);color:var(--on-fill)}
 .btn-send svg{display:block;width:10px;height:10px}
 /* Send stays disabled until every required field is filled in */
-.btn-send:disabled{background:transparent;color:rgba(255,255,255,.7);box-shadow:inset 0 0 0 var(--hair) rgba(255,255,255,.4);
+.btn-send:disabled{background:transparent;color:var(--fg-3);box-shadow:inset 0 0 0 var(--hair) var(--ink-border);
   cursor:not-allowed;transform:none}
 .cta-form.is-sending .btn-send{opacity:.7;cursor:progress}
 .form-foot{display:grid;gap:6px;margin-top:-8px}
-.form-note{font-size:13px;font-weight:var(--w-title);color:rgba(255,255,255,.8)}
-.form-status{min-height:1.6em;font-size:14.5px;font-weight:var(--w-title);color:#fff}
+.form-note{font-size:13px;font-weight:var(--w-title);color:var(--fg-3)}
+.form-status{min-height:1.6em;font-size:14.5px;font-weight:var(--w-title);color:var(--fg)}
 
 /* footer */
 footer{padding:72px 0 56px}
 .fgrid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:44px;align-items:start}
 footer .wm{width:110px;color:var(--fg);display:block}
-footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line-height:1.6}
+footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line-height:1.6}
 .fcol h4{font-size:13px;font-weight:var(--w-title);color:var(--fg);margin-bottom:16px}
-.fcol a,.fcol div{display:block;font-size:14px;color:var(--fg-5);margin-bottom:9px}
+.fcol a,.fcol div{display:block;font-size:14px;color:var(--fg-3);margin-bottom:9px}
 .fcol a:hover{color:var(--fg)}
 .fbottom{margin-top:64px;padding-top:26px;border-top:var(--hair) solid var(--line);display:flex;
-  justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--fg-5);font-weight:var(--w-title)}
+  justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--fg-3);font-weight:var(--w-title)}
 
 /* motion — entrance reveals
    Only active while <html> has .motion (set in <head> when JS runs and reduced-motion is off).
@@ -501,33 +485,6 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
 .motion [data-rv="clip"]:not(.in){clip-path:inset(0 100% 0 0)}
 .motion [data-rv="clip"].in{clip-path:inset(0 0 0 0)}
 .motion [data-rv="line"]:not(.in)::before{transform:scaleX(0)}
-
-/* labels: each character sits in its own small box, holding the character twice. Pointing at the
-   label rolls the first copy out of the top and the second up into its place, one letter after the
-   next. The box is as wide as its letter and never changes size, so the line it sits on never moves.
-   The padding under each box gives the descenders somewhere to go; the matching negative margin
-   keeps that space out of the layout. */
-.sl-run{display:inline}
-/* a word's letters stay together: a line breaks between words, never inside one */
-.sl-word{white-space:nowrap}
-/* the box hugs its letter: a line-height of its own, so a letter leaving it is gone at once rather
-   than drifting around inside a box the height of the whole line. An overflow-hidden inline-block
-   sits on its bottom edge rather than its baseline, hence bottom / the descender padding. */
-.sl{position:relative;display:inline-block;overflow:hidden;vertical-align:middle;line-height:1.02;
-  padding:.2em 0;margin:-.2em 0;top:-.065em;--sl-step:22ms}
-.sl > span{display:block;transition:transform .42s var(--ease-ref) calc(var(--i,0) * var(--sl-step))}
-/* the waiting copy has to clear the padding under the box as well as the line itself, or it shows
-   through in the space kept for the descenders */
-.sl > span + span{position:absolute;left:0;top:.2em;transform:translateY(calc(100% + .26em))}
-/* a label answers when you point at it; a title answers when you point at the row it belongs to */
-@media(hover:hover){
-  :is(a,button):hover .sl > span:first-child,
-  :is(.value,.focus-item,.pack,.step,.member,.work):hover .sl > span:first-child{transform:translateY(calc(-100% - .24em))}
-  :is(a,button):hover .sl > span + span,
-  :is(.value,.focus-item,.pack,.step,.member,.work):hover .sl > span + span{transform:translateY(0)}
-}
-:is(a,button):focus-visible .sl > span:first-child{transform:translateY(calc(-100% - .24em))}
-:is(a,button):focus-visible .sl > span + span{transform:translateY(0)}
 
 /* headings: each word rises out of its own mask */
 .wd{display:inline-block;vertical-align:top;overflow:hidden;padding:0 .06em .14em;margin:0 -.06em -.14em}
@@ -573,10 +530,7 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
   .btn:not(:disabled):hover::before{transform:none}
   .link-out:hover > span::after{background:var(--fg)}
   .link-out:hover svg{transform:translate(2px,-2px)}
-  .cta .link-out:hover > span::after{background:#fff}
   .btn-ghost:hover{color:var(--on-fill)}
-  .cta .btn-signal:hover{color:#fff}
-  .cta .btn-ghost:hover{color:var(--signal-text)}
   .stage-opt:hover input:not(:checked) + span{box-shadow:inset 0 0 0 var(--hair) #fff}
   .btn-send:not(:disabled):hover{color:#fff}
   .acc-list:has(.acc-row:hover) .acc-row:not(:hover){opacity:.45}
@@ -602,7 +556,7 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
   .values:has(.value:hover) .value:not(:hover) > *{opacity:.45}
   .value:hover .value-ic{color:var(--fg)}
   .value-core:hover .value-ic{color:var(--signal)}
-  .dl:hover b{color:var(--signal-ink)}
+  .dl:hover b{color:var(--fg)}
   .dl:hover span{color:var(--fg-2)}
   /* packages answer hover like the focus items */
   .pack:hover::before{background:var(--fg-2)}
@@ -624,7 +578,7 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
   .member:hover::before{background:var(--fg-2)}
   .team:has(.member:hover) .member:not(:hover) > *{opacity:.45}
   .member:hover img{transform:scale(1.03)}
-  .member-spec a:hover{color:var(--signal-ink)}
+  .member-spec a:hover{color:var(--fg)}
 }
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
@@ -668,7 +622,7 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
   .motion .step[data-rv]:not(.in)::before{transform:scaleY(0)}
   .step .dot{position:absolute;right:0;top:-12px;margin:0;padding:12px 0}
   /* vertically a stage's rule runs on to the next stage, so only the rules before the hovered stage light */
-  @media(hover:hover){.track .step:hover::before{background:var(--line-2)}}
+  @media(hover:hover){.track .step:hover::before{background:var(--line)}}
   .step h3{margin-top:8px}
   .packs{gap:0 32px;margin-top:40px}
   .values{margin-top:44px}
@@ -702,7 +656,7 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
   .hero p{margin-top:22px}
   .hero-cta{margin-top:32px}
   .hero-foot{margin-top:44px;padding-top:26px}
-  .hero-line{margin-right:22px}
+  .hero-what{gap:8px 24px}
   .sec-head{gap:12px 16px;margin-bottom:28px}
   .eyebrow + :is(h1,h2){margin-top:20px}
   .acc-list,.track,.focus{margin-top:32px}
@@ -740,7 +694,6 @@ footer .tag{font-size:14px;color:var(--fg-5);margin-top:22px;max-width:34ch;line
 @media(max-width:900px){
   .navlinks{display:none}
   nav .wrap{display:flex;justify-content:space-between}
-  .sec-head{grid-template-columns:minmax(0,1fr)}
 }
 @media(max-width:480px){
   .hero-cta .btn,.cta-row .btn{flex:1 1 100%;justify-content:center}
@@ -819,27 +772,30 @@ nav .nav-sheet .wrap{display:block;height:auto}
 
 /* home: each page gets a section of its own, with the numbered list of what is on it */
 .sum-list{list-style:none;margin-top:48px;border-top:var(--hair) solid var(--line)}
-.sum-list li{display:grid;grid-template-columns:52px minmax(0,1fr);gap:20px;align-items:baseline;
-  padding:26px 0;border-bottom:var(--hair) solid var(--line)}
-.sum-no{font-size:13px;font-weight:var(--w-title);color:var(--signal-ink)}
+.sum-list li{padding:26px 0;border-bottom:var(--hair) solid var(--line)}
+/* title on the left, what it is on the right: the rule already runs the width of the page, so the
+   row may as well use it */
+.sum-list li > div{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:10px 44px;align-items:baseline}
+.sum-list li > div > p{margin-top:0}
 .sum-list h3{font-size:clamp(22px,2.2vw,28px);font-weight:var(--w-title);letter-spacing:-0.032em;line-height:1.05}
 /* the three practices sign the home list the same way they sign their own page */
-.sum-list li:has(.sum-sign){align-items:start}
 .sum-sign{line-height:1}
 @media(hover:hover){
   .sum-list li:hover .acc-mk{transform:scale(1.32)}
 }
-.sum-list p{margin-top:8px;font-size:15px;line-height:1.6;color:var(--fg-4);max-width:62ch}
-.sum-stages{display:flex;flex-wrap:wrap;gap:8px 30px;margin-top:30px;font-family:var(--mono);
+.sum-list p{margin-top:8px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:62ch}
+.sum-stages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 30px;margin-top:30px;font-family:var(--mono);
   font-size:13px;letter-spacing:.03em;color:var(--fg-3);font-variant-numeric:tabular-nums}
 .sum-stages b{margin-right:9px;font-weight:var(--w-title);letter-spacing:-0.02em;color:var(--fg)}
-.sum-note{margin-top:26px;font-size:15px;line-height:1.6;color:var(--fg-4);max-width:52ch}
+.sum-note{margin-top:26px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:52ch}
 .sum-more{margin-top:40px}
 .sum-more .btn svg{width:11px;height:11px;margin-left:10px}
 @media(hover:hover){.sum-more .btn:hover{background:var(--fill);border-color:var(--fg);color:var(--on-fill)}}
-@media(max-width:720px){
-  .sum-list li{grid-template-columns:38px minmax(0,1fr);gap:0 14px;padding:20px 0}
-  .sum-stages{gap:6px 22px}
+@media(max-width:760px){
+  .sum-list li{padding:20px 0}
+  /* two columns of nothing reads worse than one */
+  .sum-list li > div{grid-template-columns:minmax(0,1fr);gap:6px}
+  .sum-stages{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 24px}
 }
 
 /* the way out to a client's own site, sitting under the row it belongs to. Qualified, because
@@ -876,14 +832,13 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .work[hidden]{display:none}
 .work-cover{position:relative;display:flex;align-items:flex-end;justify-content:space-between;aspect-ratio:16/9;padding:26px;
   overflow:hidden;background:var(--bg-2)}
-.work-cover svg{display:block;height:64px;width:auto;color:var(--line-2);transition:color .5s var(--ease-out),transform .8s var(--ease-out)}
-.work-cover .work-no{position:absolute;top:22px;left:26px;font-size:13px;font-weight:var(--w-title);color:var(--signal-ink)}
-.work-soon{font-size:12px;font-weight:var(--w-title);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-5)}
+.work-cover svg{display:block;height:64px;width:auto;color:var(--line);transition:color .5s var(--ease-out),transform .8s var(--ease-out)}
+.work-soon{font-size:12px;font-weight:var(--w-title);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3)}
 .work h3{font-size:clamp(22px,2.2vw,28px);font-weight:var(--w-title);letter-spacing:-0.028em;line-height:1.1}
 .work-body .tags{margin:0 0 14px}
-.work-body p{margin-top:12px;font-size:15px;line-height:1.6;color:var(--fg-4);max-width:46ch}
+.work-body p{margin-top:12px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:46ch}
 .work-body .work-client{margin-top:8px;font-size:14px;font-weight:var(--w-title);color:var(--fg-3)}
-.works-note{margin-top:48px;font-size:14px;color:var(--fg-5);max-width:60ch}
+.works-note{margin-top:48px;font-size:14px;color:var(--fg-3);max-width:60ch}
 .works-note a{color:var(--fg);text-decoration:underline;text-underline-offset:3px}
 
 /* short contact band at the foot of each page */
@@ -891,10 +846,10 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .cta-short .cta-row{margin-top:0;justify-content:flex-end}
 
 /* talent: the pool is still being built, so the page says so */
-.status-line{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-size:13.5px;font-weight:var(--w-title);color:rgba(255,255,255,.9)}
-.status-dot{width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.22)}
+.status-line{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-size:13.5px;font-weight:var(--w-title);color:var(--fg-2)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--fg);opacity:.9}
 .motion .status-dot{animation:status-pulse 2.4s ease-in-out infinite}
-@keyframes status-pulse{50%{box-shadow:0 0 0 7px rgba(255,255,255,.12)}}
+@keyframes status-pulse{50%{opacity:.3}}
 .status-line + h2{margin-top:14px}
 
 /* a label that follows the mouse over something clickable: what clicking does */
@@ -907,7 +862,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 @media(hover:hover){
   .works:has(.work:hover) .work:not(:hover){opacity:.5}
   .work{transition:opacity .4s var(--ease-out)}
-  .work:hover .work-cover svg{color:var(--signal-deep);transform:scale(1.04)}
+  .work:hover .work-cover svg{color:var(--fg-2);transform:scale(1.04)}
 }
 @media(max-width:1000px){
   .works{grid-template-columns:1fr}

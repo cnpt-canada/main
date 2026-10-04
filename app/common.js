@@ -134,13 +134,14 @@ export const FOCAL = [
   { key: 'advertising', label: 'Advertising', note: 'Launch, campaigns and reaching people' }
 ];
 export const FOCAL_STEP = 10;
-// every area is the brand colour; how much of it a block gets says how big its share is
-const FOCAL_RGB = '230 0 69';
-const FOCAL_FADE = [0.3, 1];
+// one hue for every area -- the page's own ink -- and how much of it a block gets says how big its
+// share is. The brand pink is kept for things you can press, so the chart does not shout louder than
+// the button beside it. color-mix rather than a literal colour, so it follows the theme.
+const FOCAL_FADE = [0.22, 1];
 export function focalShade(value, biggest) {
   if (!value) return 'transparent';
   const strength = FOCAL_FADE[0] + (FOCAL_FADE[1] - FOCAL_FADE[0]) * (value / Math.max(biggest, FOCAL_STEP));
-  return `rgb(${FOCAL_RGB} / ${strength.toFixed(3)})`;
+  return `color-mix(in srgb, var(--fg) ${(strength * 100).toFixed(1)}%, transparent)`;
 }
 export const DEFAULT_FOCUS = [30, 20, 30, 20];
 
@@ -151,7 +152,7 @@ export const DEFAULT_FOCUS = [30, 20, 30, 20];
 export function focalBar(values, { onChange, detailed = false } = {}) {
   let v = [...values];
   const editable = typeof onChange === 'function';
-  const segs = FOCAL.map((a, i) => h('div', { class: `focal-seg focal-${i}` }, h('span', { class: 'focal-pct' })));
+  const segs = FOCAL.map((a, i) => h('div', { class: `focal-seg focal-${i}` }));
   const track = h('div', { class: 'focal-track', 'aria-hidden': 'true' }, segs);
   const bar = h('div', { class: 'focal-bar' }, track);
   const items = FOCAL.map((a, i) => h('li', {},
@@ -232,7 +233,6 @@ export function focalBar(values, { onChange, detailed = false } = {}) {
     segs.forEach((s, i) => {
       s.style.flexBasis = `${v[i]}%`;
       s.style.backgroundColor = focalShade(v[i], biggest);
-      s.firstChild.textContent = `${v[i]}%`;
     });
     items.forEach((li, i) => {
       li.querySelector('.focal-val').textContent = `${v[i]}%`;
