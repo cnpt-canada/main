@@ -368,7 +368,7 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 :where(.cta) p{font-size:17px;color:var(--fg-2);max-width:52ch;margin-top:22px;line-height:1.6}
 .cta-row{display:flex;flex-wrap:wrap;align-items:center;gap:16px 30px;margin-top:40px}
 /* the short way in, under the long one: no account, an address and a line */
-.cta-note{padding-top:8px;max-width:560px}
+.cta-note{grid-column:1 / -1;padding-top:8px}
 .cta-note-head{font-size:15px;font-weight:var(--w-title);letter-spacing:-0.014em;color:var(--fg);margin:0 0 14px}
 .cta-note-head span{font-weight:var(--w-body);color:var(--fg-3)}
 .cta-note .form-status{margin-top:10px}
