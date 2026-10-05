@@ -268,45 +268,11 @@ window.addEventListener('error', function (e) {
   document.documentElement.addEventListener('mouseleave', hide);
 })();
 
-/* motion — hero parallax and entrance reveals */
+/* the hero film, and the entrance reveals */
 (function () {
   var root = document.documentElement;
   var motion = root.classList.contains('motion');
-  var nav = document.querySelector('nav');
   var hero = document.querySelector('.hero');
-  var heroWrap = hero && hero.querySelector('.wrap');
-  var ticking = false;
-  var wrapTop = 0, wrapH = 0;
-
-  // the headline block sits under the video, so it stays fully lit while it is on screen
-  // and only fades (drifting slightly) once most of it has gone up under the nav
-  function measureHero() {
-    if (!heroWrap) return;
-    var saved = heroWrap.style.transform;
-    heroWrap.style.transform = '';
-    wrapTop = heroWrap.getBoundingClientRect().top + window.pageYOffset;
-    wrapH = heroWrap.offsetHeight;
-    heroWrap.style.transform = saved;
-  }
-  function onScroll() {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(function () {
-      ticking = false;
-      var y = window.pageYOffset;
-      if (motion && hero && wrapH) {
-        var gone = (y + nav.offsetHeight - wrapTop) / wrapH; // 0: its top is at the nav, 1: all of it has passed under
-        var t = Math.min(Math.max((gone - 0.45) / 0.55, 0), 1);
-        heroWrap.style.transform = t ? 'translate3d(0,' + (t * 48).toFixed(1) + 'px,0)' : '';
-        heroWrap.style.opacity = t ? (1 - t).toFixed(3) : '';
-      }
-    });
-  }
-  measureHero();
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', function () { measureHero(); onScroll(); });
-  window.addEventListener('load', function () { measureHero(); onScroll(); }); // the video's height is known by now
-  onScroll();
 
   // The hero film is the heaviest thing on the site, so the page ships its first frame as a picture and only
   // fetches the film itself when it is wanted: not under reduced motion, and not on a metered or slow connection,
@@ -414,37 +380,6 @@ window.addEventListener('error', function (e) {
     io.observe(watch);
   });
   root.classList.add('motion-ready');
-})();
-
-/* A phrase that can say a little more.
-
-   Opening one makes the sentence longer, which can push the phrase itself onto the next line — out
-   from under the pointer. Left to :hover that closes the note, which puts the phrase back under the
-   pointer, which opens it again: it flickers as fast as the browser can lay the line out. So the open
-   state is latched here instead. Arriving at a phrase opens it, and it stays open until the pointer
-   leaves the whole sentence — a target that does not move out from under you — or another phrase
-   takes over. A phone has no pointer, so a tap does the same and a tap outside shuts it. */
-(function () {
-  var kws = Array.prototype.slice.call(document.querySelectorAll('.kw'));
-  if (!kws.length) return;
-  var shut = function () { kws.forEach(function (k) { k.classList.remove('is-open'); }); };
-  var open = function (kw) { shut(); kw.classList.add('is-open'); };
-
-  kws.forEach(function (kw) {
-    kw.addEventListener('pointerenter', function (e) { if (e.pointerType !== 'touch') open(kw); });
-    kw.addEventListener('click', function (e) {
-      e.stopPropagation();
-      if (kw.classList.contains('is-open')) shut(); else open(kw);
-    });
-    var sentence = kw.parentNode;
-    if (sentence && sentence.nodeType === 1 && !sentence.hasAttribute('data-kw-sentence')) {
-      sentence.setAttribute('data-kw-sentence', '');
-      sentence.addEventListener('pointerleave', shut);
-    }
-  });
-  document.addEventListener('click', function (e) {
-    if (!(e.target.closest && e.target.closest('.kw'))) shut();
-  });
 })();
 
 /* Publish the classic-scrollbar width, so a row that has to know the page's real content width can

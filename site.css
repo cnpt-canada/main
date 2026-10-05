@@ -114,8 +114,9 @@ nav .wm-plain{display:none}
 .hero-video{display:block;width:100%;aspect-ratio:3/1;object-fit:cover;object-position:center 61%;
   background:var(--bg-2);margin-bottom:64px}
 .hero h1{font-size:var(--t-display);font-weight:var(--w-display);letter-spacing:-0.045em;line-height:.93;max-width:16ch}
-.hero h1 em{font-style:normal;color:inherit}
-.hero p{margin-top:30px;font-size:var(--t-lede);color:var(--fg-2);max-width:54ch;line-height:1.5}
+/* :where() so the container does not count: these set the default for a paragraph in here, and a
+   paragraph given a class of its own is meant to beat them */
+:where(.hero) p{margin-top:30px;font-size:var(--t-lede);color:var(--fg-2);max-width:54ch;line-height:1.5}
 .hero-cta{display:flex;flex-wrap:wrap;align-items:center;gap:16px 30px;margin-top:44px}
 .hero-foot{position:relative;margin-top:96px;padding-top:34px}
 .hero-foot::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--hair);background:var(--line);
@@ -130,26 +131,12 @@ nav .wm-plain{display:none}
 .motion .ticker-track{animation:ticker 46s linear infinite}
 @keyframes ticker{to{transform:translate3d(-50%,0,0)}}
 @media(hover:hover){.ticker:hover .ticker-track{animation-play-state:paused}}
-/* a phrase that can say a little more: the qualifier opens out inline and pushes the rest of the
-   sentence along, instead of floating over the line above (0fr -> 1fr animates to its natural width).
-   The device is the 2026 portfolio's; there the phrase carries a filled plate, here it is marked with
-   a rule under it, the way every other way-through on this site is. */
-.kw{text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:4px;
-  text-decoration-color:var(--fg-3);color:var(--fg-2);cursor:default;
-  transition:color .26s ease,text-decoration-color .26s ease}
-.kw-note{display:inline-grid;grid-template-columns:0fr;opacity:0;vertical-align:baseline;
-  transition:grid-template-columns .45s var(--ease-ref),opacity .24s ease}
-.kw-note > span{overflow:hidden;white-space:nowrap;
-  text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:4px;
-  text-decoration-color:inherit}
-/* Opening a note makes the sentence longer, which can carry the phrase onto the next line and out
-   from under the pointer, so :hover cannot hold one open without flickering. site.js latches the
-   state and sets this class instead — for the pointer and for a tap alike. */
-.kw.is-open{color:var(--fg);text-decoration-color:var(--fg)}
-.kw.is-open .kw-note{grid-template-columns:1fr;opacity:1}
-
-/* what the studio does, said once and standing still */
-.hero-what{display:flex;flex-wrap:wrap;gap:10px 44px;list-style:none;color:var(--fg-2)}
+/* What the studio does, said once and standing still. It carries its own label: three phrases under
+   a rule with nothing naming them read as something left behind rather than as a list. */
+.hero-what{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 28px;max-width:none;margin-top:0;color:var(--fg-2)}
+.hero-what-label{flex:none;min-width:148px;color:var(--fg-3)}
+.hero-what > span + span{position:relative}
+.hero-what > span:not(.hero-what-label) + span::before{content:"·";position:absolute;left:-16px;color:var(--fg-3)}
 
 /* section shell */
 .sec{padding:var(--sec-pad) 0}
@@ -185,7 +172,7 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 .value-ic svg{display:block;width:48px;height:48px}
 .value-core .value-ic{color:var(--fg)}
 .value h3{font-size:var(--vt);font-weight:var(--w-title);letter-spacing:-0.028em;line-height:1.1}
-.value-body p{font-size:16px;line-height:1.65;color:var(--fg-3)}
+:where(.value-body) p{font-size:16px;line-height:1.65;color:var(--fg-3)}
 .tags{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:20px;font-size:13px;font-weight:var(--w-title);color:var(--fg-3)}
 .tags span{position:relative}
 .tags span:not(:last-child)::after{content:"·";position:absolute;right:-11px}
@@ -384,7 +371,7 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 .cta{position:relative;isolation:isolate;color:var(--fg);padding:96px 0}
 .cta::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--band)}
 .cta :is(h1,h2){max-width:20ch}
-.cta p{font-size:17px;color:var(--fg-2);max-width:52ch;margin-top:22px;line-height:1.6}
+:where(.cta) p{font-size:17px;color:var(--fg-2);max-width:52ch;margin-top:22px;line-height:1.6}
 .cta-row{display:flex;flex-wrap:wrap;align-items:center;gap:16px 30px;margin-top:40px}
 /* the short way in, under the long one: no account, an address and a line */
 .cta-note{padding-top:30px;border-top:var(--hair) solid var(--ink-border);max-width:560px}
@@ -658,10 +645,10 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
   .theme-btn svg{width:18px;height:18px}
   .hero{padding:0 0 48px}
   .hero-video{aspect-ratio:16/9;margin-bottom:28px}
-  .hero p{margin-top:22px}
+  :where(.hero) p{margin-top:22px}
   .hero-cta{margin-top:32px}
   .hero-foot{margin-top:44px;padding-top:26px}
-  .hero-what{gap:8px 24px}
+  .hero-what{gap:8px 22px}
   .sec-head{gap:12px 16px;margin-bottom:28px}
   .eyebrow + :is(h1,h2){margin-top:20px}
   .acc-list,.track,.focus{margin-top:32px}
@@ -691,7 +678,7 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
   .member-spec > div{grid-template-columns:84px minmax(0,1fr)}
   .lede{font-size:16px;margin-top:18px}
   .cta{padding:64px 0}
-  .cta p{font-size:16px}
+  :where(.cta) p{font-size:16px}
   .cta-row{margin-top:32px}
   .fbottom{margin-top:40px}
 }
@@ -791,16 +778,17 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .sum-list p{margin-top:8px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:62ch}
 /* the three practices, three across. No box is drawn: a card here is its share of the row, the air
    around it and the rule it opens under — the same rule every other block on this page opens under. */
-.pracs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;margin-top:48px;list-style:none}
-.prac{display:flex;flex-direction:column;justify-content:space-between;gap:24px;aspect-ratio:3/4;
-  padding:26px 0 0;border-top:var(--hair) solid var(--line)}
-.prac .acc-lockup{flex-direction:column;align-items:flex-start;gap:18px}
-.prac .acc-mk{height:clamp(56px,12vw,170px)}
+.pracs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:48px;list-style:none;max-width:860px}
+.prac{display:flex;flex-direction:column;justify-content:space-between;gap:20px;aspect-ratio:3/4;
+  padding:20px 0 0;border-top:var(--hair) solid var(--line)}
+/* the mark top left, what the practice is bottom right: the diagonal is what fills the card */
+.prac .acc-lockup{flex-direction:column;align-items:flex-start;gap:12px}
+.prac .acc-mk{height:clamp(34px,4vw,54px)}
 .prac .mk-ai{width:auto} .prac .mk-ux{width:auto} .prac .mk-df{width:auto}
-.prac .acc-wm{width:clamp(92px,15vw,206px)}
-.prac p{padding-top:18px;border-top:var(--hair) solid var(--line);min-height:calc(2.7em + 18px);
-  font-size:clamp(17px,1.6vw,21px);line-height:1.35;letter-spacing:-0.022em;color:var(--fg-2)}
-@media(hover:hover){.prac:hover .acc-mk{transform:scale(1.14)}}
+.prac .acc-wm{width:clamp(62px,5.4vw,74px)}
+.prac p{align-self:flex-end;max-width:13ch;text-align:right;
+  font-size:15px;line-height:1.4;letter-spacing:-0.014em;color:var(--fg-2)}
+@media(hover:hover){.prac:hover .acc-mk{transform:scale(1.1)}}
 
 /* The four stages as one line across the page, changing character at each: dotted while the work is
    being framed, solid once there is a concept, fanned into three strands and gathered again while a
@@ -825,9 +813,8 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .sum-list li{padding:20px 0}
   /* two columns of nothing reads worse than one */
   .sum-list li > div{grid-template-columns:minmax(0,1fr);gap:6px}
-  .pracs{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
-  .prac{aspect-ratio:auto;gap:18px}
-  .prac p{font-size:15px;min-height:0}
+  .pracs{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;max-width:none}
+  .prac{aspect-ratio:auto;gap:16px}
 }
 /* after the block above, or it would not win: two across leaves the third card on a row of its own,
    and four stage labels across a phone break every one of them over three lines */
