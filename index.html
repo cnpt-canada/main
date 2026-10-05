@@ -147,16 +147,24 @@
           </g>
           <path class="tl-entry" d="M900 64H1200"/>
         </g>
-        <!-- the same four stretches again, drawn in only while one is being pointed at -->
+        <!-- The same four stretches again, revealed only while one is being pointed at. Each is
+             clipped by a rectangle that widens across it, so the stroke itself is never touched and
+             the dotted stretch stays dotted as it fills. -->
+        <defs>
+          <clipPath id="tl-sweep-1" clipPathUnits="userSpaceOnUse"><rect x="0" y="0" width="300" height="128"/></clipPath>
+          <clipPath id="tl-sweep-2" clipPathUnits="userSpaceOnUse"><rect x="300" y="0" width="300" height="128"/></clipPath>
+          <clipPath id="tl-sweep-3" clipPathUnits="userSpaceOnUse"><rect x="600" y="0" width="300" height="128"/></clipPath>
+          <clipPath id="tl-sweep-4" clipPathUnits="userSpaceOnUse"><rect x="900" y="0" width="300" height="128"/></clipPath>
+        </defs>
         <g class="tl-lit">
-          <path class="lit-frame" pathLength="1" d="M0 64H300"/>
-          <path class="lit-concept" pathLength="1" d="M300 64H600"/>
-          <g class="lit-system">
-            <path pathLength="1" d="M600 64C670 64 700 8 750 8s80 56 150 56"/>
-            <path pathLength="1" d="M600 64h300"/>
-            <path pathLength="1" d="M600 64c70 0 100 56 150 56s80-56 150-56"/>
+          <path class="lit-frame" clip-path="url(#tl-sweep-1)" d="M0 64H300"/>
+          <path class="lit-concept" clip-path="url(#tl-sweep-2)" d="M300 64H600"/>
+          <g class="lit-system" clip-path="url(#tl-sweep-3)">
+            <path d="M600 64C670 64 700 8 750 8s80 56 150 56"/>
+            <path d="M600 64h300"/>
+            <path d="M600 64c70 0 100 56 150 56s80-56 150-56"/>
           </g>
-          <path class="lit-entry" pathLength="1" d="M900 64H1200"/>
+          <path class="lit-entry" clip-path="url(#tl-sweep-4)" d="M900 64H1200"/>
         </g>
       </svg>
       <ol class="track-stages">

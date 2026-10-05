@@ -802,9 +802,11 @@ nav .nav-sheet .wrap{display:block;height:auto}
 /* qualified: `.track-line path` is a class plus a type and would otherwise win */
 .track-line .tl-frame{stroke:var(--fg-3);stroke-dasharray:2 10;stroke-linecap:round}
 .track-line .tl-entry{stroke:var(--signal);stroke-width:2.5}
-.track-stages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 20px;margin-top:16px;list-style:none;
+/* no column gap: a gap here is a strip that belongs to no stage, and it pushes every area out of
+   line with the stretch it names. The space between labels is padding inside them instead. */
+.track-stages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 0;margin-top:16px;list-style:none;
   font-family:var(--mono);font-size:13px;letter-spacing:.03em;color:var(--fg-3);font-variant-numeric:tabular-nums}
-.track-stages li{position:relative;display:flex;flex-direction:column;gap:3px;min-width:0;
+.track-stages li{position:relative;display:flex;flex-direction:column;gap:3px;min-width:0;padding-right:20px;
   transition:opacity .3s var(--ease-out)}
 /* a stage is its whole column, not just the words at the foot of it */
 .track-stages li::before{content:"";position:absolute;left:0;right:0;bottom:0;top:-600px}
@@ -813,10 +815,14 @@ nav .nav-sheet .wrap{display:block;height:auto}
 /* Pointing at a stage draws its stretch of the line. The lit copy sits exactly over the base one
    with a path length of 1, so a dash of 1 covers the whole of it however long it really is: held off
    the end at offset 1, laid down at offset 0, and the transition between them is the draw. */
-.tl-lit path{fill:none;stroke:var(--fg);stroke-width:2.4;vector-effect:none;
-  stroke-linecap:butt;stroke-dasharray:1;stroke-dashoffset:1;
-  transition:stroke-dashoffset .42s var(--ease-ref)}
+.tl-lit path{fill:none;stroke:var(--fg);stroke-width:2.4;vector-effect:non-scaling-stroke}
+/* the dotted stretch fills in dotted: the same pattern as the line underneath, so the lit dots land
+   exactly on the unlit ones rather than beside them */
+.track-line .lit-frame{stroke-dasharray:2 10;stroke-linecap:round}
 .tl-lit .lit-entry{stroke:var(--signal)}
+/* fill-box, so each rectangle grows from its own left edge wherever it sits along the line */
+.track-line clipPath rect{transform-box:fill-box;transform-origin:0 50%;transform:scaleX(0);
+  transition:transform .42s var(--ease-ref)}
 .tl-base{transition:opacity .3s var(--ease-out)}
 @media(hover:hover){
   /* the run steps back so the lit path can be read over it */
@@ -827,20 +833,18 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .track-line:has(.track-stages li:nth-child(3):hover) .track-stages li:nth-child(n+4){opacity:.4}
 
   /* everything up to and including the stage under the pointer */
-  .track-line:has(.track-stages li:nth-child(1):hover) .lit-frame,
-  .track-line:has(.track-stages li:nth-child(2):hover) :is(.lit-frame,.lit-concept),
-  .track-line:has(.track-stages li:nth-child(3):hover) :is(.lit-frame,.lit-concept,.lit-system path),
-  .track-line:has(.track-stages li:nth-child(4):hover) :is(.lit-frame,.lit-concept,.lit-system path,.lit-entry){
-    stroke-dashoffset:0}
+  .track-line:has(.track-stages li:nth-child(1):hover) #tl-sweep-1 rect,
+  .track-line:has(.track-stages li:nth-child(2):hover) :is(#tl-sweep-1,#tl-sweep-2) rect,
+  .track-line:has(.track-stages li:nth-child(3):hover) :is(#tl-sweep-1,#tl-sweep-2,#tl-sweep-3) rect,
+  .track-line:has(.track-stages li:nth-child(4):hover) :is(#tl-sweep-1,#tl-sweep-2,#tl-sweep-3,#tl-sweep-4) rect{
+    transform:scaleX(1)}
 
   /* and it arrives in the order the work happens in, so the eye follows the path along */
-  .track-line:has(.track-stages li:hover) .lit-concept{transition-delay:.12s}
-  .track-line:has(.track-stages li:hover) .lit-system path{transition-delay:.24s}
-  .track-line:has(.track-stages li:hover) .lit-system path:nth-child(2){transition-delay:.29s}
-  .track-line:has(.track-stages li:hover) .lit-system path:nth-child(3){transition-delay:.34s}
-  .track-line:has(.track-stages li:hover) .lit-entry{transition-delay:.42s}
+  .track-line:has(.track-stages li:hover) #tl-sweep-2 rect{transition-delay:.12s}
+  .track-line:has(.track-stages li:hover) #tl-sweep-3 rect{transition-delay:.24s}
+  .track-line:has(.track-stages li:hover) #tl-sweep-4 rect{transition-delay:.4s}
 }
-@media(prefers-reduced-motion:reduce){.tl-lit path{transition:none}}
+@media(prefers-reduced-motion:reduce){.track-line clipPath rect{transition:none}}
 .sum-note{margin-top:26px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:52ch}
 .sum-more{margin-top:40px}
 .sum-more .btn svg{width:11px;height:11px;margin-left:10px}
