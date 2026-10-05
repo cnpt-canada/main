@@ -149,7 +149,7 @@ button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 
 /* left navigation */
 .side{position:sticky;top:0;z-index:30;display:flex;flex-direction:column;height:100vh;background:var(--panel);border-right:1px solid var(--rule)}
-.side-top{display:flex;align-items:center;gap:10px;height:var(--bar-h);padding:0 12px 0 20px;border-bottom:1px solid var(--rule)}
+.side-top{display:flex;align-items:center;gap:10px;height:var(--bar-h);padding:0 12px 0 20px}
 .side-brand{display:block;color:var(--fg)}
 .side-brand .wm{display:block;width:62px;height:auto;aspect-ratio:140/32}
 /* just the word beside the mark: no pill, no weight */
@@ -169,7 +169,7 @@ button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 .nav-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;margin-left:auto;padding:0 6px;
   border-radius:var(--r-cap);background:var(--fill);color:var(--on-fill);font-size:11px;font-weight:var(--w-title)}
 .nav-count:empty{display:none}
-.side-foot{display:flex;align-items:center;gap:8px;padding:12px 10px 12px 16px;border-top:1px solid var(--rule)}
+.side-foot{display:flex;align-items:center;gap:8px;padding:12px 10px 12px 16px}
 .me{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
 .me-text{display:grid;min-width:0}
 .me-text strong,.me-text span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -180,7 +180,7 @@ button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 /* top bar */
 .stage{min-width:0}
 .bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;height:var(--bar-h);padding:0 32px;
-  background:var(--ink);border-bottom:1px solid var(--rule)}
+  background:var(--ink)}
 .bar-menu{display:none;margin-left:-8px}
 .crumbs{display:flex;align-items:center;gap:9px;min-width:0;font-size:13.5px;font-weight:var(--w-title);color:var(--fg-3);white-space:nowrap}
 .crumbs [aria-current]{color:var(--fg);overflow:hidden;text-overflow:ellipsis}
@@ -286,7 +286,7 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .detail{position:sticky;top:calc(var(--bar-h) + 16px);max-height:calc(100vh - var(--bar-h) - 32px);overflow-y:auto;
   border-left:1px solid var(--rule);padding-left:20px}
 .detail-head{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;height:48px;padding:0 8px 0 0;
-  background:var(--ink);border-bottom:1px solid var(--rule)}
+  background:var(--ink)}
 .detail-id{font-family:var(--mono);font-size:12px;color:var(--fg-3)}
 .detail-body{display:grid;gap:26px;padding:22px 0 26px}
 .detail-title{font-size:20px;font-weight:var(--w-title);letter-spacing:-0.024em;line-height:1.25;overflow-wrap:anywhere}
@@ -314,8 +314,8 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .edit-actions{display:flex;flex-wrap:wrap;gap:8px;padding-top:4px}
 .msg{font-size:14.5px;line-height:1.65;color:var(--fg-2);white-space:pre-wrap;overflow-wrap:anywhere}
 .hint{margin-top:10px;font-size:12.5px;color:var(--fg-3)}
-.kv > div{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:baseline;padding:10px 0;border-top:1px solid var(--rule)}
-.kv > div:first-child{border-top:0;padding-top:0}
+.kv > div{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:baseline;padding:7px 0}
+.kv > div:first-child{padding-top:0}
 .kv dt{font-size:12.5px;font-weight:var(--w-title);color:var(--fg-3)}
 .kv dd{font-size:13.5px;overflow-wrap:anywhere}
 .kv dd a{text-decoration:underline;text-underline-offset:3px}
@@ -337,18 +337,17 @@ th[aria-sort] .th-sort .ic{opacity:1}
 /* a region of the page, not a box drawn on it: no outline, no fill, a rule under its heading */
 .card{background:none}
 .card h2{font-size:15px;font-weight:var(--w-title);letter-spacing:-0.016em}
-.card-head{padding:0 0 13px;border-bottom:1px solid var(--rule)}
+.card-head{padding:0 0 15px}
 .card-body{padding:18px 0 0}
 .card-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px 20px;padding:18px 0}
 .card-row .sub{display:block;margin-top:3px;font-size:13px}
 .card-danger .card-head{border-bottom-color:#5C1B2B}
 .profile-top{display:flex;align-items:center;gap:16px;margin-bottom:20px}
 .profile-top strong{font-size:17px;font-weight:var(--w-title);letter-spacing:-0.02em}
-.card .kv > div:first-child{padding-top:0;border-top:0}
 /* profile: account on the left, the client's project at a glance on the right */
 .card-head-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .card-head-row a{font-size:12.5px;font-weight:var(--w-title);color:var(--fg-2);text-decoration:underline;text-underline-offset:3px}
-.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid var(--rule)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
 .stat{display:grid;gap:4px;padding:16px 20px 16px 0}
 .stat + .stat{border-left:1px solid var(--rule)}
 .stat strong{font-size:28px;font-weight:var(--w-title);letter-spacing:-0.03em;line-height:1;font-variant-numeric:tabular-nums}
@@ -395,9 +394,8 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .thread{display:grid;gap:14px}
 .notes{display:grid;gap:2px;list-style:none;margin:0;padding:0}
 /* the day a run of notes belongs to, announced once, on the rule that divides them */
-.notes-day{display:flex;align-items:center;gap:12px;margin:18px 0 10px;
+.notes-day{display:flex;align-items:center;justify-content:center;gap:12px;margin:26px 0 14px;
   font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3)}
-.notes-day::before,.notes-day::after{content:"";flex:1;height:1px;background:var(--rule)}
 .notes-day:first-child{margin-top:0}
 .note{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;padding:12px;border-radius:var(--r-lg)}
 /* a note from the same person on the same day keeps the column but not the name */
@@ -495,8 +493,8 @@ th[aria-sort] .th-sort .ic{opacity:1}
 /* the meetings themselves, which is what the page is for */
 .bookings{list-style:none;margin:0;padding:0}
 .booking{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px 16px;
-  padding:16px 0;border-top:1px solid var(--rule)}
-.booking:first-child{border-top:0;padding-top:0}
+  padding:14px 0}
+.booking:first-child{padding-top:0}
 .booking-main{flex:1 1 320px;min-width:0}
 .booking-when{font-size:14.5px;font-weight:var(--w-title);letter-spacing:-0.014em}
 .booking-soon{margin-left:10px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3)}
@@ -506,7 +504,7 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .booking-acts{display:flex;gap:6px}
 .booking.is-past{opacity:.5}
 /* the ones already behind you, folded away rather than taking the same room as the ones ahead */
-.been{margin-top:22px;border-top:1px solid var(--rule);padding-top:14px}
+.been{margin-top:26px}
 .been summary{cursor:pointer;font-size:13px;font-weight:var(--w-title);color:var(--fg-3);list-style:none}
 .been summary::-webkit-details-marker{display:none}
 .been summary::before{content:"\203A";display:inline-block;margin-right:8px;transition:transform .2s ease}
@@ -559,7 +557,7 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .focal-val{margin-left:auto;color:var(--fg);font-variant-numeric:tabular-nums}
 .focal-legend-detailed{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 20px}
 .focal-legend-detailed li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:start;align-content:start;row-gap:6px;
-  padding-top:12px;border-top:1px solid var(--rule)}
+  padding-top:12px}
 .focal-legend-detailed .focal-dot{margin-top:4px}
 .focal-legend-detailed .focal-name{font-size:14px;font-weight:var(--w-title);color:var(--fg);white-space:normal}
 .focal-legend-detailed .focal-val{font-size:15px}
@@ -597,8 +595,6 @@ th[aria-sort] .th-sort .ic{opacity:1}
 .as-banner .btn{margin-left:auto}
 /* picking a member to view as, on the admin's own profile */
 .as-list{list-style:none;margin:10px 0 0;padding:0;max-height:320px;overflow-y:auto}
-.as-list > li{border-top:1px solid var(--rule)}
-.as-list > li:first-child{border-top:0}
 .as-list .sub{padding:12px 2px}
 .as-item{display:flex;align-items:center;gap:12px;min-width:0;padding:10px 6px;border-radius:var(--r-lg);
   color:inherit;transition:background-color .15s}
@@ -637,7 +633,7 @@ th[aria-sort] .th-sort .ic{opacity:1}
 
 /* ---------- onboarding (/onboarding) ---------- */
 .onb{font-size:15px;line-height:1.55}
-.onb-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;height:64px;padding:0 32px;background:var(--ink);border-bottom:1px solid var(--rule)}
+.onb-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;height:64px;padding:0 32px;background:var(--ink)}
 .onb-bar .wm{display:block;width:62px;aspect-ratio:140/32;color:var(--fg)}
 .onb-progress{display:flex;gap:6px;margin:0 auto;list-style:none}
 .onb-progress li{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 14px 0 8px;border-radius:var(--r-sm);
@@ -668,7 +664,7 @@ a.reading{transition:border-color .2s ease}
 a.reading:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 
 /* the hand-off at the end of the welcome flow: what is worth doing next, without making it a step */
-.onb-next{max-width:56ch;margin-top:clamp(28px,5vh,44px);padding-top:clamp(22px,4vh,32px);border-top:1px solid var(--rule)}
+.onb-next{max-width:56ch;margin-top:clamp(28px,5vh,44px);padding-top:clamp(22px,4vh,32px)}
 .onb-next h2{font-size:15px;font-weight:var(--w-title);letter-spacing:-0.018em;color:var(--fg)}
 .onb-next p{margin:9px 0 16px;font-size:14px;line-height:1.65;color:var(--fg-3)}
 .onb-next .link-out{display:inline-flex;align-items:center;gap:9px;font-size:14px;font-weight:var(--w-title);color:var(--fg)}
@@ -695,15 +691,14 @@ a.reading:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 .doc-answer{font-size:14px;line-height:1.65;color:var(--fg-2);white-space:pre-wrap;overflow-wrap:anywhere}
 .doc-answer.is-blank{font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--fg-3)}
 .doc-send{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;
-  padding:18px 0 0;border-top:1px solid var(--rule)}
+  padding:18px 0 0}
 .doc-send .sub{max-width:52ch;margin:0}
 .doc-progress{display:block}
 .doc-bar{display:block;height:4px;margin:11px 0 8px;border-radius:var(--r-sm);background:var(--sel);overflow:hidden}
 .doc-bar span{display:block;height:100%;background:var(--fg);transition:width .35s var(--ease-out,ease)}
 .doc-index ol{list-style:none;margin:0;padding:0}
 .doc-index li{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
-  padding:9px 20px;border-bottom:1px solid var(--rule);font-size:13px}
-.doc-index li:last-child{border-bottom:0}
+  padding:6px 20px;font-size:13px}
 .doc-index a{display:flex;align-items:baseline;gap:10px;color:var(--fg-2)}
 .doc-index li.is-done a{color:var(--fg)}
 .doc-index-i{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--fg-3)}
@@ -715,8 +710,7 @@ a.reading:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 
 .waiting{list-style:none;margin:0;padding:0}
 .waiting li{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
-  padding:13px 20px;border-bottom:1px solid var(--rule);font-size:13.5px;line-height:1.5;color:var(--fg-2)}
-.waiting li:last-child{border-bottom:0}
+  padding:10px 20px;font-size:13.5px;line-height:1.5;color:var(--fg-2)}
 .waiting .btn{flex:none;margin-top:-2px}
 .rail-strong{font-size:15px;font-weight:var(--w-title);letter-spacing:-0.02em;line-height:1.35;color:var(--fg)}
 .rail-meeting{display:grid;gap:8px;justify-items:start}
@@ -771,8 +765,7 @@ a.reading:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 .consultant:has(input:checked) .consultant-check{background:var(--fill);color:var(--on-fill);box-shadow:none}
 .consultant:has(input:focus-visible){outline:2px solid var(--fg);outline-offset:3px}
 @media(hover:hover){.consultant:not(:has(input:checked)):hover{box-shadow:inset 0 0 0 1px var(--fg)}}
-.onb-summary > div{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:16px;align-items:start;padding:20px 0;border-top:1px solid var(--rule)}
-.onb-summary > div:last-child{border-bottom:1px solid var(--rule)}
+.onb-summary > div{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:16px;align-items:start;padding:16px 0}
 .onb-summary dt{font-size:13px;font-weight:var(--w-title);color:var(--fg-3);padding-top:3px}
 .onb-summary dd{display:grid;gap:10px;justify-items:start;min-width:0}
 .onb-summary .msg{font-size:15px}

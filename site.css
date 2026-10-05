@@ -59,7 +59,7 @@ a{color:inherit;text-decoration:none}
 .dark{background:var(--bg);color:var(--fg)}
 
 /* nav */
-nav{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:var(--hair) solid var(--line)}
+nav{position:sticky;top:0;z-index:20;background:var(--bg)}
 /* three columns: the wordmark, the section links centred on the page, then Sign in and the button */
 nav .wrap{height:var(--nav-h);display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:24px}
 .nav-home{grid-column:1;justify-self:start}
@@ -118,9 +118,7 @@ nav .wm-plain{display:none}
    paragraph given a class of its own is meant to beat them */
 :where(.hero) p{margin-top:30px;font-size:var(--t-lede);color:var(--fg-2);max-width:54ch;line-height:1.5}
 .hero-cta{display:flex;flex-wrap:wrap;align-items:center;gap:16px 30px;margin-top:44px}
-.hero-foot{position:relative;margin-top:96px;padding-top:34px}
-.hero-foot::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--hair);background:var(--line);
-  transform-origin:left;transition:transform 1.4s var(--ease-io) var(--d,0ms)}
+.hero-foot{margin-top:84px}
 /* the three things we do run past as a band: one set, then the same set again, so translating the
    track by half its width returns it exactly where it started. Each line carries its own spacing,
    so half the track is exactly the first set. */
@@ -156,7 +154,7 @@ nav .wm-plain{display:none}
    section covers, together on one line. It was a two-column grid, which left that line stranded in
    the middle of the page above a heading that began again at the left margin. */
 .sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;
-  margin-bottom:40px;padding-top:18px;border-top:var(--hair) solid var(--line)}
+  margin-bottom:40px}
 .sec-head p{font-size:var(--t-body);color:var(--fg-3);max-width:58ch;font-weight:var(--w-body)}
 /* A section heading. On an inner page the first one is the page's own h1, which is a matter of
    what the page means rather than how big it is, so both are set the same. */
@@ -179,8 +177,6 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 
 /* practices — accordion rows */
 .acc-list{margin-top:52px}
-.acc{border-top:var(--hair) solid var(--line)}
-.acc:last-of-type{border-bottom:var(--hair) solid var(--line)}
 .acc-row{
   width:100%;background:none;border:0;cursor:pointer;text-align:left;
   font-family:inherit;color:inherit;padding:34px 0;
@@ -256,7 +252,7 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 /* what is in the package: one ruled line each, so it reads as a spec sheet rather than a run of chips.
    The slack sits above the list, so the spec sheets line up across the row however long the copy runs. */
 .pack-in{list-style:none;margin-top:auto}
-.pack-in li{padding:10px 0;border-top:var(--hair) solid var(--line);font-size:14px;font-weight:var(--w-title);color:var(--fg-2)}
+.pack-in li{padding:7px 0;font-size:14px;font-weight:var(--w-title);color:var(--fg-2)}
 /* lengths sit at the foot of each column, so they share one line across the row */
 .pack-len{padding-top:20px;font-size:12.5px;font-weight:var(--w-title);color:var(--fg-3)}
 .pack-len b{margin-right:9px;font-weight:var(--w-title);color:var(--fg-3)}
@@ -269,9 +265,8 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 @media(max-width:900px){.packs{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.packs{grid-template-columns:minmax(0,1fr)}}
 
-/* hairline used by value rows, process steps, deliverables, focus items and team rows — drawn in by the "rule" reveal */
-.value::before,.step::before,.dl::before,.focus-item::before,.member::before,.pack::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--hair);background:var(--line);
-  transform-origin:left;transition:transform 1.2s var(--ease-io) var(--d,0ms),background-color .5s var(--ease-out)}
+/* These rows used to open on a hairline. They are separated by the space around them now, so the
+   "rule" reveal has nothing to draw and only raises their contents. */
 
 /* process — a timeline: icon dots strung on one hairline */
 .track{display:grid;grid-template-columns:repeat(4,1fr);margin-top:56px}
@@ -290,7 +285,6 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 
 /* entry — deliverables read as a ruled spec sheet */
 .entry{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:72px;align-items:start}
-.deliver{border-bottom:var(--hair) solid var(--line)}
 .dl{position:relative;display:grid;grid-template-columns:150px 1fr;gap:24px;align-items:baseline;padding:20px 0}
 .dl b{font-size:15px;font-weight:var(--w-title);letter-spacing:-0.012em}
 .dl span{font-size:15px;color:var(--fg-3);line-height:1.5}
@@ -328,7 +322,7 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 .member-role span{white-space:nowrap}
 /* spec sheet: label | value rows */
 .member-spec > div{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px;align-items:baseline;
-  padding:10px 0;border-top:var(--hair) solid var(--line)}
+  padding:7px 0}
 .member-spec > div:last-child{padding-bottom:0}
 .member-spec dt{font-size:11.5px;font-weight:var(--w-title);color:var(--fg-3)}
 .member-spec dd{font-size:13px;line-height:1.5;color:var(--fg-2)}
@@ -374,7 +368,7 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 :where(.cta) p{font-size:17px;color:var(--fg-2);max-width:52ch;margin-top:22px;line-height:1.6}
 .cta-row{display:flex;flex-wrap:wrap;align-items:center;gap:16px 30px;margin-top:40px}
 /* the short way in, under the long one: no account, an address and a line */
-.cta-note{padding-top:30px;border-top:var(--hair) solid var(--ink-border);max-width:560px}
+.cta-note{padding-top:8px;max-width:560px}
 .cta-note-head{font-size:15px;font-weight:var(--w-title);letter-spacing:-0.014em;color:var(--fg);margin:0 0 14px}
 .cta-note-head span{font-weight:var(--w-body);color:var(--fg-3)}
 .cta-note .form-status{margin-top:10px}
@@ -433,7 +427,7 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
 .fcol h4{font-size:13px;font-weight:var(--w-title);color:var(--fg);margin-bottom:16px}
 .fcol a,.fcol div{display:block;font-size:14px;color:var(--fg-3);margin-bottom:9px}
 .fcol a:hover{color:var(--fg)}
-.fbottom{margin-top:64px;padding-top:26px;border-top:var(--hair) solid var(--line);display:flex;
+.fbottom{margin-top:64px;padding-top:26px;display:flex;
   justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--fg-3);font-weight:var(--w-title)}
 
 /* motion — entrance reveals
@@ -709,7 +703,7 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
 /* a page built from several sections keeps that section's title at the top while you are inside it,
    so the page stays divided as it scrolls */
 .page-sections .sec-head{position:sticky;top:var(--nav-h);z-index:6;gap:8px 20px;
-  margin-bottom:40px;padding:14px 0 15px;border-top:0;background:var(--bg);box-shadow:0 1px 0 var(--line)}
+  margin-bottom:40px;padding:14px 0 15px;border-top:0;background:var(--bg)}
 
 /* phone menu: the section links move into a sheet under the nav */
 .nav-menu{display:none;position:relative;width:40px;height:40px;border:0;border-radius:var(--r-sm);background:none;cursor:pointer;
@@ -719,7 +713,7 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
 .nav-menu span:last-child{top:22.5px}
 .nav-menu[aria-expanded="true"] span:first-child{top:19px;transform:rotate(45deg)}
 .nav-menu[aria-expanded="true"] span:last-child{top:19px;transform:rotate(-45deg)}
-.nav-sheet{position:absolute;left:0;right:0;top:100%;background:var(--bg);border-bottom:var(--hair) solid var(--line);padding:12px 0 28px}
+.nav-sheet{position:absolute;left:0;right:0;top:100%;background:var(--bg);padding:12px 0 28px}
 nav .nav-sheet .wrap{display:block;height:auto}
 .nav-sheet a{display:flex;align-items:center;gap:14px;padding:12px 0;font-size:26px;font-weight:400;letter-spacing:-0.028em;color:var(--fg-3)}
 .nav-sheet a[aria-current="page"],.nav-sheet a:hover{color:var(--fg)}
@@ -763,8 +757,8 @@ nav .nav-sheet .wrap{display:block;height:auto}
 @keyframes nic-draw{from{stroke-dashoffset:1.01}}
 
 /* home: each page gets a section of its own, with the numbered list of what is on it */
-.sum-list{list-style:none;margin-top:48px;border-top:var(--hair) solid var(--line)}
-.sum-list li{padding:26px 0;border-bottom:var(--hair) solid var(--line)}
+.sum-list{list-style:none;margin-top:40px}
+.sum-list li{padding:18px 0}
 /* title on the left, what it is on the right: the rule already runs the width of the page, so the
    row may as well use it */
 .sum-list li > div{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:10px 44px;align-items:baseline}
@@ -780,7 +774,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
    around it and the rule it opens under — the same rule every other block on this page opens under. */
 .pracs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:48px;list-style:none}
 .prac{display:flex;flex-direction:column;justify-content:space-between;gap:20px;aspect-ratio:16/10;
-  padding:20px 0 0;border-top:var(--hair) solid var(--line)}
+  padding:0}
 /* the mark top left, what the practice is bottom right: the diagonal is what fills the card */
 .prac .acc-lockup{flex-direction:column;align-items:flex-start;gap:14px}
 .prac .acc-mk{height:clamp(38px,5.4vw,76px)}
