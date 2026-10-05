@@ -778,16 +778,16 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .sum-list p{margin-top:8px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:62ch}
 /* the three practices, three across. No box is drawn: a card here is its share of the row, the air
    around it and the rule it opens under — the same rule every other block on this page opens under. */
-.pracs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:48px;list-style:none;max-width:860px}
-.prac{display:flex;flex-direction:column;justify-content:space-between;gap:20px;aspect-ratio:3/4;
+.pracs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:48px;list-style:none}
+.prac{display:flex;flex-direction:column;justify-content:space-between;gap:20px;aspect-ratio:16/10;
   padding:20px 0 0;border-top:var(--hair) solid var(--line)}
 /* the mark top left, what the practice is bottom right: the diagonal is what fills the card */
-.prac .acc-lockup{flex-direction:column;align-items:flex-start;gap:12px}
-.prac .acc-mk{height:clamp(34px,4vw,54px)}
+.prac .acc-lockup{flex-direction:column;align-items:flex-start;gap:14px}
+.prac .acc-mk{height:clamp(38px,5.4vw,76px)}
 .prac .mk-ai{width:auto} .prac .mk-ux{width:auto} .prac .mk-df{width:auto}
-.prac .acc-wm{width:clamp(62px,5.4vw,74px)}
-.prac p{align-self:flex-end;max-width:13ch;text-align:right;
-  font-size:15px;line-height:1.4;letter-spacing:-0.014em;color:var(--fg-2)}
+.prac .acc-wm{width:clamp(68px,7.4vw,104px)}
+.prac p{align-self:flex-end;max-width:16ch;text-align:right;
+  font-size:clamp(15px,1.3vw,17px);line-height:1.4;letter-spacing:-0.016em;color:var(--fg-2)}
 @media(hover:hover){.prac:hover .acc-mk{transform:scale(1.1)}}
 
 /* The four stages as one line across the page, changing character at each: dotted while the work is
@@ -803,8 +803,30 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .track-line .tl-entry{stroke:var(--signal);stroke-width:2.5}
 .track-stages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 20px;margin-top:16px;list-style:none;
   font-family:var(--mono);font-size:13px;letter-spacing:.03em;color:var(--fg-3);font-variant-numeric:tabular-nums}
-.track-stages li{display:flex;flex-direction:column;gap:3px;min-width:0}
+.track-stages li{display:flex;flex-direction:column;gap:3px;min-width:0;transition:opacity .3s var(--ease-out)}
 .track-stages b{font-weight:var(--w-title);letter-spacing:-0.02em;color:var(--fg)}
+
+/* Pointing at a stage draws its stretch of the line. The lit copy sits exactly over the base one
+   with a path length of 1, so a dash of 1 covers the whole of it however long it really is: held off
+   the end at offset 1, laid down at offset 0, and the transition between them is the draw. */
+.tl-lit path{fill:none;stroke:var(--fg);stroke-width:2.4;vector-effect:none;
+  stroke-linecap:butt;stroke-dasharray:1;stroke-dashoffset:1;
+  transition:stroke-dashoffset .55s var(--ease-ref)}
+.tl-lit .lit-entry{stroke:var(--signal)}
+.tl-base{transition:opacity .3s var(--ease-out)}
+@media(hover:hover){
+  /* the stages not being read step back rather than go out, so the run stays readable */
+  .track-line:has(.track-stages li:hover) .tl-base{opacity:.3}
+  .track-line:has(.track-stages li:hover) .track-stages li:not(:hover){opacity:.45}
+  .track-line:has(.track-stages li:nth-child(1):hover) .lit-frame,
+  .track-line:has(.track-stages li:nth-child(2):hover) .lit-concept,
+  .track-line:has(.track-stages li:nth-child(3):hover) .lit-system path,
+  .track-line:has(.track-stages li:nth-child(4):hover) .lit-entry{stroke-dashoffset:0}
+  /* the three strands of the fan arrive one after another, outside in */
+  .track-line:has(.track-stages li:nth-child(3):hover) .lit-system path:nth-child(2){transition-delay:.08s}
+  .track-line:has(.track-stages li:nth-child(3):hover) .lit-system path:nth-child(3){transition-delay:.16s}
+}
+@media(prefers-reduced-motion:reduce){.tl-lit path{transition:none}}
 .sum-note{margin-top:26px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:52ch}
 .sum-more{margin-top:40px}
 .sum-more .btn svg{width:11px;height:11px;margin-left:10px}

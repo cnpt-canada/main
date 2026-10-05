@@ -137,14 +137,27 @@
          below line up with the segment they name. -->
     <div class="track-line">
       <svg viewBox="0 0 1200 128" aria-hidden="true">
-        <path class="tl-frame" d="M0 64H300"/>
-        <path class="tl-concept" d="M300 64H600"/>
-        <g class="tl-system">
-          <path d="M600 64C670 64 700 8 750 8s80 56 150 56"/>
-          <path d="M600 64h300"/>
-          <path d="M600 64c70 0 100 56 150 56s80-56 150-56"/>
+        <g class="tl-base">
+          <path class="tl-frame" d="M0 64H300"/>
+          <path class="tl-concept" d="M300 64H600"/>
+          <g class="tl-system">
+            <path d="M600 64C670 64 700 8 750 8s80 56 150 56"/>
+            <path d="M600 64h300"/>
+            <path d="M600 64c70 0 100 56 150 56s80-56 150-56"/>
+          </g>
+          <path class="tl-entry" d="M900 64H1200"/>
         </g>
-        <path class="tl-entry" d="M900 64H1200"/>
+        <!-- the same four stretches again, drawn in only while one is being pointed at -->
+        <g class="tl-lit">
+          <path class="lit-frame" pathLength="1" d="M0 64H300"/>
+          <path class="lit-concept" pathLength="1" d="M300 64H600"/>
+          <g class="lit-system">
+            <path pathLength="1" d="M600 64C670 64 700 8 750 8s80 56 150 56"/>
+            <path pathLength="1" d="M600 64h300"/>
+            <path pathLength="1" d="M600 64c70 0 100 56 150 56s80-56 150-56"/>
+          </g>
+          <path class="lit-entry" pathLength="1" d="M900 64H1200"/>
+        </g>
       </svg>
       <ol class="track-stages">
         <li><b>Frame</b><span>2–3 weeks</span></li>
