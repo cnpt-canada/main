@@ -334,6 +334,8 @@ window.addEventListener('error', function (e) {
     ['.sec h1, .sec h2, .cta h1, .cta h2', 'split'],
     ['.sec-head p, .prac-note, .lede, .cta-grid > div > p, .cta-row, .cta-form, .works-note', 'up'],
     ['.acc, .fgrid > *, .work, .sum-list li', 'up'],
+    ['.track-line svg', 'clip'],
+    ['.track-stages li', 'up', 320, 110],
     ['.value, .step, .dl, .focus-item, .member, .pack', 'rule'],
     ['.cta', 'cta'],
     ['.fbottom', 'fade']

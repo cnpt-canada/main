@@ -792,7 +792,10 @@ nav .nav-sheet .wrap{display:block;height:auto}
    being framed, solid once there is a concept, fanned into three strands and gathered again while a
    system is built, and in the brand colour at entry. The line is stretched to the width of the page,
    so the stroke is told not to stretch with it. */
-.track-line{margin-top:52px}
+/* overflow is what bounds each stage's hover area: the zones reach far up and are cut to this box */
+.track-line{position:relative;margin-top:52px;overflow:hidden}
+/* the line is the width of the page, so it is given longer to arrive than a section label is */
+.motion .track-line svg[data-rv="clip"]{transition-duration:1.5s}
 /* the box scales whole, so the fan is always the shape it was drawn */
 .track-line svg{display:block;width:100%;height:auto}
 .track-line path{fill:none;stroke:var(--fg-2);stroke-width:2;vector-effect:non-scaling-stroke}
@@ -801,7 +804,10 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .track-line .tl-entry{stroke:var(--signal);stroke-width:2.5}
 .track-stages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 20px;margin-top:16px;list-style:none;
   font-family:var(--mono);font-size:13px;letter-spacing:.03em;color:var(--fg-3);font-variant-numeric:tabular-nums}
-.track-stages li{display:flex;flex-direction:column;gap:3px;min-width:0;transition:opacity .3s var(--ease-out)}
+.track-stages li{position:relative;display:flex;flex-direction:column;gap:3px;min-width:0;
+  transition:opacity .3s var(--ease-out)}
+/* a stage is its whole column, not just the words at the foot of it */
+.track-stages li::before{content:"";position:absolute;left:0;right:0;bottom:0;top:-600px}
 .track-stages b{font-weight:var(--w-title);letter-spacing:-0.02em;color:var(--fg)}
 
 /* Pointing at a stage draws its stretch of the line. The lit copy sits exactly over the base one
@@ -809,20 +815,30 @@ nav .nav-sheet .wrap{display:block;height:auto}
    the end at offset 1, laid down at offset 0, and the transition between them is the draw. */
 .tl-lit path{fill:none;stroke:var(--fg);stroke-width:2.4;vector-effect:none;
   stroke-linecap:butt;stroke-dasharray:1;stroke-dashoffset:1;
-  transition:stroke-dashoffset .55s var(--ease-ref)}
+  transition:stroke-dashoffset .42s var(--ease-ref)}
 .tl-lit .lit-entry{stroke:var(--signal)}
 .tl-base{transition:opacity .3s var(--ease-out)}
 @media(hover:hover){
-  /* the stages not being read step back rather than go out, so the run stays readable */
+  /* the run steps back so the lit path can be read over it */
   .track-line:has(.track-stages li:hover) .tl-base{opacity:.3}
-  .track-line:has(.track-stages li:hover) .track-stages li:not(:hover){opacity:.45}
+  /* the stages after the one being read step back; the ones leading up to it stay */
+  .track-line:has(.track-stages li:nth-child(1):hover) .track-stages li:nth-child(n+2),
+  .track-line:has(.track-stages li:nth-child(2):hover) .track-stages li:nth-child(n+3),
+  .track-line:has(.track-stages li:nth-child(3):hover) .track-stages li:nth-child(n+4){opacity:.4}
+
+  /* everything up to and including the stage under the pointer */
   .track-line:has(.track-stages li:nth-child(1):hover) .lit-frame,
-  .track-line:has(.track-stages li:nth-child(2):hover) .lit-concept,
-  .track-line:has(.track-stages li:nth-child(3):hover) .lit-system path,
-  .track-line:has(.track-stages li:nth-child(4):hover) .lit-entry{stroke-dashoffset:0}
-  /* the three strands of the fan arrive one after another, outside in */
-  .track-line:has(.track-stages li:nth-child(3):hover) .lit-system path:nth-child(2){transition-delay:.08s}
-  .track-line:has(.track-stages li:nth-child(3):hover) .lit-system path:nth-child(3){transition-delay:.16s}
+  .track-line:has(.track-stages li:nth-child(2):hover) :is(.lit-frame,.lit-concept),
+  .track-line:has(.track-stages li:nth-child(3):hover) :is(.lit-frame,.lit-concept,.lit-system path),
+  .track-line:has(.track-stages li:nth-child(4):hover) :is(.lit-frame,.lit-concept,.lit-system path,.lit-entry){
+    stroke-dashoffset:0}
+
+  /* and it arrives in the order the work happens in, so the eye follows the path along */
+  .track-line:has(.track-stages li:hover) .lit-concept{transition-delay:.12s}
+  .track-line:has(.track-stages li:hover) .lit-system path{transition-delay:.24s}
+  .track-line:has(.track-stages li:hover) .lit-system path:nth-child(2){transition-delay:.29s}
+  .track-line:has(.track-stages li:hover) .lit-system path:nth-child(3){transition-delay:.34s}
+  .track-line:has(.track-stages li:hover) .lit-entry{transition-delay:.42s}
 }
 @media(prefers-reduced-motion:reduce){.tl-lit path{transition:none}}
 .sum-note{margin-top:26px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:52ch}
