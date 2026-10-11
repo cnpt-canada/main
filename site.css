@@ -759,9 +759,13 @@ nav .nav-sheet .wrap{display:block;height:auto}
 /* home: each page gets a section of its own, with the numbered list of what is on it */
 .sum-list{list-style:none;margin-top:40px}
 .sum-list li{padding:18px 0}
-/* title on the left, what it is on the right: the rule already runs the width of the page, so the
-   row may as well use it */
-.sum-list li > div{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:10px 44px;align-items:baseline}
+/* A row with exactly two things in it -- a title and one line about it -- reads across the width.
+   A row with more in it than that reads down, or its parts end up scattered between two columns. */
+.sum-list li > div{display:grid;grid-template-columns:minmax(0,1fr);gap:10px 44px;align-items:baseline}
+@media(min-width:761px){
+  .sum-list li > div:has(> :nth-child(2)):not(:has(> :nth-child(3))){
+    grid-template-columns:minmax(0,7fr) minmax(0,5fr)}
+}
 .sum-list li > div > p{margin-top:0}
 .sum-list h3{font-size:clamp(22px,2.2vw,28px);font-weight:var(--w-title);letter-spacing:-0.032em;line-height:1.05}
 /* the three practices sign the home list the same way they sign their own page */
@@ -851,8 +855,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 @media(hover:hover){.sum-more .btn:hover{background:var(--fill);border-color:var(--fg);color:var(--on-fill)}}
 @media(max-width:760px){
   .sum-list li{padding:20px 0}
-  /* two columns of nothing reads worse than one */
-  .sum-list li > div{grid-template-columns:minmax(0,1fr);gap:6px}
+  .sum-list li > div{gap:6px}
   .pracs{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;max-width:none}
   .prac{aspect-ratio:auto;gap:16px}
 }
@@ -866,6 +869,9 @@ nav .nav-sheet .wrap{display:block;height:auto}
 /* the way out to a client's own site, sitting under the row it belongs to. Qualified, because
    `.sum-list p` is a class plus a type and would otherwise keep its own 8px. */
 .sum-list .work-link{margin-top:18px}
+/* the client's own mark over the row that is about them */
+.work-mark{margin-bottom:14px}
+.work-mark svg{display:block;height:30px;width:auto;color:var(--fg-2)}
 
 /* the marks of the clients so far. It is the hero band again, so it rides on .ticker and adds only
    what differs. Each mark carries its own trailing space instead of the row using `gap`: with `gap`
@@ -880,6 +886,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .logos svg{display:block;flex:none;width:auto;margin-right:clamp(64px,9vw,130px);
   color:var(--fg-3);transition:color .45s var(--ease-out)}
 .logo-mkpk{height:24px}
+.logo-vayence{height:26px}
 /* a square mark reads far smaller than a wordmark set to the same height — the wordmark is six
    times as wide — so the slab is given a third more height to sit level with it */
 .logo-kh{height:32px}
@@ -887,6 +894,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 @media(max-width:620px){
   .logos{margin-top:38px}
   .logo-mkpk{height:19px}
+  .logo-vayence{height:21px}
   .logo-kh{height:25px}
 }
 
