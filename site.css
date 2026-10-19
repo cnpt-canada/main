@@ -13,6 +13,8 @@
   /* one geometry, and it is generous: the references round a card hard enough that the corner is
      part of the look rather than an apology for a rectangle */
   --r-card:20px; --r-sm:8px; --r-cap:999px;
+  /* the inset from a card's edge to the type on it, shared by every card that carries type */
+  --card-pad:clamp(22px,3vw,40px);
   /* the bar across the top is a bar: enough of a corner to sit on the paper, not a pill */
   --r-nav:14px;
   --font:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
@@ -92,19 +94,13 @@ nav .wm-plain{display:none}
 .theme-btn:focus-visible{outline:2px solid var(--fg);outline-offset:2px;border-radius:var(--r-cap)}
 @media(hover:hover){.theme-btn:hover{color:var(--fg)}}
 .navlinks a:not(.btn):hover{color:var(--fg)}
-/* One action component, three roles, the same three everywhere including the signed-in side:
-   .btn-signal is the brand pink and is reserved for Start a project, so the thing that begins a
-   project looks like one thing on every page; .btn-primary is the filled action for everything else;
-   .btn-ghost is the hairline outline. The outline is an inset shadow rather than a border, so a
+/* One action component,three roles,the same three everywhere including the signed-in side:
+   .btn-signal is the brand pink and is reserved for Start a project,so a
    ghost and a filled button measure exactly the same. */
 .btn{display:inline-flex;align-items:center;justify-content:center;height:var(--btn-h,44px);
   padding:0 var(--btn-x,22px);border-radius:var(--r-cap);
   font-size:var(--btn-t,14px);font-weight:var(--w-title);letter-spacing:-0.014em;flex:none}
-.btn-signal{background:var(--fill);color:var(--on-fill);--btn-fill:var(--signal)}
-.btn-primary{background:var(--fill);color:var(--on-fill)}
-.btn-ghost{box-shadow:inset 0 0 0 var(--hair) var(--ink-border);color:var(--fg)}
-.btn-sm{--btn-h:36px;--btn-x:15px;--btn-t:13px}
-.btn-lg{--btn-h:56px;--btn-x:28px;--btn-t:15px}
+.btn-signal{background:var(--fill);color:var(--on-fill);--btn-fill:var(--signal)}.btn-lg{--btn-h:56px;--btn-x:28px;--btn-t:15px}
 /* a way through is a line of type: the filled box is kept for an action, not for a link */
 .link-out{display:inline-flex;align-items:center;gap:10px;font-size:15px;font-weight:var(--w-title);letter-spacing:-0.014em;color:var(--fg)}
 .link-out > span{position:relative;text-decoration:none}
@@ -121,10 +117,6 @@ nav .wm-plain{display:none}
 .slab{position:relative;display:flex;flex-direction:column;justify-content:space-between;
   border-radius:var(--r-card);background:var(--bg-3);overflow:hidden;isolation:isolate}
 .slab-dark{background:var(--slab);color:var(--on-slab)}
-.slab-dark .slab-note{color:var(--on-slab-2)}
-.slab-pad{padding:clamp(24px,3vw,44px)}
-.slab-note{font-size:var(--t-meta);letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3)}
-
 /* A paragraph that begins in ink and finishes in grey: the claim, then the explanation. */
 .split{font-size:var(--t-lede);font-weight:var(--w-body);line-height:1.34;letter-spacing:-0.02em;color:var(--fg-3)}
 .split b{font-weight:inherit;color:var(--fg)}
@@ -147,43 +139,24 @@ nav .wm-plain{display:none}
   .slab-dark .go:hover{background:var(--on-slab);color:var(--slab)}
 }
 
-/* A row that counts itself: the number in a ring, the label and the line it introduces. */
-.steps-num{list-style:none;display:grid}
-.steps-num > li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:clamp(20px,5vw,72px);
-  align-items:start;padding:clamp(20px,2.4vw,30px) 0;border-top:var(--hair) solid var(--line)}
-.num{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;flex:none;
-  border-radius:var(--r-cap);box-shadow:inset 0 0 0 var(--hair) var(--ink-border);
-  font-size:12px;color:var(--fg-2);font-variant-numeric:tabular-nums}
-.steps-num .eyebrow{margin-bottom:7px}
-.steps-num h3{font-size:var(--t-h3);font-weight:var(--w-title);letter-spacing:-0.022em;line-height:1.25}
-
-/* A card on the paper, and the white card the references put inside it. */
-.panel{border-radius:var(--r-card);background:var(--bg-3);padding:clamp(22px,2.6vw,34px)}
-.panel-in{border-radius:calc(var(--r-card) - 10px);background:var(--bg-2);padding:clamp(20px,2.2vw,28px)}
-
+/* A row that counts itself: the number in a ring{list-style:none;display:grid}
+/* A card on the paper{border-radius:var(--r-card);background:var(--bg-3);padding:clamp(22px,2.6vw,34px)}
 /* hero */
-.hero{padding:10px 0 0}
-/* full-bleed band; the crop is placed so the video's own type lands in the middle of the band */
-.hero-video{display:block;width:100%;aspect-ratio:3/1;object-fit:cover;object-position:center 61%;
-  border-radius:var(--r-card);
-  background:var(--bg-2);margin-bottom:64px}
-.hero h1{font-size:var(--t-display);font-weight:var(--w-display);letter-spacing:-0.05em;line-height:.88;max-width:none}
+.hero{padding:10px 0 0}.hero h1{font-size:var(--t-display);font-weight:var(--w-display);letter-spacing:-0.05em;line-height:.88;max-width:none}
 /* the opening block: a picture's worth of dark with one word on it */
-.hero-slab{min-height:clamp(320px,44vh,460px);padding:clamp(22px,3vw,40px)}
+.hero-slab{min-height:clamp(320px,44vh,460px);padding:var(--card-pad)}
 .hero-slab .hero-top{display:flex;flex-direction:column;gap:clamp(18px,2.4vw,30px);align-items:flex-start}
 .hero-tag{display:inline-flex;align-items:center;height:34px;padding:0 18px;border-radius:var(--r-cap);
   background:rgba(255,255,255,.14);color:var(--on-slab);font-size:12.5px;font-weight:var(--w-title)}
 .hero-foot-line{font-size:13px;color:var(--on-slab-2)}
 /* the card of numbers the references lift over the bottom of the hero */
 .hero-card{position:relative;z-index:1;margin:calc(-1 * clamp(28px,4vw,64px)) auto 0;
-  border-radius:var(--r-card);background:var(--bg-2);padding:clamp(28px,3.4vw,52px);
-  display:grid;gap:clamp(30px,4vw,60px)}
+  border-radius:var(--r-card);background:var(--bg-2);padding:var(--card-pad);
+  display:grid;gap:clamp(26px,3.2vw,48px)}
 /* :where() so the container does not count: these set the default for a paragraph in here, and a
    paragraph given a class of its own is meant to beat them */
 :where(.hero) p{margin-top:30px;font-size:var(--t-lede);color:var(--fg-2);max-width:54ch;line-height:1.5}
-.hero-cta{display:flex;flex-wrap:wrap;align-items:center;gap:16px 30px;margin-top:44px}
-.hero-foot{margin-top:84px}
-/* the three things we do run past as a band: one set, then the same set again, so translating the
+.hero-cta{display:flex;flex-wrap:wrap;align-items:center;gap:16px 30px;margin-top:44px}/* the three things we do run past as a band: one set, then the same set again, so translating the
    track by half its width returns it exactly where it started. Each line carries its own spacing,
    so half the track is exactly the first set. */
 .ticker{overflow:hidden;
@@ -193,13 +166,7 @@ nav .wm-plain{display:none}
 .motion .ticker-track{animation:ticker 46s linear infinite}
 @keyframes ticker{to{transform:translate3d(-50%,0,0)}}
 @media(hover:hover){.ticker:hover .ticker-track{animation-play-state:paused}}
-/* What the studio does, said once and standing still. It carries its own label: three phrases under
-   a rule with nothing naming them read as something left behind rather than as a list. */
-.hero-what{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 28px;max-width:none;margin-top:0;color:var(--fg-2)}
-.hero-what-label{flex:none;min-width:148px;color:var(--fg-3)}
-.hero-what > span + span{position:relative}
-.hero-what > span:not(.hero-what-label) + span::before{content:"·";position:absolute;left:-16px;color:var(--fg-3)}
-
+/* What the studio does{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 28px;max-width:none;margin-top:0;color:var(--fg-2)}
 /* section shell */
 .sec{padding:var(--sec-pad) 0}
 .sec-join{padding-top:0}
@@ -209,12 +176,9 @@ nav .wm-plain{display:none}
   letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);font-variant-numeric:tabular-nums}
 /* on a dark block it takes the block's own quiet ink, not the page's */
 .slab-dark .eyebrow,.cta .eyebrow{color:var(--on-slab-2)}
-/* every number and every small label is set in the mono: it tells the meta apart from the reading
-   matter without spending another weight or another colour on it */
-.work-soon,.pack-len,.step .len,.acc-seg,.member-spec dt,
-.fbottom,.tags,.acc-out,.count,.hero-what,.member-role,.work-body .work-client{
+.pack-len,.step .len,.acc-seg,.member-spec dt,.fbottom,.tags,.acc-out,.count,.member-role{
   font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:.04em}
-.work-soon,.pack-len,.step .len,.acc-seg,.member-spec dt,.hero-what{
+.pack-len,.step .len,.acc-seg,.member-spec dt{
   font-size:var(--t-meta);text-transform:uppercase;letter-spacing:.06em}
 /* A running head: the rule says a section starts, then the label and the line that says what the
    section covers, together on one line. It was a two-column grid, which left that line stranded in
@@ -442,8 +406,13 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
    element behind it: a pseudo-element is invisible to anything that reads computed styles, so every
    word on it reported as white-on-paper. */
 .cta{position:relative;isolation:isolate;color:var(--on-slab);background:var(--slab);
-  margin:0 var(--pad);border-radius:var(--r-card);padding:clamp(44px,5vw,80px) 0}
-.cta .wrap{max-width:calc(var(--max) - var(--pad) * 2);padding:0 clamp(20px,2.6vw,44px)}
+  /* the gutter has to come off the width as well as off the cap, or on a window narrower than the
+     page the band keeps its cap, fills the window and loses the margin every other card keeps */
+  width:calc(100% - var(--pad) * 2);max-width:calc(var(--max) - var(--pad) * 2);margin:0 auto;
+  border-radius:var(--r-card);
+  padding:clamp(40px,4.4vw,68px) 0}
+/* the band is a card, so the type on it is inset by a card's padding like any other */
+.cta .wrap{padding:0 var(--card-pad)}
 .cta :is(h1,h2){max-width:18ch}
 :where(.cta) p{font-size:17px;color:var(--on-slab-2);max-width:52ch;margin-top:22px;line-height:1.6}
 .cta .split b{color:var(--on-slab)}
@@ -600,9 +569,7 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
 @media(hover:hover){
   .btn:not(:disabled):hover::before{transform:none}
   .link-out:hover > span::after{background:var(--fg)}
-  .link-out:hover svg{transform:translate(2px,-2px)}
-  .btn-ghost:hover{color:var(--on-fill)}
-  /* whatever the button looked like at rest, the red that rises under it carries white */
+  .link-out:hover svg{transform:translate(2px,-2px)}  /* whatever the button looked like at rest, the red that rises under it carries white */
   .btn-signal:hover{color:#fff}
   .stage-opt:hover input:not(:checked) + span{box-shadow:inset 0 0 0 var(--hair) #fff}
   .btn-send:not(:disabled):hover{color:#fff}
@@ -674,10 +641,7 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
 /* tablet */
 @media(max-width:1000px){
   :root{--sec-pad:80px}
-  .hero{padding:0 0 64px}
-  .hero-video{aspect-ratio:2/1;object-position:center 90%;margin-bottom:40px}
-  .hero-foot{margin-top:56px}
-  .sec-head{margin-bottom:36px}
+  .hero{padding:0 0 64px}  .sec-head{margin-bottom:36px}
   .acc-list,.track,.focus{margin-top:40px}
   .navlinks,.nav-actions{gap:20px}
   .acc-row{grid-template-columns:minmax(0,1fr) auto;gap:18px 16px;padding:26px 0}
@@ -724,13 +688,8 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
   .nav-actions .btn{height:36px;padding:0 15px;font-size:13px}
   .theme-btn{width:32px;height:32px}
   .theme-btn svg{width:18px;height:18px}
-  .hero{padding:0 0 48px}
-  .hero-video{aspect-ratio:16/9;margin-bottom:28px}
-  :where(.hero) p{margin-top:22px}
-  .hero-cta{margin-top:32px}
-  .hero-foot{margin-top:44px;padding-top:26px}
-  .hero-what{gap:8px 22px}
-  .sec-head{gap:12px 16px;margin-bottom:28px}
+  .hero{padding:0 0 48px}  :where(.hero) p{margin-top:22px}
+  .hero-cta{margin-top:32px}  .sec-head{gap:12px 16px;margin-bottom:28px}
   .eyebrow + :is(h1,h2){margin-top:20px}
   .acc-list,.track,.focus{margin-top:32px}
   .acc-row{padding:22px 0}
@@ -785,7 +744,6 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
 .navlinks a[aria-current="page"]{color:var(--fg)}
 /* inner pages start with a section right under the nav */
 .page-first{padding-top:calc(var(--sec-pad) * .8)}
-
 
 /* a page built from several sections keeps that section's title at the top while you are inside it,
    so the page stays divided as it scrolls */
@@ -854,10 +812,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
     grid-template-columns:minmax(0,7fr) minmax(0,5fr)}
 }
 .sum-list li > div > p{margin-top:0}
-.sum-list h3{font-size:clamp(22px,2.2vw,28px);font-weight:var(--w-title);letter-spacing:-0.032em;line-height:1.05}
-/* the three practices sign the home list the same way they sign their own page */
-.sum-sign{line-height:1}
-@media(hover:hover){
+.sum-list h3{font-size:clamp(22px,2.2vw,28px);font-weight:var(--w-title);letter-spacing:-0.032em;line-height:1.05}@media(hover:hover){
   .sum-list li:hover .acc-mk{transform:scale(1.32)}
 }
 .sum-list p{margin-top:8px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:62ch}
@@ -948,19 +903,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 }
 
 /* client works */
-/* one case study per row, full width, running down the page; covers have square corners */
-.works{display:grid;grid-template-columns:minmax(0,1fr);gap:72px;margin-top:44px}
-.work{display:grid;align-content:start;gap:20px}
-.work[hidden]{display:none}
-.work-cover{position:relative;display:flex;align-items:flex-end;justify-content:space-between;aspect-ratio:16/9;padding:26px;
-  overflow:hidden;background:var(--bg-2)}
-.work-cover svg{display:block;height:64px;width:auto;color:var(--line);transition:color .5s var(--ease-out),transform .8s var(--ease-out)}
-.work-soon{font-size:12px;font-weight:var(--w-title);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3)}
-.work h3{font-size:clamp(22px,2.2vw,28px);font-weight:var(--w-title);letter-spacing:-0.028em;line-height:1.1}
-.work-body .tags{margin:0 0 14px}
-.work-body p{margin-top:12px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:46ch}
-.work-body .work-client{margin-top:8px;font-size:14px;font-weight:var(--w-title);color:var(--fg-3)}
-.works-note{margin-top:48px;font-size:14px;color:var(--fg-3);max-width:60ch}
+/* one case study per row,full width{display:grid;grid-template-columns:minmax(0,1fr);gap:72px;margin-top:44px}.works-note{margin-top:48px;font-size:14px;color:var(--fg-3);max-width:60ch}
 .works-note a{color:var(--fg);text-decoration:underline;text-underline-offset:3px}
 
 /* short contact band at the foot of each page */
@@ -981,11 +924,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
   opacity:0;transform:scale(.6);transform-origin:0 0;transition:opacity .18s ease,transform .25s var(--ease-out)}
 .cursor-tip.on span{opacity:1;transform:none}
 
-@media(hover:hover){
-  .works:has(.work:hover) .work:not(:hover){opacity:.5}
-  .work{transition:opacity .4s var(--ease-out)}
-  .work:hover .work-cover svg{color:var(--fg-2);transform:scale(1.04)}
-}
+@media(hover:hover){}
 @media(max-width:1000px){
   .works{grid-template-columns:1fr}
   .cta-short .cta-row{justify-content:flex-start}
@@ -1007,9 +946,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .nav-menu span{left:11px;right:11px}
   .nav-menu span:first-child{top:14px}
   .nav-menu span:last-child{top:20.5px}
-  .nav-menu[aria-expanded="true"] span:first-child,.nav-menu[aria-expanded="true"] span:last-child{top:17.25px}
-  .works{gap:44px}
-  .work-cover{aspect-ratio:4/3} /* a wide band is too thin on a phone */
+  .nav-menu[aria-expanded="true"] span:first-child,.nav-menu[aria-expanded="true"] span:last-child{top:17.25px} /* a wide band is too thin on a phone */
 }
 
 /* hero headline weight follows the mouse (site.js). Manrope's own weight axis carries it, so the headline

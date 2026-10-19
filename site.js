@@ -274,27 +274,6 @@ window.addEventListener('error', function (e) {
   var motion = root.classList.contains('motion');
   var hero = document.querySelector('.hero');
 
-  // The hero film is the heaviest thing on the site, so the page ships its first frame as a picture and only
-  // fetches the film itself when it is wanted: not under reduced motion, and not on a metered or slow connection,
-  // where the still frame is what visitors get. Once it is loaded it plays only while it is on screen.
-  var heroVideo = document.querySelector('.hero-video');
-  if (heroVideo && heroVideo.getAttribute('data-film')) {
-    var link = navigator.connection || {};
-    var sparing = link.saveData === true || /(^|-)2g$/.test(link.effectiveType || '');
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && !sparing) {
-      heroVideo.src = heroVideo.getAttribute('data-film');
-      var roll = function () {
-        var played = heroVideo.play();
-        if (played && played.catch) played.catch(function () {});
-      };
-      if ('IntersectionObserver' in window) {
-        new IntersectionObserver(function (entries) {
-          entries.forEach(function (e) { e.isIntersecting ? roll() : heroVideo.pause(); });
-        }, { threshold: 0.05 }).observe(heroVideo);
-      } else roll();
-    }
-  }
-
   if (!motion) return;
 
   // wrap every word in a mask span so headings can rise word by word
@@ -324,16 +303,13 @@ window.addEventListener('error', function (e) {
   // [selector, reveal type, fixed delay ms, extra delay per match]
   // Targets without a fixed delay are staggered in the order they enter the viewport.
   var plan = [
-    ['.hero-video', 'up', 40],
     ['.hero h1', 'split', 120],
     ['.hero p', 'up', 480],
     ['.hero-cta .btn', 'up', 620, 80],
-    ['.hero-foot', 'line', 760],
-    ['.hero-foot .hero-what', 'up', 880],
     ['.eyebrow', 'clip'],
     ['.sec h1, .sec h2, .cta h1, .cta h2', 'split'],
     ['.sec-head p, .prac-note, .lede, .split, .cta-grid > div > p, .cta-row, .cta-form, .works-note', 'up'],
-    ['.acc, .fgrid > *, .work, .sum-list li', 'up'],
+    ['.acc, .fgrid > *, .sum-list li', 'up'],
     ['.prac, .step-card', 'up', 0, 80],
     ['.value, .step, .dl, .focus-item, .member, .pack', 'rule'],
     ['.cta', 'cta'],
