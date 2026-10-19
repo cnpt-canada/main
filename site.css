@@ -1,21 +1,23 @@
 /* cnpt site: shared styles for every public page (/, /about, /network, /work).
-   Type is Geist and Geist Mono, self-hosted as two variable files with a 100–900 weight axis
-   (SIL Open Font License 1.1, fonts/Geist-OFL.txt). Geist is a neo-grotesque; the mono carries every
-   number and label on the site, which is what keeps the small type from competing with the headings. */
-@font-face{font-family:'Geist';src:url(/fonts/geist.woff2) format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
-@font-face{font-family:'Geist Mono';src:url(/fonts/geist-mono.woff2) format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
+   Type is Manrope, self-hosted as one variable file with a 200–800 weight axis (SIL Open Font
+   License 1.1, fonts/Manrope-OFL.txt). One family does everything: the small uppercase labels are the
+   same face set small and tracked out, which is how the references set them. */
+@font-face{font-family:'Manrope';src:url(/fonts/manrope.woff2) format('woff2');font-weight:200 800;font-style:normal;font-display:swap}
 :root{
   color-scheme:light;
   /* one accent, spent on the action that starts a project and nothing else */
-  --signal:#1A41FF;
+  --signal:#E60045;
   --ink:#0E0E0D; --paper:#FFFFFF;
-  --nav-h:76px; --sec-pad:clamp(72px,9vw,128px);
-  --max:1360px; --pad:clamp(16px,3.4vw,40px); --hair:1px;
+  --nav-h:68px; --sec-pad:clamp(54px,5.6vw,92px);
+  --max:1400px; --pad:clamp(16px,2.6vw,34px); --hair:1px;
   /* one geometry, and it is generous: the references round a card hard enough that the corner is
      part of the look rather than an apology for a rectangle */
-  --r-card:28px; --r-sm:8px; --r-cap:999px;
-  --font:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  --mono:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r-card:20px; --r-sm:8px; --r-cap:999px;
+  /* the bar across the top is a bar: enough of a corner to sit on the paper, not a pill */
+  --r-nav:14px;
+  --font:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  /* the small uppercase labels are the same face, set small and tracked out, as the references set them */
+  --mono:var(--font);
   /* Light and large. Tracking tightens as the size grows, which is how a grotesque is set. */
   --t-display:clamp(56px,11vw,168px); --t-h2:clamp(30px,4.4vw,58px); --t-h3:clamp(19px,1.7vw,25px);
   --t-lede:clamp(18px,1.7vw,26px); --t-body:15px; --t-meta:10.5px;
@@ -60,9 +62,10 @@ a{color:inherit;text-decoration:none}
 .dark{background:var(--bg);color:var(--fg)}
 
 /* nav */
-nav{position:sticky;top:10px;z-index:20;margin:10px auto 0;max-width:calc(var(--max) - 2px);
-  background:var(--bg-2);border-radius:var(--r-cap);box-shadow:0 1px 2px rgba(0,0,0,.04)}
-nav .wrap{height:var(--nav-h);padding:0 clamp(16px,2vw,28px)}
+nav{position:sticky;top:8px;z-index:20;margin:8px auto 0;max-width:var(--max);
+  background:var(--bg-2);border-radius:var(--r-nav);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+/* the same padding the page uses, so the wordmark and every heading below start on one line */
+nav .wrap{height:var(--nav-h);padding:0 var(--pad)}
 /* three columns: the wordmark, the section links centred on the page, then Sign in and the button */
 nav .wrap{height:var(--nav-h);display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:24px}
 .nav-home{grid-column:1;justify-self:start}
@@ -216,15 +219,24 @@ nav .wm-plain{display:none}
 /* A running head: the rule says a section starts, then the label and the line that says what the
    section covers, together on one line. It was a two-column grid, which left that line stranded in
    the middle of the page above a heading that began again at the left margin. */
-.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;margin-bottom:clamp(26px,3vw,40px)}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;margin-bottom:clamp(20px,2.2vw,30px)}
 /* the standfirst carries the measure now, so the heading can run wider */
-.sec h2 + .split,.sec h1 + .split{margin-top:clamp(18px,2vw,26px);max-width:46ch}
+.sec h2 + .split,.sec h1 + .split{margin-top:clamp(14px,1.5vw,20px);max-width:46ch}
+/* the claim and the sentence that explains it, side by side: the left column is set at display
+   size and the right at reading size, which is how both references open a section. */
+.sec-top{display:grid;gap:clamp(12px,1.4vw,18px)}
+@media(min-width:900px){
+  .sec-top{grid-template-columns:minmax(0,1.04fr) minmax(0,1fr);gap:clamp(36px,5vw,92px);align-items:start}
+  /* in its own column the heading no longer needs a measure, and the sentence beside it has one */
+  .sec-top > :is(h1,h2){max-width:none}
+  .sec-top > :is(.split,.lede){margin-top:7px;max-width:52ch}
+}
 .sec-head p{font-size:var(--t-body);color:var(--fg-3);max-width:58ch;font-weight:var(--w-body)}
 /* A section heading. On an inner page the first one is the page's own h1, which is a matter of
    what the page means rather than how big it is, so both are set the same. */
 h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-spacing:-0.035em;line-height:1.02;max-width:20ch}
 .lede{font-size:var(--t-lede);line-height:1.55;color:var(--fg-2);max-width:58ch;margin-top:22px}
-.eyebrow + :is(h1,h2){margin-top:26px}
+.eyebrow + :is(h1,h2){margin-top:18px}
 
 /* what we do — three value rows: icon, title, description + tags */
 .values{margin-top:56px}
@@ -240,7 +252,7 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 .tags span:not(:last-child)::after{content:"·";position:absolute;right:-11px}
 
 /* practices — accordion rows */
-.acc-list{margin-top:52px}
+.acc-list{margin-top:clamp(28px,3vw,40px)}
 .acc-row{
   width:100%;background:none;border:0;cursor:pointer;text-align:left;
   font-family:inherit;color:inherit;padding:34px 0;
@@ -590,6 +602,8 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
   .link-out:hover > span::after{background:var(--fg)}
   .link-out:hover svg{transform:translate(2px,-2px)}
   .btn-ghost:hover{color:var(--on-fill)}
+  /* whatever the button looked like at rest, the red that rises under it carries white */
+  .btn-signal:hover{color:#fff}
   .stage-opt:hover input:not(:checked) + span{box-shadow:inset 0 0 0 var(--hair) #fff}
   .btn-send:not(:disabled):hover{color:#fff}
   .acc-list:has(.acc-row:hover) .acc-row:not(:hover){opacity:.45}
@@ -830,7 +844,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 @keyframes nic-draw{from{stroke-dashoffset:1.01}}
 
 /* home: each page gets a section of its own, with the numbered list of what is on it */
-.sum-list{list-style:none;margin-top:40px}
+.sum-list{list-style:none;margin-top:clamp(24px,2.6vw,32px)}
 .sum-list li{padding:18px 0}
 /* A row with exactly two things in it -- a title and one line about it -- reads across the width.
    A row with more in it than that reads down, or its parts end up scattered between two columns. */
@@ -849,81 +863,45 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .sum-list p{margin-top:8px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:62ch}
 /* the three practices, three across. No box is drawn: a card here is its share of the row, the air
    around it and the rule it opens under — the same rule every other block on this page opens under. */
-.pracs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:48px;list-style:none}
-.prac{display:flex;flex-direction:column;justify-content:space-between;gap:20px;aspect-ratio:16/10;
-  padding:0}
-/* the mark top left, what the practice is bottom right: the diagonal is what fills the card */
-.prac .acc-lockup{flex-direction:column;align-items:flex-start;gap:14px}
-.prac .acc-mk{height:clamp(38px,5.4vw,76px);transform-origin:0 50%}
-.prac .mk-ai{width:auto} .prac .mk-ux{width:auto} .prac .mk-df{width:auto}
-.prac .acc-wm{width:clamp(68px,7.4vw,104px)}
-.prac p{align-self:flex-end;max-width:16ch;text-align:right;transform-origin:100% 100%;
-  transition:transform .45s var(--ease-spring);
-  font-size:clamp(15px,1.3vw,17px);line-height:1.4;letter-spacing:-0.016em;color:var(--fg-2)}
-@media(hover:hover){
-  .prac:hover .acc-mk{transform:scale(1.1)}
-  .prac:hover p{transform:scale(1.12)}
+.pracs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:clamp(26px,3vw,38px);list-style:none}
+.prac{min-height:clamp(196px,17vw,244px)}
+/* the mark sits in the corner the number sits in on a phase card, at the size that corner allows */
+.prac .acc-mk{height:clamp(30px,2.9vw,42px);width:auto;transform-origin:0 50%}
+@media(hover:hover){.prac:hover .acc-mk{transform:scale(1.1)}}
+
+/* The card the page is built from: white on the paper's light grey, a hairline to hold the edge,
+   and a foot it closes on. The difference between a card and the page behind it is meant to be
+   small -- it separates them without drawing a box around everything. */
+.card-s{display:flex;flex-direction:column;justify-content:space-between;gap:clamp(26px,3vw,44px);
+  background:var(--bg-2);border-radius:var(--r-card);padding:clamp(18px,1.8vw,24px);
+  box-shadow:inset 0 0 0 var(--hair) var(--line);
+  transition:box-shadow .32s var(--ease-out),transform .32s var(--ease-out)}
+@media(hover:hover){.card-s:hover{box-shadow:inset 0 0 0 var(--hair) var(--ink-border);transform:translateY(-3px)}}
+
+/* the four phases, as a row of those cards */
+.steps{list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(10px,1vw,14px);margin-top:clamp(26px,3vw,38px)}
+.step-card{min-height:clamp(212px,19vw,268px)}
+.step-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.step-no{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;flex:none;
+  border-radius:var(--r-cap);box-shadow:inset 0 0 0 var(--hair) var(--ink-border);
+  font-size:12px;font-weight:var(--w-title);letter-spacing:.02em;color:var(--fg-3);
+  font-variant-numeric:tabular-nums;transition:background .32s var(--ease-out),color .32s var(--ease-out),box-shadow .32s var(--ease-out)}
+/* the length is a pill, the way the reference tags a card in its top corner */
+.step-cap{display:inline-flex;align-items:center;height:28px;padding:0 13px;border-radius:var(--r-cap);
+  box-shadow:inset 0 0 0 var(--hair) var(--ink-border);
+  font-size:11.5px;font-weight:var(--w-title);letter-spacing:-0.008em;color:var(--fg-3);white-space:nowrap}
+.step-foot h3{font-size:var(--t-h3);font-weight:var(--w-title);letter-spacing:-0.026em;line-height:1.1}
+.step-foot p{margin-top:9px;font-size:13.5px;line-height:1.5;color:var(--fg-3)}
+@media(hover:hover){.step-card:hover .step-no{background:var(--fill);color:var(--on-fill);box-shadow:none}}
+@media(max-width:900px){.steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){
+  .steps{grid-template-columns:minmax(0,1fr)}
+  .step-card{min-height:0;gap:22px}
 }
 
-/* The four stages as one line across the page, changing character at each: dotted while the work is
-   being framed, solid once there is a concept, fanned into three strands and gathered again while a
-   system is built, and in the brand colour at entry. The line is stretched to the width of the page,
-   so the stroke is told not to stretch with it. */
-/* overflow is what bounds each stage's hover area: the zones reach far up and are cut to this box */
-.track-line{position:relative;margin-top:52px;overflow:hidden}
-/* the line is the width of the page, so it is given longer to arrive than a section label is */
-.motion .track-line svg[data-rv="clip"]{transition-duration:1.5s}
-/* the box scales whole, so the fan is always the shape it was drawn */
-.track-line svg{display:block;width:100%;height:auto}
-.track-line path{fill:none;stroke:var(--fg-2);stroke-width:2;vector-effect:non-scaling-stroke}
-/* qualified: `.track-line path` is a class plus a type and would otherwise win */
-.track-line .tl-frame{stroke:var(--fg-3);stroke-dasharray:2 10;stroke-linecap:round}
-.track-line .tl-entry{stroke:var(--signal);stroke-width:2.5}
-/* no column gap: a gap here is a strip that belongs to no stage, and it pushes every area out of
-   line with the stretch it names. The space between labels is padding inside them instead. */
-.track-stages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 0;margin-top:16px;list-style:none;
-  font-family:var(--mono);font-size:13px;letter-spacing:.03em;color:var(--fg-3);font-variant-numeric:tabular-nums}
-.track-stages li{position:relative;display:flex;flex-direction:column;gap:3px;min-width:0;padding-right:20px;
-  transition:opacity .3s var(--ease-out)}
-/* a stage is its whole column, not just the words at the foot of it */
-.track-stages li::before{content:"";position:absolute;left:0;right:0;bottom:0;top:-600px}
-.track-stages b{font-weight:var(--w-title);letter-spacing:-0.02em;color:var(--fg)}
-
-/* Pointing at a stage draws its stretch of the line. The lit copy sits exactly over the base one
-   with a path length of 1, so a dash of 1 covers the whole of it however long it really is: held off
-   the end at offset 1, laid down at offset 0, and the transition between them is the draw. */
-.tl-lit path{fill:none;stroke:var(--fg);stroke-width:2.4;vector-effect:non-scaling-stroke}
-/* the dotted stretch fills in dotted: the same pattern as the line underneath, so the lit dots land
-   exactly on the unlit ones rather than beside them */
-.track-line .lit-frame{stroke-dasharray:2 10;stroke-linecap:round}
-.tl-lit .lit-entry{stroke:var(--signal)}
-/* fill-box, so each rectangle grows from its own left edge wherever it sits along the line */
-.track-line clipPath rect{transform-box:fill-box;transform-origin:0 50%;transform:scaleX(0);
-  transition:transform .42s var(--ease-ref)}
-.tl-base{transition:opacity .3s var(--ease-out)}
-@media(hover:hover){
-  /* the run steps back so the lit path can be read over it */
-  .track-line:has(.track-stages li:hover) .tl-base{opacity:.3}
-  /* the stages after the one being read step back; the ones leading up to it stay */
-  .track-line:has(.track-stages li:nth-child(1):hover) .track-stages li:nth-child(n+2),
-  .track-line:has(.track-stages li:nth-child(2):hover) .track-stages li:nth-child(n+3),
-  .track-line:has(.track-stages li:nth-child(3):hover) .track-stages li:nth-child(n+4){opacity:.4}
-
-  /* everything up to and including the stage under the pointer */
-  .track-line:has(.track-stages li:nth-child(1):hover) #tl-sweep-1 rect,
-  .track-line:has(.track-stages li:nth-child(2):hover) :is(#tl-sweep-1,#tl-sweep-2) rect,
-  .track-line:has(.track-stages li:nth-child(3):hover) :is(#tl-sweep-1,#tl-sweep-2,#tl-sweep-3) rect,
-  .track-line:has(.track-stages li:nth-child(4):hover) :is(#tl-sweep-1,#tl-sweep-2,#tl-sweep-3,#tl-sweep-4) rect{
-    transform:scaleX(1)}
-
-  /* and it arrives in the order the work happens in, so the eye follows the path along */
-  .track-line:has(.track-stages li:hover) #tl-sweep-2 rect{transition-delay:.12s}
-  .track-line:has(.track-stages li:hover) #tl-sweep-3 rect{transition-delay:.24s}
-  .track-line:has(.track-stages li:hover) #tl-sweep-4 rect{transition-delay:.4s}
-}
-@media(prefers-reduced-motion:reduce){.track-line clipPath rect{transition:none}}
-.sum-note{margin-top:26px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:52ch}
-.sum-more{margin-top:40px}
+.sum-note{margin-top:22px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:52ch}
+.sum-more{margin-top:30px}
 .sum-more .btn svg{width:11px;height:11px;margin-left:10px}
 @media(hover:hover){.sum-more .btn:hover{background:var(--fill);border-color:var(--fg);color:var(--on-fill)}}
 @media(max-width:760px){
@@ -932,11 +910,9 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .pracs{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;max-width:none}
   .prac{aspect-ratio:auto;gap:16px}
 }
-/* after the block above, or it would not win: two across leaves the third card on a row of its own,
-   and four stage labels across a phone break every one of them over three lines */
+/* after the block above, or it would not win: two across leaves the third card on a row of its own */
 @media(max-width:620px){
   .pracs{grid-template-columns:minmax(0,1fr)}
-  .track-stages{gap:3px 8px;font-size:11px;letter-spacing:.02em}
 }
 
 /* the way out to a client's own site, sitting under the row it belongs to. Qualified, because
@@ -1036,7 +1012,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .work-cover{aspect-ratio:4/3} /* a wide band is too thin on a phone */
 }
 
-/* hero headline weight follows the mouse (site.js). Geist's own weight axis carries it, so the headline
+/* hero headline weight follows the mouse (site.js). Manrope's own weight axis carries it, so the headline
    keeps the same font and only its weight moves; the class marks that the effect has taken over. */
 .hero h1.is-var{font-weight:var(--w-display)}
 /* Each letter is a box that keeps the advance it has at rest, so a letter thickening under the

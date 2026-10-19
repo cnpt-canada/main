@@ -334,8 +334,7 @@ window.addEventListener('error', function (e) {
     ['.sec h1, .sec h2, .cta h1, .cta h2', 'split'],
     ['.sec-head p, .prac-note, .lede, .split, .cta-grid > div > p, .cta-row, .cta-form, .works-note', 'up'],
     ['.acc, .fgrid > *, .work, .sum-list li', 'up'],
-    ['.track-line svg', 'clip'],
-    ['.track-stages li', 'up', 320, 110],
+    ['.prac, .step-card', 'up', 0, 80],
     ['.value, .step, .dl, .focus-item, .member, .pack', 'rule'],
     ['.cta', 'cta'],
     ['.fbottom', 'fade']
@@ -398,8 +397,9 @@ window.addEventListener('error', function (e) {
 /* hero headline: with the mouse inside the headline's box, the headline eases from ExtraBold to Regular and the
    letters near the pointer stay heavy (the closest ones a little past ExtraBold), so the weight follows the pointer;
    leaving eases everything back to ExtraBold.
-   A smooth change of weight needs a font with a weight axis: Geist carries one (100–900), so the headline keeps
-   its font and only the weight moves, once the file has loaded.
+   A smooth change of weight needs a font with a weight axis: Manrope carries one (200–800), so the headline
+   keeps its font and only the weight moves, once the file has loaded. Both ends stay inside that range — a
+   weight the file does not carry is clamped, and the effect looks broken rather than absent.
    Mouse and trackpad only, and only with motion on. */
 (function () {
   var h1 = document.querySelector('.hero h1');
@@ -407,8 +407,8 @@ window.addEventListener('error', function (e) {
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches || !document.fonts || !document.fonts.load) return;
 
   // REST is the ladder's own weight, so a headline nobody is pointing at is simply the headline.
-  var REST = 480, PEAK = 820;
-  document.fonts.load(PEAK + ' 80px "Geist"').then(function (faces) { if (faces.length) start(); }, function () {});
+  var REST = 350, PEAK = 520;
+  document.fonts.load(PEAK + ' 80px "Manrope"').then(function (faces) { if (faces.length) start(); }, function () {});
 
   function start() {
     var letters = [];
@@ -446,10 +446,12 @@ window.addEventListener('error', function (e) {
     function lockLines() {
       Array.prototype.forEach.call(h1.querySelectorAll('br.wl'), function (br) { br.remove(); });
       h1.classList.remove('lines-locked');
-      // back to the resting weight, and to natural widths, so both are measured as the reader sees them
+      // Measured at the heaviest the letter will ever be, so the box it keeps is the widest the glyph
+      // can need. A box measured at rest is the one the glyph overflows, and the overflow lands on the
+      // letter beside it.
       var saved = letters.map(function (l) {
         var w = l.el.style.fontWeight;
-        l.el.style.fontWeight = '';
+        l.el.style.fontWeight = PEAK;
         l.el.style.width = '';
         return w;
       });
@@ -465,6 +467,7 @@ window.addEventListener('error', function (e) {
       });
       // measure every letter before writing any width back, or each write would lay the line out again
       var widths = letters.map(function (l) { return l.el.getBoundingClientRect().width; });
+      // the line breaks above were found at this same weight, so they match the widths being written
       letters.forEach(function (l, i) {
         l.el.style.width = widths[i].toFixed(2) + 'px';
         l.el.style.fontWeight = saved[i];

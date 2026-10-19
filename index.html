@@ -21,7 +21,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#141414">
 <link rel="stylesheet" href="/site.css">
-<link rel="preload" href="/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/manrope.woff2" as="font" type="font/woff2" crossorigin>
 <!-- What the studio is, for anything that reads a page rather than looks at one. A data block, not
      a script: nothing here executes, so the page's script-src stays closed. -->
 <script type="application/ld+json">
@@ -128,77 +128,84 @@
       <span class="eyebrow">about</span>
       <p>What cnpt does, what you can commission, and how an engagement runs.</p>
     </div>
-    <h2>Three practices, four stages, <em>one team.</em></h2>
-    <p class="split"><b>A project can use one practice or all three.</b> Whichever it uses, it runs through the same four stages, and each stage ends with something you can act on without us.</p>
+      <div class="sec-top">
+      <h2>Three practices, four stages, <em>one team.</em></h2>
+      <p class="split"><b>A project can use one practice or all three.</b> Whichever it uses, it runs through the same four stages, and each stage ends with something you can act on without us.</p>
+    </div>
     <ul class="pracs">
-      <li class="prac">
-        <span class="acc-lockup">
+      <li class="card-s prac">
+        <div class="step-top">
           <svg class="acc-mk mk-ai" viewBox="0 0 81 53" aria-hidden="true"><use href="/site-icons.svg#m-ai"/></svg>
-          <svg class="acc-wm" viewBox="0 0 140 32" aria-hidden="true"><use href="/site-icons.svg#cnpt"/></svg>
-          <span class="sr-only">cnpt ai</span>
-        </span>
-        <p>Information system design</p>
+          <span class="step-cap">cnpt ai</span>
+        </div>
+        <div class="step-foot">
+          <h3>Information system design</h3>
+        </div>
       </li>
-      <li class="prac">
-        <span class="acc-lockup">
+      <li class="card-s prac">
+        <div class="step-top">
           <svg class="acc-mk mk-ux" viewBox="0 0 83 39" aria-hidden="true"><use href="/site-icons.svg#m-ux"/></svg>
-          <svg class="acc-wm" viewBox="0 0 140 32" aria-hidden="true"><use href="/site-icons.svg#cnpt"/></svg>
-          <span class="sr-only">cnpt ux</span>
-        </span>
-        <p>Human-centred design</p>
+          <span class="step-cap">cnpt ux</span>
+        </div>
+        <div class="step-foot">
+          <h3>Human-centred design</h3>
+        </div>
       </li>
-      <li class="prac">
-        <span class="acc-lockup">
+      <li class="card-s prac">
+        <div class="step-top">
           <svg class="acc-mk mk-df" viewBox="0 0 86 53" aria-hidden="true"><use href="/site-icons.svg#m-df"/></svg>
-          <svg class="acc-wm" viewBox="0 0 140 32" aria-hidden="true"><use href="/site-icons.svg#cnpt"/></svg>
-          <span class="sr-only">cnpt df</span>
-        </span>
-        <p>Design fabrication</p>
+          <span class="step-cap">cnpt df</span>
+        </div>
+        <div class="step-foot">
+          <h3>Design fabrication</h3>
+        </div>
       </li>
     </ul>
-    <!-- The four stages as one line: dotted while the work is being framed, solid once there is a
-         concept, fanned into three strands and gathered again while a system is built, and in the
-         brand colour at entry. The viewBox is 1200x72 and each stage owns 300 of it, so the labels
-         below line up with the segment they name. -->
-    <div class="track-line">
-      <svg viewBox="0 0 1200 128" aria-hidden="true">
-        <g class="tl-base">
-          <path class="tl-frame" d="M0 64H300"/>
-          <path class="tl-concept" d="M300 64H600"/>
-          <g class="tl-system">
-            <path d="M600 64C670 64 700 8 750 8s80 56 150 56"/>
-            <path d="M600 64h300"/>
-            <path d="M600 64c70 0 100 56 150 56s80-56 150-56"/>
-          </g>
-          <path class="tl-entry" d="M900 64H1200"/>
-        </g>
-        <!-- The same four stretches again, revealed only while one is being pointed at. Each is
-             clipped by a rectangle that widens across it, so the stroke itself is never touched and
-             the dotted stretch stays dotted as it fills. -->
-        <defs>
-          <clipPath id="tl-sweep-1" clipPathUnits="userSpaceOnUse"><rect x="0" y="0" width="300" height="128"/></clipPath>
-          <clipPath id="tl-sweep-2" clipPathUnits="userSpaceOnUse"><rect x="300" y="0" width="300" height="128"/></clipPath>
-          <clipPath id="tl-sweep-3" clipPathUnits="userSpaceOnUse"><rect x="600" y="0" width="300" height="128"/></clipPath>
-          <clipPath id="tl-sweep-4" clipPathUnits="userSpaceOnUse"><rect x="900" y="0" width="300" height="128"/></clipPath>
-        </defs>
-        <g class="tl-lit">
-          <path class="lit-frame" clip-path="url(#tl-sweep-1)" d="M0 64H300"/>
-          <path class="lit-concept" clip-path="url(#tl-sweep-2)" d="M300 64H600"/>
-          <g class="lit-system" clip-path="url(#tl-sweep-3)">
-            <path d="M600 64C670 64 700 8 750 8s80 56 150 56"/>
-            <path d="M600 64h300"/>
-            <path d="M600 64c70 0 100 56 150 56s80-56 150-56"/>
-          </g>
-          <path class="lit-entry" clip-path="url(#tl-sweep-4)" d="M900 64H1200"/>
-        </g>
-      </svg>
-      <ol class="track-stages">
-        <li><b>Frame</b><span>2–3 weeks</span></li>
-        <li><b>Concept</b><span>3–5 weeks</span></li>
-        <li><b>System</b><span>6–12 weeks</span></li>
-        <li><b>Entry</b><span>4–8 weeks</span></li>
-      </ol>
-    </div>
+    <!-- The four stages as a row of cards: the number, how long it runs, and at the foot the stage
+         and what it hands back. Every stage ends with something you can act on without us, which is
+         why the card closes on that rather than on the length. -->
+    <ol class="steps">
+      <li class="card-s step-card">
+        <div class="step-top">
+          <span class="step-no">01</span>
+          <span class="step-cap">2–3 weeks</span>
+        </div>
+        <div class="step-foot">
+          <h3>Frame</h3>
+          <p>Where the market is, and what it pays attention to.</p>
+        </div>
+      </li>
+      <li class="card-s step-card">
+        <div class="step-top">
+          <span class="step-no">02</span>
+          <span class="step-cap">3–5 weeks</span>
+        </div>
+        <div class="step-foot">
+          <h3>Concept</h3>
+          <p>The idea the brand will stand on, drawn and argued.</p>
+        </div>
+      </li>
+      <li class="card-s step-card">
+        <div class="step-top">
+          <span class="step-no">03</span>
+          <span class="step-cap">6–12 weeks</span>
+        </div>
+        <div class="step-foot">
+          <h3>System</h3>
+          <p>Identity, product and the rules that keep them one thing.</p>
+        </div>
+      </li>
+      <li class="card-s step-card">
+        <div class="step-top">
+          <span class="step-no">04</span>
+          <span class="step-cap">4–8 weeks</span>
+        </div>
+        <div class="step-foot">
+          <h3>Entry</h3>
+          <p>In market, with everything it needs to hold its ground.</p>
+        </div>
+      </li>
+    </ol>
     <p class="sum-note">Three packages to start from: logo and brand identity, web design, and physical hands-on.</p>
     <div class="sum-more">
       <a class="link-out" href="/about" data-cursor="Three practices"><span>About</span><svg viewBox="0 0 10 10" aria-hidden="true"><use href="/site-icons.svg#arrow-ur"/></svg></a>
@@ -212,8 +219,10 @@
       <span class="eyebrow">client works</span>
       <p>One engagement running. The write-up follows.</p>
     </div>
-    <h2>We are rebranding <em>Vayence.</em></h2>
-    <p class="split"><b>Vayence is taking ProActive to market, a self-inflating vest that responds to the sensory needs of people with autism.</b> We are rebuilding the brand it launches under.</p>
+      <div class="sec-top">
+      <h2>We are rebranding <em>Vayence.</em></h2>
+      <p class="split"><b>Vayence is taking ProActive to market, a self-inflating vest that responds to the sensory needs of people with autism.</b> We are rebuilding the brand it launches under.</p>
+    </div>
     <!-- Three clients, so the set is three marks and the strip repeats less than it used to. The
          track turns by half its own width, which means the two halves have to be identical and one
          half has to be at least as wide as the strip, or a gap opens at the join. The strip sits on
@@ -241,8 +250,10 @@
       <span class="eyebrow">network</span>
       <p>The people here, and the pool forming around them.</p>
     </div>
-    <h2>The people behind <em>cnpt.</em></h2>
-    <p class="split"><b>Industrial design and UX product design, from the first sketch to launch.</b> Around them, cnpt is putting together a pool of designers, engineers, consultants and the people who run commerce and management in Toronto.</p>
+      <div class="sec-top">
+      <h2>The people behind <em>cnpt.</em></h2>
+      <p class="split"><b>Industrial design and UX product design, from the first sketch to launch.</b> Around them, cnpt is putting together a pool of designers, engineers, consultants and the people who run commerce and management in Toronto.</p>
+    </div>
     <ol class="sum-list">
       <li>
         <div>
