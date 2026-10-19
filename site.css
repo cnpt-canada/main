@@ -61,13 +61,20 @@ body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:var(
   text-rendering:optimizeLegibility}
 a{color:inherit;text-decoration:none}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 var(--pad)}
+/* words written straight onto the paper start where the words on a card start */
+.sec > .wrap > *,footer > .wrap > *{padding-inline:var(--card-pad)}
+/* except a row of cards, which is a card and keeps the card line */
+.sec > .wrap > :is(.pracs,.steps){padding-inline:0}
 .dark{background:var(--bg);color:var(--fg)}
 
 /* nav */
-nav{position:sticky;top:8px;z-index:20;margin:8px auto 0;max-width:var(--max);
+/* the gutter comes off the width as well as off the cap, the same way the contact band takes it,
+   so the bar keeps its margin on a window narrower than the page */
+nav{position:sticky;top:8px;z-index:20;margin:8px auto 0;
+  width:calc(100% - var(--pad) * 2);max-width:calc(var(--max) - var(--pad) * 2);
   background:var(--bg-2);border-radius:var(--r-nav);box-shadow:0 1px 2px rgba(0,0,0,.04)}
-/* the same padding the page uses, so the wordmark and every heading below start on one line */
-nav .wrap{height:var(--nav-h);padding:0 var(--pad)}
+/* a card's own padding, so the wordmark starts where the type on every card below it starts */
+nav .wrap{height:var(--nav-h);padding:0 var(--card-pad)}
 /* three columns: the wordmark, the section links centred on the page, then Sign in and the button */
 nav .wrap{height:var(--nav-h);display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:24px}
 .nav-home{grid-column:1;justify-self:start}
@@ -748,7 +755,7 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
 /* a page built from several sections keeps that section's title at the top while you are inside it,
    so the page stays divided as it scrolls */
 .page-sections .sec-head{position:sticky;top:var(--nav-h);z-index:6;gap:8px 20px;
-  margin-bottom:40px;padding:14px 0 15px;border-top:0;background:var(--bg)}
+  margin-bottom:40px;padding:14px var(--card-pad) 15px;border-top:0;background:var(--bg)}
 
 /* phone menu: the section links move into a sheet under the nav */
 .nav-menu{display:none;position:relative;width:40px;height:40px;border:0;border-radius:var(--r-sm);background:none;cursor:pointer;
