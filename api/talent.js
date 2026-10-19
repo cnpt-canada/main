@@ -1,8 +1,7 @@
-// POST /api/talent — the networking pool form on /talent. No sign-in needed.
-// Saves the person (so nothing is lost if email is down) and emails the pool address with the
-// category they picked in the subject, so it is clear at a glance who wrote in.
+// POST /api/talent — the networking pool form on /network#talent.
+// It emails the pool address with the category they picked in the subject, so it is clear at a
+// glance who wrote in. Nothing is stored: the message is the record.
 // Email: RESEND_API_KEY, TALENT_TO (falls back to CONTACT_TO), optional CONTACT_FROM — see .env.example.
-import { db, hasDb, run } from './_lib/db.js';
 import { fail, json, methodNotAllowed, readBody, route } from './_lib/http.js';
 import { emailStudio } from './_lib/notify.js';
 import { EMAIL_RE, MAX_TALENT_LINKS, MAX_TALENT_MESSAGE, MAX_TALENT_NAME, TALENT_CATEGORIES } from './_lib/rules.js';
@@ -24,10 +23,6 @@ export default route(async (req, res) => {
   if (!message || message.length > MAX_TALENT_MESSAGE) return fail(res, 400, 'invalid_message');
 
   const label = TALENT_CATEGORIES.find((c) => c.key === category).label;
-  const saved = hasDb()
-    ? await run(db().from('talent').insert({ category, name, email, links: links || null, message }))
-        .then(() => true, (err) => { console.error('talent: could not save', err); return false; })
-    : false;
   const emailed = await emailStudio({
     to: process.env.TALENT_TO,
     subject: `Talent pool — ${label}: ${name}`,
@@ -36,9 +31,6 @@ export default route(async (req, res) => {
     replyTo: email
   });
 
-  if (!saved && !emailed) {
-    const notSetUp = !hasDb() && emailed === null;
-    return fail(res, notSetUp ? 500 : 502, notSetUp ? 'not_configured' : 'send_failed');
-  }
+  if (!emailed) return fail(res, emailed === null ? 500 : 502, emailed === null ? 'not_configured' : 'send_failed');
   json(res, 200, { ok: true });
 });

@@ -2,12 +2,8 @@
   "name": "cnpt-site",
   "private": true,
   "type": "module",
-  "description": "cnpt website: static pages plus Vercel functions for sign-in, accounts, admin and the contact form",
+  "description": "cnpt website: static pages plus two Vercel functions for the contact and talent forms",
   "engines": {
     "node": ">=20"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.116.0",
-    "jose": "^6.2.12"
   }
 }

@@ -1,11 +1,7 @@
 # cnpt.ca
-# The signed-in workspace is nobody's search result; the public pages are.
+# Every page is public. The two form endpoints are not pages, so they stay out of the index.
 User-agent: *
 Allow: /
-Disallow: /signin
-Disallow: /onboarding
-Disallow: /account
-Disallow: /admin
 Disallow: /api/
 
 Sitemap: https://cnpt.ca/sitemap.xml

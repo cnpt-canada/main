@@ -12,7 +12,11 @@
     { "source": "/process", "destination": "/about#process", "permanent": true },
     { "source": "/team", "destination": "/network#team", "permanent": true },
     { "source": "/talent", "destination": "/network#talent", "permanent": true },
-    { "source": "/contact", "destination": "/signin", "permanent": false }
+    { "source": "/contact", "destination": "/#contact", "permanent": false },
+    { "source": "/signin", "destination": "/#contact", "permanent": false },
+    { "source": "/onboarding", "destination": "/#contact", "permanent": false },
+    { "source": "/account", "destination": "/#contact", "permanent": false },
+    { "source": "/admin", "destination": "/", "permanent": false }
   ],
   "headers": [
     {
@@ -22,7 +26,7 @@
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=()" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://*.googleusercontent.com; font-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'" }
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'" }
       ]
     },
     {

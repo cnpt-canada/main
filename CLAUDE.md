@@ -15,17 +15,18 @@ cnpt.ca, so a push is a release.
 ## Content
 
 - Sample data is Canadian: Toronto, Canadian names, `@gmail.com` addresses. Never Korean examples.
-- Run `supabase/schema.sql` on production **before** shipping code that needs the change.
 
 ## How the site is put together
 
-- Public pages: `/` `/about` `/network` `/work`. Workspace: `/signin` `/onboarding` `/account` `/admin`.
+- Four pages: `/` `/about` `/network` `/work`. There is no sign-in and no database — the only two
+  functions, `api/contact.js` and `api/talent.js`, take a form and send it as an email through Resend.
 - One stylesheet, `site.css`, with two themes: `:root` is dark, `:root[data-theme="light"]` is light.
   Colours are tokens (`--bg`, `--fg`, `--line`, `--signal`); anything sitting on the signal pink stays `#fff`
   in both themes.
 - `site-head.js` applies the saved theme before the first paint; `site.js` is everything else.
 - Icons live in `site-icons.svg` and are used as `<use href="/site-icons.svg#id">`, drawn 24×24 with a 2px
   stroke in `currentColor`.
-- The Vercel plan allows 12 functions, so routes are bundled: `api/auth/[action].js`,
-  `api/admin/[section].js`. Anything under `api/_lib/` is shared code and is never deployed as a function.
+- The site has no dependencies at all, so a deploy is just Vercel copying files. Keep it that way:
+  anything that needs provisioning can take the whole site down with it. Code under `api/_lib/` is
+  shared and is never deployed as a function.
 - Old URLs are kept alive with redirects in `vercel.json` rather than by leaving pages behind.
