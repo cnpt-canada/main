@@ -1,10 +1,10 @@
-/* theme: the choice this browser made last time, otherwise the dark the site is drawn in.
+/* theme: the choice this browser made last time, otherwise the light the site is drawn in.
    This runs before the page is painted, so the page never flashes the other one. */
 (function (root) {
   try {
     var saved = localStorage.getItem('cnpt-theme');
-    if (saved === 'light') root.setAttribute('data-theme', 'light');
-  } catch (e) {}   // a browser with storage turned off keeps the dark one
+    if (saved === 'dark') root.setAttribute('data-theme', 'dark');
+  } catch (e) {}   // a browser with storage turned off keeps the light one
 })(document.documentElement);
 
 /* motion gate: reveals run only with IntersectionObserver and without reduced-motion.

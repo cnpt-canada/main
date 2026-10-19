@@ -161,9 +161,9 @@ window.addEventListener('error', function (e) {
   var meta = document.querySelector('meta[name="theme-color"]');
 
   function tell() {
-    var light = root.getAttribute('data-theme') === 'light';
-    button.setAttribute('aria-label', light ? 'Switch to dark mode' : 'Switch to light mode');
-    if (meta) meta.setAttribute('content', light ? '#EDEDEA' : '#141414');
+    var dark = root.getAttribute('data-theme') === 'dark';
+    button.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+    if (meta) meta.setAttribute('content', dark ? '#0E0E0D' : '#F2F2F0');
   }
   tell();
 
@@ -171,15 +171,15 @@ window.addEventListener('error', function (e) {
   var settle;
 
   button.addEventListener('click', function () {
-    var light = root.getAttribute('data-theme') !== 'light';
+    var dark = root.getAttribute('data-theme') !== 'dark';
     if (easing !== null) {                       // let the colours travel, then stop transitioning
       root.classList.add('theming');
       clearTimeout(settle);
       settle = setTimeout(function () { root.classList.remove('theming'); }, 700);
     }
-    if (light) root.setAttribute('data-theme', 'light');
+    if (dark) root.setAttribute('data-theme', 'dark');
     else root.removeAttribute('data-theme');
-    try { localStorage.setItem('cnpt-theme', light ? 'light' : 'dark'); } catch (e) {}
+    try { localStorage.setItem('cnpt-theme', dark ? 'dark' : 'light'); } catch (e) {}
     tell();
   });
 })();
@@ -332,7 +332,7 @@ window.addEventListener('error', function (e) {
     ['.hero-foot .hero-what', 'up', 880],
     ['.eyebrow', 'clip'],
     ['.sec h1, .sec h2, .cta h1, .cta h2', 'split'],
-    ['.sec-head p, .prac-note, .lede, .cta-grid > div > p, .cta-row, .cta-form, .works-note', 'up'],
+    ['.sec-head p, .prac-note, .lede, .split, .cta-grid > div > p, .cta-row, .cta-form, .works-note', 'up'],
     ['.acc, .fgrid > *, .work, .sum-list li', 'up'],
     ['.track-line svg', 'clip'],
     ['.track-stages li', 'up', 320, 110],

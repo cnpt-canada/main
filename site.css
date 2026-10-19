@@ -5,48 +5,49 @@
 @font-face{font-family:'Geist';src:url(/fonts/geist.woff2) format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:'Geist Mono';src:url(/fonts/geist-mono.woff2) format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
 :root{
-  color-scheme:dark;
-  /* the same in both themes: one signal, spent on the action that starts a project */
-  --signal:#E60045;
-  --ink:#0F0F0E; --paper:#FFFFFF;
-  --nav-h:74px; --sec-pad:112px;
-  --max:1440px; --pad:clamp(20px,4vw,56px); --hair:1px;
-  /* one geometry: a 4px corner on anything that holds content. The capsule is kept for the two
-     things that are not content - the label that follows the pointer, and the theme knob. */
-  --r-sm:4px; --r-lg:8px; --r-cap:999px;
+  color-scheme:light;
+  /* one accent, spent on the action that starts a project and nothing else */
+  --signal:#1A41FF;
+  --ink:#0E0E0D; --paper:#FFFFFF;
+  --nav-h:76px; --sec-pad:clamp(72px,9vw,128px);
+  --max:1360px; --pad:clamp(16px,3.4vw,40px); --hair:1px;
+  /* one geometry, and it is generous: the references round a card hard enough that the corner is
+     part of the look rather than an apology for a rectangle */
+  --r-card:28px; --r-sm:8px; --r-cap:999px;
   --font:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --mono:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  /* one ladder for the whole site. Tracking tightens as the type grows and the weight stays near
-     Medium, which is how a grotesque is set; nothing on the page is Bold. */
-  --t-display:clamp(42px,8.6vw,124px); --t-h2:clamp(30px,5.2vw,72px); --t-h3:clamp(19px,1.9vw,28px);
-  --t-lede:clamp(16px,1.4vw,20px); --t-body:15px; --t-meta:12px;
-  --w-display:480; --w-title:500; --w-body:400;
+  /* Light and large. Tracking tightens as the size grows, which is how a grotesque is set. */
+  --t-display:clamp(56px,11vw,168px); --t-h2:clamp(30px,4.4vw,58px); --t-h3:clamp(19px,1.7vw,25px);
+  --t-lede:clamp(18px,1.7vw,26px); --t-body:15px; --t-meta:10.5px;
+  --w-display:350; --w-title:400; --w-body:400;
 
-  /* dark: a dark grey rather than black, so type and rules have something to sit on */
-  --bg:#141414;          /* the page */
-  --bg-2:#1D1D1C;        /* a surface above it: a cover, a portrait, the video band */
-  /* three greys, three names. Nothing on the page is a fourth. */
-  --fg:#FFFFFF;          /* headings, and anything that has to carry */
-  --fg-2:#C6C6C0;        /* a lede, a role, a line that answers the pointer */
-  --fg-3:#8C8C86;        /* body copy, captions, the quietest line */
-  --band:#0A0A09;        /* the contact band: the page, but darker */
-  --line:#2A2A28;        /* between rows */
-  --ink-border:#3A3A37;  /* around a control */
-  --fill:#FFFFFF;        /* a chip that is filled in, and the type on it */
-  --on-fill:#141414;
-}
-:root[data-theme="light"]{
-  color-scheme:light;
-  --bg:#EDEDEA;
-  --bg-2:#E0E0DB;
-  --fg:#121211;
-  --fg-2:#3A3A35;
-  --fg-3:#63635D;
-  --band:#FFFFFF;
-  --line:#D7D7D1;
-  --ink-border:#BFBFB8;
-  --fill:#121211;
+  /* the paper, and the white that sits on it */
+  --bg:#F2F2F0;          /* the page */
+  --bg-2:#FFFFFF;        /* a card on it */
+  --bg-3:#EAEAE7;        /* a card inside a card, or a placeholder where a picture goes */
+  --fg:#0E0E0D;          /* anything that has to carry */
+  --fg-2:#4F4F4A;        /* the quieter half of a sentence, a value */
+  --fg-3:#6E6E68;        /* a label, a caption: the lightest a word may be */
+  --line:#E2E2DE;        /* between rows */
+  --ink-border:#D4D4CF;  /* around a control */
+  --fill:#0E0E0D;        /* a control that is switched on, and the type on it */
   --on-fill:#FFFFFF;
+  /* a dark block on a light page: the hero, and any card that carries a picture */
+  --slab:#1A1A18; --on-slab:#FFFFFF; --on-slab-2:#B4B4AE;
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0E0E0D;
+  --bg-2:#171716;
+  --bg-3:#1F1F1D;
+  --fg:#FFFFFF;
+  --fg-2:#B7B7B1;
+  --fg-3:#92928C;
+  --line:#242422;
+  --ink-border:#33332F;
+  --fill:#FFFFFF;
+  --on-fill:#0E0E0D;
+  --slab:#000000; --on-slab:#FFFFFF; --on-slab-2:#AFAFA9;
 }
 ::selection{background:var(--signal);color:#fff}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -59,7 +60,9 @@ a{color:inherit;text-decoration:none}
 .dark{background:var(--bg);color:var(--fg)}
 
 /* nav */
-nav{position:sticky;top:0;z-index:20;background:var(--bg)}
+nav{position:sticky;top:10px;z-index:20;margin:10px auto 0;max-width:calc(var(--max) - 2px);
+  background:var(--bg-2);border-radius:var(--r-cap);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+nav .wrap{height:var(--nav-h);padding:0 clamp(16px,2vw,28px)}
 /* three columns: the wordmark, the section links centred on the page, then Sign in and the button */
 nav .wrap{height:var(--nav-h);display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:24px}
 .nav-home{grid-column:1;justify-self:start}
@@ -92,9 +95,9 @@ nav .wm-plain{display:none}
    .btn-ghost is the hairline outline. The outline is an inset shadow rather than a border, so a
    ghost and a filled button measure exactly the same. */
 .btn{display:inline-flex;align-items:center;justify-content:center;height:var(--btn-h,44px);
-  padding:0 var(--btn-x,20px);border-radius:var(--r-sm);
+  padding:0 var(--btn-x,22px);border-radius:var(--r-cap);
   font-size:var(--btn-t,14px);font-weight:var(--w-title);letter-spacing:-0.014em;flex:none}
-.btn-signal{background:var(--signal);color:#fff;--btn-fill:var(--ink)}
+.btn-signal{background:var(--fill);color:var(--on-fill);--btn-fill:var(--signal)}
 .btn-primary{background:var(--fill);color:var(--on-fill)}
 .btn-ghost{box-shadow:inset 0 0 0 var(--hair) var(--ink-border);color:var(--fg)}
 .btn-sm{--btn-h:36px;--btn-x:15px;--btn-t:13px}
@@ -108,12 +111,70 @@ nav .wm-plain{display:none}
   background:var(--fg-3);transition:background-color .25s ease}
 .link-out svg{display:block;width:11px;height:11px;transition:transform .25s var(--ease-out)}
 
+/* ---------- the pieces the pages are built out of ---------- */
+
+/* A picture, or the grey standing in for one until there is a picture. Flat on purpose: a
+   placeholder that tries to look like a photograph is a placeholder nobody replaces. */
+.slab{position:relative;display:flex;flex-direction:column;justify-content:space-between;
+  border-radius:var(--r-card);background:var(--bg-3);overflow:hidden;isolation:isolate}
+.slab-dark{background:var(--slab);color:var(--on-slab)}
+.slab-dark .slab-note{color:var(--on-slab-2)}
+.slab-pad{padding:clamp(24px,3vw,44px)}
+.slab-note{font-size:var(--t-meta);letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3)}
+
+/* A paragraph that begins in ink and finishes in grey: the claim, then the explanation. */
+.split{font-size:var(--t-lede);font-weight:var(--w-body);line-height:1.34;letter-spacing:-0.02em;color:var(--fg-3)}
+.split b{font-weight:inherit;color:var(--fg)}
+
+/* A row of numbers, each with its caption and a way through. */
+.readings{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:clamp(24px,3vw,44px)}
+.reading{display:flex;flex-direction:column;gap:14px;align-items:flex-start}
+.reading strong{font-size:clamp(34px,4.4vw,58px);font-weight:var(--w-display);letter-spacing:-0.04em;line-height:.95}
+.reading p{font-size:12.5px;line-height:1.45;color:var(--fg-3);max-width:22ch}
+.slab-dark .reading p{color:var(--on-slab-2)}
+
+/* The circular way through the references put beside a number. */
+.go{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;flex:none;
+  border-radius:var(--r-cap);box-shadow:inset 0 0 0 var(--hair) var(--ink-border);color:var(--fg);
+  transition:background-color .25s var(--ease-out),color .25s var(--ease-out),box-shadow .25s var(--ease-out)}
+.go svg{display:block;width:12px;height:12px}
+.slab-dark .go{box-shadow:inset 0 0 0 var(--hair) rgba(255,255,255,.28);color:var(--on-slab)}
+@media(hover:hover){
+  .go:hover{background:var(--fill);color:var(--on-fill);box-shadow:none}
+  .slab-dark .go:hover{background:var(--on-slab);color:var(--slab)}
+}
+
+/* A row that counts itself: the number in a ring, the label and the line it introduces. */
+.steps-num{list-style:none;display:grid}
+.steps-num > li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:clamp(20px,5vw,72px);
+  align-items:start;padding:clamp(20px,2.4vw,30px) 0;border-top:var(--hair) solid var(--line)}
+.num{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;flex:none;
+  border-radius:var(--r-cap);box-shadow:inset 0 0 0 var(--hair) var(--ink-border);
+  font-size:12px;color:var(--fg-2);font-variant-numeric:tabular-nums}
+.steps-num .eyebrow{margin-bottom:7px}
+.steps-num h3{font-size:var(--t-h3);font-weight:var(--w-title);letter-spacing:-0.022em;line-height:1.25}
+
+/* A card on the paper, and the white card the references put inside it. */
+.panel{border-radius:var(--r-card);background:var(--bg-3);padding:clamp(22px,2.6vw,34px)}
+.panel-in{border-radius:calc(var(--r-card) - 10px);background:var(--bg-2);padding:clamp(20px,2.2vw,28px)}
+
 /* hero */
-.hero{padding:0;overflow:hidden}
+.hero{padding:10px 0 0}
 /* full-bleed band; the crop is placed so the video's own type lands in the middle of the band */
 .hero-video{display:block;width:100%;aspect-ratio:3/1;object-fit:cover;object-position:center 61%;
+  border-radius:var(--r-card);
   background:var(--bg-2);margin-bottom:64px}
-.hero h1{font-size:var(--t-display);font-weight:var(--w-display);letter-spacing:-0.045em;line-height:.93;max-width:16ch}
+.hero h1{font-size:var(--t-display);font-weight:var(--w-display);letter-spacing:-0.05em;line-height:.88;max-width:none}
+/* the opening block: a picture's worth of dark with one word on it */
+.hero-slab{min-height:clamp(320px,44vh,460px);padding:clamp(22px,3vw,40px)}
+.hero-slab .hero-top{display:flex;flex-direction:column;gap:clamp(18px,2.4vw,30px);align-items:flex-start}
+.hero-tag{display:inline-flex;align-items:center;height:34px;padding:0 18px;border-radius:var(--r-cap);
+  background:rgba(255,255,255,.14);color:var(--on-slab);font-size:12.5px;font-weight:var(--w-title)}
+.hero-foot-line{font-size:13px;color:var(--on-slab-2)}
+/* the card of numbers the references lift over the bottom of the hero */
+.hero-card{position:relative;z-index:1;margin:calc(-1 * clamp(28px,4vw,64px)) auto 0;
+  border-radius:var(--r-card);background:var(--bg-2);padding:clamp(28px,3.4vw,52px);
+  display:grid;gap:clamp(30px,4vw,60px)}
 /* :where() so the container does not count: these set the default for a paragraph in here, and a
    paragraph given a class of its own is meant to beat them */
 :where(.hero) p{margin-top:30px;font-size:var(--t-lede);color:var(--fg-2);max-width:54ch;line-height:1.5}
@@ -143,6 +204,8 @@ nav .wm-plain{display:none}
    something to read. */
 .eyebrow{display:block;font-family:var(--mono);font-size:var(--t-meta);font-weight:var(--w-title);
   letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);font-variant-numeric:tabular-nums}
+/* on a dark block it takes the block's own quiet ink, not the page's */
+.slab-dark .eyebrow,.cta .eyebrow{color:var(--on-slab-2)}
 /* every number and every small label is set in the mono: it tells the meta apart from the reading
    matter without spending another weight or another colour on it */
 .work-soon,.pack-len,.step .len,.acc-seg,.member-spec dt,
@@ -153,12 +216,13 @@ nav .wm-plain{display:none}
 /* A running head: the rule says a section starts, then the label and the line that says what the
    section covers, together on one line. It was a two-column grid, which left that line stranded in
    the middle of the page above a heading that began again at the left margin. */
-.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;
-  margin-bottom:40px}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;margin-bottom:clamp(26px,3vw,40px)}
+/* the standfirst carries the measure now, so the heading can run wider */
+.sec h2 + .split,.sec h1 + .split{margin-top:clamp(18px,2vw,26px);max-width:46ch}
 .sec-head p{font-size:var(--t-body);color:var(--fg-3);max-width:58ch;font-weight:var(--w-body)}
 /* A section heading. On an inner page the first one is the page's own h1, which is a matter of
    what the page means rather than how big it is, so both are set the same. */
-h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-spacing:-0.04em;line-height:.97;max-width:20ch}
+h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-spacing:-0.035em;line-height:1.02;max-width:20ch}
 .lede{font-size:var(--t-lede);line-height:1.55;color:var(--fg-2);max-width:58ch;margin-top:22px}
 .eyebrow + :is(h1,h2){margin-top:26px}
 
@@ -362,15 +426,24 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 }
 
 /* cta band */
-.cta{position:relative;isolation:isolate;color:var(--fg);padding:96px 0}
-.cta::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--band)}
-.cta :is(h1,h2){max-width:20ch}
-:where(.cta) p{font-size:17px;color:var(--fg-2);max-width:52ch;margin-top:22px;line-height:1.6}
+/* A dark card on a light page. The background is on the block itself rather than on a pseudo-
+   element behind it: a pseudo-element is invisible to anything that reads computed styles, so every
+   word on it reported as white-on-paper. */
+.cta{position:relative;isolation:isolate;color:var(--on-slab);background:var(--slab);
+  margin:0 var(--pad);border-radius:var(--r-card);padding:clamp(44px,5vw,80px) 0}
+.cta .wrap{max-width:calc(var(--max) - var(--pad) * 2);padding:0 clamp(20px,2.6vw,44px)}
+.cta :is(h1,h2){max-width:18ch}
+:where(.cta) p{font-size:17px;color:var(--on-slab-2);max-width:52ch;margin-top:22px;line-height:1.6}
+.cta .split b{color:var(--on-slab)}
+.cta .btn-signal{background:var(--on-slab);color:var(--slab);--btn-fill:var(--signal)}
+@media(hover:hover){.cta .btn-signal:hover{color:#fff}}
+.cta .link-out{color:var(--on-slab)}
+.cta .link-out > span::after{background:var(--on-slab-2)}
 .cta-row{display:flex;flex-wrap:wrap;align-items:center;gap:16px 30px;margin-top:40px}
 /* the short way in, under the long one: no account, an address and a line */
 .cta-note{grid-column:1 / -1;padding-top:8px}
-.cta-note-head{font-size:15px;font-weight:var(--w-title);letter-spacing:-0.014em;color:var(--fg);margin:0 0 14px}
-.cta-note-head span{font-weight:var(--w-body);color:var(--fg-3)}
+.cta-note-head{font-size:15px;font-weight:var(--w-title);letter-spacing:-0.014em;color:var(--on-slab);margin:0 0 14px}
+.cta-note-head span{font-weight:var(--w-body);color:var(--on-slab-2)}
 .cta-note .form-status{margin-top:10px}
 /* copy on the left, the enquiry form on the right */
 .cta-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:64px;align-items:start}
@@ -381,43 +454,43 @@ button.btn{border:0;font-family:inherit;cursor:pointer}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .cta-form{position:relative;display:grid;gap:22px}
 .stage{border:0;min-width:0}
-.stage legend{font-size:13px;font-weight:var(--w-title);color:var(--fg-2);margin-bottom:12px}
+.stage legend{font-size:13px;font-weight:var(--w-title);color:var(--on-slab-2);margin-bottom:12px}
 .stage-opts{display:flex;flex-wrap:wrap;gap:8px}
 .stage-opt{position:relative;display:block}
 /* the radio stays focusable and readable by screen readers; the chip is what people see */
 .stage-opt input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
 .stage-opt span{display:inline-flex;align-items:center;height:40px;padding:0 18px;border-radius:var(--r-sm);
-  font-size:14px;font-weight:var(--w-title);letter-spacing:-0.012em;color:var(--fg);box-shadow:inset 0 0 0 var(--hair) var(--ink-border);
+  font-size:14px;font-weight:var(--w-title);letter-spacing:-0.012em;color:var(--on-slab);box-shadow:inset 0 0 0 var(--hair) rgba(255,255,255,.26);
   transition:background-color .25s ease,color .25s ease,box-shadow .25s ease}
-.stage-opt input:checked + span{background:var(--fill);color:var(--on-fill);box-shadow:inset 0 0 0 var(--hair) var(--fill)}
-.stage-opt input:focus-visible + span{outline:2px solid var(--fg);outline-offset:3px}
+.stage-opt input:checked + span{background:var(--on-slab);color:var(--slab);box-shadow:none}
+.stage-opt input:focus-visible + span{outline:2px solid var(--on-slab);outline-offset:3px}
 /* the composer is drawn like the chips and outline buttons: no fill, a hairline, the page's own ink */
-.composer{border-radius:var(--r-sm);box-shadow:inset 0 0 0 var(--hair) var(--ink-border);transition:box-shadow .25s ease}
-.composer:hover{box-shadow:inset 0 0 0 var(--hair) var(--fg-3)}
-.composer:focus-within{box-shadow:inset 0 0 0 var(--hair) var(--fg)}
+.composer{border-radius:var(--r-sm);box-shadow:inset 0 0 0 var(--hair) rgba(255,255,255,.26);transition:box-shadow .25s ease}
+.composer:hover{box-shadow:inset 0 0 0 var(--hair) rgba(255,255,255,.45)}
+.composer:focus-within{box-shadow:inset 0 0 0 var(--hair) var(--on-slab)}
 .composer textarea,.composer input{font-family:inherit;font-size:16px;font-weight:var(--w-body);letter-spacing:-0.004em;color:var(--fg);
-  background:none;border:0;outline:none;caret-color:var(--fg)}
+  background:none;border:0;outline:none;caret-color:var(--on-slab)}
 .composer textarea{display:block;width:100%;min-height:130px;padding:8px 22px 14px;line-height:1.55;resize:none}
-.composer ::placeholder{color:var(--fg-3);opacity:1}
+.composer ::placeholder{color:var(--on-slab-2);opacity:1}
 /* keep browser autofill from painting a light box inside the transparent field */
-.composer input:-webkit-autofill{-webkit-text-fill-color:var(--fg);box-shadow:0 0 0 1000px var(--band) inset}
+.composer input:-webkit-autofill{-webkit-text-fill-color:var(--on-slab);box-shadow:0 0 0 1000px var(--slab) inset}
 .composer-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:16px 22px 0}
-.composer-head label,.composer-foot label{font-size:12.5px;font-weight:var(--w-title);color:var(--fg-2);white-space:nowrap;cursor:text}
-.req{color:var(--fg)}
-.composer-foot{display:flex;align-items:center;gap:14px;padding:10px 10px 10px 22px;border-top:var(--hair) solid var(--ink-border)}
+.composer-head label,.composer-foot label{font-size:12.5px;font-weight:var(--w-title);color:var(--on-slab-2);white-space:nowrap;cursor:text}
+.req{color:var(--on-slab)}
+.composer-foot{display:flex;align-items:center;gap:14px;padding:10px 10px 10px 22px;border-top:var(--hair) solid rgba(255,255,255,.2)}
 .composer input{flex:1;min-width:0;height:40px}
-.count{font-size:12.5px;font-weight:var(--w-title);color:var(--fg-3);font-variant-numeric:tabular-nums;white-space:nowrap}
-.count.is-near{color:var(--fg)}
+.count{font-size:12.5px;font-weight:var(--w-title);color:var(--on-slab-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.count.is-near{color:var(--on-slab)}
 /* Send is this form's action, drawn as the filled neutral control */
-.btn-send{gap:8px;background:var(--fill);color:var(--on-fill)}
+.btn-send{gap:8px;background:var(--on-slab);color:var(--slab)}
 .btn-send svg{display:block;width:10px;height:10px}
 /* Send stays disabled until every required field is filled in */
-.btn-send:disabled{background:transparent;color:var(--fg-3);box-shadow:inset 0 0 0 var(--hair) var(--ink-border);
+.btn-send:disabled{background:transparent;color:var(--on-slab-2);box-shadow:inset 0 0 0 var(--hair) rgba(255,255,255,.22);
   cursor:not-allowed;transform:none}
 .cta-form.is-sending .btn-send{opacity:.7;cursor:progress}
 .form-foot{display:grid;gap:6px;margin-top:-8px}
-.form-note{font-size:13px;font-weight:var(--w-title);color:var(--fg-3)}
-.form-status{min-height:1.6em;font-size:14.5px;font-weight:var(--w-title);color:var(--fg)}
+.form-note{font-size:13px;font-weight:var(--w-title);color:var(--on-slab-2)}
+.form-status{min-height:1.6em;font-size:14.5px;font-weight:var(--w-title);color:var(--on-slab)}
 
 /* footer */
 footer{padding:72px 0 56px}
@@ -479,9 +552,9 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
 .motion [data-rv="split"]:not(.in) .wd > span{transform:translateY(115%)}
 
 /* contact: the red layer opens out over the black section */
-.motion .cta[data-rv]::before{transition:clip-path 1.2s var(--ease-out) var(--d,0ms)}
-.motion .cta[data-rv]:not(.in)::before{clip-path:inset(4% 3% round 8px)}
-.motion .cta[data-rv].in::before{clip-path:inset(0% 0% round 0px)}
+.motion .cta[data-rv]{transition:clip-path 1.2s var(--ease-out) var(--d,0ms)}
+.motion .cta[data-rv]:not(.in){clip-path:inset(3% 2% round var(--r-card))}
+.motion .cta[data-rv].in{clip-path:inset(0% 0% round var(--r-card))}
 
 /* ruled rows (value rows, process steps, deliverables, focus items): the rule draws first, then the contents rise in */
 .motion [data-rv="rule"]:not(.in)::before{transform:scaleX(0)}
@@ -884,7 +957,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .logos-track{align-items:center}
 .motion .logos-track{animation-duration:58s}
 .logos svg{display:block;flex:none;width:auto;margin-right:clamp(64px,9vw,130px);
-  color:var(--fg-3);transition:color .45s var(--ease-out)}
+  color:var(--fg-2);transition:color .45s var(--ease-out)}
 .logo-mkpk{height:24px}
 .logo-vayence{height:26px}
 /* a square mark reads far smaller than a wordmark set to the same height — the wordmark is six
@@ -919,7 +992,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .cta-short .cta-row{margin-top:0;justify-content:flex-end}
 
 /* talent: the pool is still being built, so the page says so */
-.status-line{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-size:13.5px;font-weight:var(--w-title);color:var(--fg-2)}
+.status-line{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-size:13.5px;font-weight:var(--w-title);color:var(--on-slab-2)}
 .status-dot{width:8px;height:8px;border-radius:50%;background:var(--fg);opacity:.9}
 .motion .status-dot{animation:status-pulse 2.4s ease-in-out infinite}
 @keyframes status-pulse{50%{opacity:.3}}
