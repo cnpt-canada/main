@@ -146,15 +146,11 @@ nav .wm-plain{display:none}
   .slab-dark .go:hover{background:var(--on-slab);color:var(--slab)}
 }
 
-/* A row that counts itself: the number in a ring{list-style:none;display:grid}
-/* A card on the paper{border-radius:var(--r-card);background:var(--bg-3);padding:clamp(22px,2.6vw,34px)}
 /* hero */
 .hero{padding:10px 0 0}.hero h1{font-size:var(--t-display);font-weight:var(--w-display);letter-spacing:-0.05em;line-height:.88;max-width:none}
 /* the opening block: a picture's worth of dark with one word on it */
 .hero-slab{min-height:clamp(320px,44vh,460px);padding:var(--card-pad)}
 .hero-slab .hero-top{display:flex;flex-direction:column;gap:clamp(18px,2.4vw,30px);align-items:flex-start}
-.hero-tag{display:inline-flex;align-items:center;height:34px;padding:0 18px;border-radius:var(--r-cap);
-  background:rgba(255,255,255,.14);color:var(--on-slab);font-size:12.5px;font-weight:var(--w-title)}
 .hero-foot-line{font-size:13px;color:var(--on-slab-2)}
 /* the card of numbers the references lift over the bottom of the hero */
 .hero-card{position:relative;z-index:1;margin:calc(-1 * clamp(28px,4vw,64px)) auto 0;
@@ -173,7 +169,6 @@ nav .wm-plain{display:none}
 .motion .ticker-track{animation:ticker 46s linear infinite}
 @keyframes ticker{to{transform:translate3d(-50%,0,0)}}
 @media(hover:hover){.ticker:hover .ticker-track{animation-play-state:paused}}
-/* What the studio does{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 28px;max-width:none;margin-top:0;color:var(--fg-2)}
 /* section shell */
 .sec{padding:var(--sec-pad) 0}
 .sec-join{padding-top:0}
@@ -910,7 +905,8 @@ nav .nav-sheet .wrap{display:block;height:auto}
 }
 
 /* client works */
-/* one case study per row,full width{display:grid;grid-template-columns:minmax(0,1fr);gap:72px;margin-top:44px}.works-note{margin-top:48px;font-size:14px;color:var(--fg-3);max-width:60ch}
+/* the note under the engagement list: the way through for work that is not listed yet */
+.works-note{margin-top:48px;font-size:14px;color:var(--fg-3);max-width:60ch}
 .works-note a{color:var(--fg);text-decoration:underline;text-underline-offset:3px}
 
 /* short contact band at the foot of each page */
