@@ -857,6 +857,21 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .step-card{min-height:0;gap:22px}
 }
 
+/* updates: one dated note per row, read across the width the way the other row lists do. No rule
+   between rows — the page draws none anywhere else either. */
+.ups{list-style:none;margin-top:clamp(24px,2.6vw,32px)}
+.up{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px clamp(20px,4vw,64px);
+  align-items:baseline;padding:18px 0}
+.up-date{font-family:var(--mono);font-size:var(--t-meta);font-weight:var(--w-title);letter-spacing:.11em;
+  text-transform:uppercase;color:var(--fg-3);white-space:nowrap;min-width:72px}
+.up h3{font-size:clamp(20px,1.9vw,24px);font-weight:var(--w-title);letter-spacing:-0.028em;line-height:1.1}
+.up p{margin-top:8px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:62ch}
+/* a row still waiting for its entry says so by staying in the quieter grey */
+.up-waiting h3{color:var(--fg-3)}
+@media(max-width:620px){
+  .up{grid-template-columns:minmax(0,1fr);gap:6px;padding:16px 0}
+}
+
 .sum-note{margin-top:22px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:52ch}
 .sum-more{margin-top:30px}
 .sum-more .btn svg{width:11px;height:11px;margin-left:10px}
@@ -891,7 +906,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .motion .logos-track{animation-duration:58s}
 .logos svg{display:block;flex:none;width:auto;margin-right:clamp(64px,9vw,130px);
   color:var(--fg-2);transition:color .45s var(--ease-out)}
-.logo-mkpk{height:24px}
+.logo-mkpk{height:18px}
 .logo-vayence{height:26px}
 /* a square mark reads far smaller than a wordmark set to the same height — the wordmark is six
    times as wide — so the slab is given a third more height to sit level with it */
@@ -899,7 +914,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 @media(hover:hover){.logos:hover svg{color:var(--fg-2)}}
 @media(max-width:620px){
   .logos{margin-top:38px}
-  .logo-mkpk{height:19px}
+  .logo-mkpk{height:15px}
   .logo-vayence{height:21px}
   .logo-kh{height:25px}
 }
