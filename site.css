@@ -150,7 +150,8 @@ nav .wm-plain{display:none}
 .hero{padding:10px 0 0}.hero h1{font-size:var(--t-display);font-weight:var(--w-display);letter-spacing:-0.05em;line-height:.88;max-width:none}
 /* the opening block: a picture's worth of dark with one word on it */
 .hero-slab{min-height:clamp(320px,44vh,460px);padding:var(--card-pad)}
-.hero-slab .hero-top{display:flex;flex-direction:column;gap:clamp(18px,2.4vw,30px);align-items:flex-start}
+.hero-slab .hero-top{display:flex;flex-direction:column;gap:clamp(18px,2.4vw,30px);align-items:flex-start;
+  padding-bottom:calc(34px + clamp(18px,2.4vw,30px))}
 .hero-foot-line{font-size:13px;color:var(--on-slab-2)}
 /* the card of numbers the references lift over the bottom of the hero */
 .hero-card{position:relative;z-index:1;margin:calc(-1 * clamp(28px,4vw,64px)) auto 0;
@@ -800,6 +801,8 @@ nav .nav-sheet .wrap{display:block;height:auto}
   animation:nic-pop .5s cubic-bezier(.34,1.56,.64,1) calc(var(--sd,0ms) + var(--i,0) * 70ms) backwards}
 .motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-talent path{
   animation:nic-draw .4s var(--ease-out) calc(var(--sd,0ms) + var(--i,0) * 70ms) backwards}
+.motion :is(.navlinks .nav-link:hover,.navlinks .nav-link:focus-visible,.navlinks .nav-link[aria-current="page"],.nav-sheet a) .ic-updates path{
+  animation:nic-draw .45s var(--ease-out) calc(var(--sd,0ms) + var(--i,0) * 90ms) backwards}
 @keyframes nic-pop{from{transform:scale(0) rotate(-40deg)}}
 @keyframes nic-draw{from{stroke-dashoffset:1.01}}
 
