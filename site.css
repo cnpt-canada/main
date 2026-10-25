@@ -870,6 +870,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .up h3{font-size:clamp(20px,1.9vw,24px);font-weight:var(--w-title);letter-spacing:-0.028em;line-height:1.1}
 .up p{margin-top:8px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:62ch}
 /* a row still waiting for its entry says so by staying in the quieter grey */
+.up p a{color:var(--fg);text-decoration:underline;text-underline-offset:3px}
 .up-waiting h3{color:var(--fg-3)}
 @media(max-width:620px){
   .up{grid-template-columns:minmax(0,1fr);gap:6px;padding:16px 0}

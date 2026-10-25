@@ -2,7 +2,7 @@
 
 /* old single-page links (cnpt.ca/#team) go to the page that now holds that section */
 (function () {
-  var moved = { '#practices': '/#s-about', '#process': '/#s-about', '#team': '/network#team', '#talent': '/network#talent' };
+  var moved = { '#practices': '/#s-about', '#process': '/#s-about', '#team': '/network#team', '#talent': '/network#talent', '#updates': '/updates' };
   if (location.pathname === '/' && moved[location.hash]) location.replace(moved[location.hash]);
 })();
 
@@ -309,7 +309,7 @@ window.addEventListener('error', function (e) {
     ['.eyebrow', 'clip'],
     ['.sec h1, .sec h2, .cta h1, .cta h2', 'split'],
     ['.sec-head p, .prac-note, .lede, .split, .cta-grid > div > p, .cta-row, .cta-form, .works-note', 'up'],
-    ['.acc, .fgrid > *, .sum-list li', 'up'],
+    ['.acc, .fgrid > *, .sum-list li, .up', 'up'],
     ['.prac, .step-card', 'up', 0, 80],
     ['.value, .step, .dl, .focus-item, .member, .pack', 'rule'],
     ['.cta', 'cta'],
