@@ -64,7 +64,7 @@ a{color:inherit;text-decoration:none}
 /* words written straight onto the paper start where the words on a card start */
 .sec > .wrap > *,footer > .wrap > *{padding-inline:var(--card-pad)}
 /* except a row of cards, which is a card and keeps the card line */
-.sec > .wrap > :is(.pracs,.steps){padding-inline:0}
+.sec > .wrap > .steps{padding-inline:0}
 .dark{background:var(--bg);color:var(--fg)}
 
 /* nav */
@@ -824,7 +824,15 @@ nav .nav-sheet .wrap{display:block;height:auto}
 /* the three practices, three across. No box is drawn: a card here is its share of the row, the air
    around it and the rule it opens under — the same rule every other block on this page opens under. */
 .pracs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:clamp(26px,3vw,38px);list-style:none}
-.prac{min-height:clamp(196px,17vw,244px)}
+/* The practices are not cards: no fill, no border, so the marks and the names sit on the page the
+   way type does. Named through the list, because .card-s carries the same weight further down the
+   file and would otherwise win on order. Nothing lifts on hover either -- there is no card to lift,
+   so the mark growing is the whole of the feedback. */
+.pracs .prac{min-height:0;background:none;box-shadow:none;padding:0;gap:clamp(14px,1.4vw,20px)}
+@media(hover:hover){.pracs .prac:hover{box-shadow:none;transform:none}}
+/* The card used to hold a mark and its name apart at either end of its own top edge. With no card
+   there is nothing to hold them apart, so they read as one lockup and the name follows the mark. */
+.pracs .step-top{justify-content:flex-start}
 /* the mark sits in the corner the number sits in on a phase card, at the size that corner allows */
 .prac .acc-mk{height:clamp(30px,2.9vw,42px);width:auto;transform-origin:0 50%}
 @media(hover:hover){.prac:hover .acc-mk{transform:scale(1.1)}}
