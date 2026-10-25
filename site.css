@@ -823,7 +823,8 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .sum-list p{margin-top:8px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:62ch}
 /* the three practices, three across. No box is drawn: a card here is its share of the row, the air
    around it and the rule it opens under — the same rule every other block on this page opens under. */
-.pracs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:clamp(26px,3vw,38px);list-style:none}
+.pracs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px 18px;list-style:none;
+  margin-block:clamp(40px,4.6vw,66px)}
 /* The practices are not cards: no fill, no border, so the marks and the names sit on the page the
    way type does. Named through the list, because .card-s carries the same weight further down the
    file and would otherwise win on order. Nothing lifts on hover either -- there is no card to lift,
@@ -891,7 +892,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
 @media(max-width:760px){
   .sum-list li{padding:20px 0}
   .sum-list li > div{gap:6px}
-  .pracs{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;max-width:none}
+  .pracs{grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 20px;max-width:none}
   .prac{aspect-ratio:auto;gap:16px}
 }
 /* after the block above, or it would not win: two across leaves the third card on a row of its own */
