@@ -206,14 +206,21 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 .eyebrow + :is(h1,h2){margin-top:18px}
 
 /* what we do — three value rows: icon, title, description + tags */
-.values{margin-top:56px}
-.value{--vt:clamp(24px,2.4vw,30px);position:relative;display:grid;grid-template-columns:80px minmax(0,446fr) minmax(0,602fr);gap:36px;padding:42px 0}
-/* centre the 48px icon on the title's first line (line-height 1.1) at every title size */
-.value-ic{display:block;margin-top:calc(var(--vt) * .55 - 24px);color:var(--fg-2)}
-.value-ic svg{display:block;width:48px;height:48px}
+.values{margin-top:clamp(26px,2.6vw,34px)}
+/* 24 | 240 | the rest, 44 apart, which at 1440 leaves the body the 900px the reference gives it */
+.value{--vt:clamp(21px,1.9vw,24.5px);position:relative;display:grid;
+  grid-template-columns:24px clamp(140px,18.5vw,240px) minmax(0,1fr);
+  gap:clamp(20px,3.1vw,44px);padding:26px 0;
+  border-bottom:var(--hair) solid var(--line)}
+/* centre the 24px mark on the title's first line (line-height 1.1) at every title size */
+.value-ic{display:block;margin-top:calc(var(--vt) * .55 - 12px);color:var(--fg-2)}
+.value-ic svg{display:block;width:24px;height:24px}
 .value-core .value-ic{color:var(--fg)}
-.value h3{font-size:var(--vt);font-weight:var(--w-title);letter-spacing:-0.028em;line-height:1.1}
-:where(.value-body) p{font-size:16px;line-height:1.65;color:var(--fg-3)}
+.value h3{font-size:var(--vt);font-weight:var(--w-title);letter-spacing:-0.026em;line-height:1.1}
+:where(.value-body) p{font-size:15px;line-height:1.6;letter-spacing:-0.014em;color:var(--fg-3)}
+/* the run of tags under a row is plain text here, not the mono label it is elsewhere */
+.value-body .tags{margin-top:14px;font-size:12.5px;line-height:1.45;letter-spacing:-0.014em;
+  font-weight:var(--w-body)}
 .tags{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:20px;font-size:13px;font-weight:var(--w-title);color:var(--fg-3)}
 .tags span{position:relative}
 .tags span:not(:last-child)::after{content:"·";position:absolute;right:-11px}
@@ -569,6 +576,7 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
 .dl b,.dl span{transition:color .35s ease}
 /* the step is a transition on the row itself, so it also eases back out when the pointer leaves */
 .sum-list li,.value,.dl,.pack-in li{transition:padding-left .3s var(--ease-ref)}
+.value{transition:padding-left .3s var(--ease-ref),border-color .5s var(--ease-out)}
 @media(hover:hover){
   .btn:not(:disabled):hover::before{transform:none}
   .link-out:hover > span::after{background:var(--fg)}
@@ -595,7 +603,7 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
   .step-last:hover .dot{color:var(--fg)}
   .step:hover p{color:var(--fg-2)}
   /* same as the process: rules light together down to the hovered row; text and icons respond per row */
-  :is(.value:hover, .value:has(~ .value:hover))::before{background:var(--fg-2)}
+  :is(.value:hover, .value:has(~ .value:hover)){border-bottom-color:var(--ink-border)}
   .values:has(.value:hover) .value:not(:hover) > *{opacity:.45}
   .value:hover .value-ic{color:var(--fg)}
   .value-core:hover .value-ic{color:var(--fg)}
@@ -665,8 +673,7 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
   @media(hover:hover){.track .step:hover::before{background:var(--line)}}
   .step h3{margin-top:8px}
   .packs{gap:0 32px;margin-top:40px}
-  .values{margin-top:44px}
-  .value{grid-template-columns:56px minmax(0,1fr);gap:14px 24px;padding:34px 0}
+  .value{grid-template-columns:24px minmax(0,1fr);gap:12px 20px;padding:22px 0}
   .value-body{grid-column:2}
   .entry{grid-template-columns:1fr;gap:36px}
   .team{margin-top:44px}
@@ -702,8 +709,7 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
   .packs{margin-top:32px}
   .pack{padding:24px 0 4px}
   .pack h3{margin-top:18px}
-  .values{margin-top:36px}
-  .value{grid-template-columns:1fr;gap:16px;padding:28px 0}
+  .value{grid-template-columns:1fr;gap:12px;padding:20px 0}
   .value-body{grid-column:auto}
   .value-ic{margin-top:0}
   .dl{grid-template-columns:1fr;gap:4px;padding:16px 0}
