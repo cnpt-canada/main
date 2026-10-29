@@ -64,7 +64,7 @@ a{color:inherit;text-decoration:none}
 /* words written straight onto the paper start where the words on a card start */
 .sec > .wrap > *,footer > .wrap > *{padding-inline:var(--card-pad)}
 /* except a row of cards, which is a card and keeps the card line */
-.sec > .wrap > .steps{padding-inline:0}
+.sec > .wrap > .packs{padding-inline:0}
 .dark{background:var(--bg);color:var(--fg)}
 
 /* nav */
@@ -294,21 +294,26 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 
 /* packages — three columns of work a client can commission by name. Each one is a ruled column:
    icon and number, the name, what it is, then the spec sheet of what is in it and how long it runs. */
-.packs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 44px;margin-top:52px}
-.pack{position:relative;display:flex;flex-direction:column;padding:28px 0 8px}
-/* icon on the left, number pinned to the right — the same head as a focus item */
-.pack-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+/* The packages are the cards on this page, so the row sits on the card line and each one is a
+   white box with a hairline and a 20px corner, 28 of padding, 22 between its parts. */
+.packs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:clamp(26px,2.6vw,34px)}
+.pack{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:22px;
+  background:var(--bg-2);border-radius:var(--r-card);padding:28px;
+  box-shadow:inset 0 0 0 var(--hair) var(--line);
+  transition:box-shadow .32s var(--ease-out),transform .32s var(--ease-out)}
 .pack-ic{display:block;color:var(--fg-2);transition:color .5s var(--ease-out)}
-.pack-ic svg{display:block;width:48px;height:48px}
-.pack h3{font-size:clamp(20px,2vw,26px);font-weight:var(--w-title);letter-spacing:-0.028em;line-height:1.1;margin-top:26px}
-.pack > p{font-size:15px;line-height:1.6;color:var(--fg-3);margin:12px 0 24px}
+.pack-ic svg{display:block;width:24px;height:24px}
+.pack h3{font-size:clamp(21px,1.9vw,24.5px);font-weight:var(--w-title);letter-spacing:-0.026em;line-height:1.1}
+.pack > p{font-size:14px;line-height:1.6;letter-spacing:-0.014em;color:var(--fg-3)}
 /* what is in the package: one ruled line each, so it reads as a spec sheet rather than a run of chips.
    The slack sits above the list, so the spec sheets line up across the row however long the copy runs. */
-.pack-in{list-style:none;margin-top:auto}
-.pack-in li{padding:7px 0;font-size:14px;font-weight:var(--w-title);color:var(--fg-2)}
+.pack-in{list-style:none;width:100%;margin-top:auto}
+.pack-in li{padding:11px 0;font-size:14px;line-height:1.6;letter-spacing:-0.014em;color:var(--fg-2);
+  border-top:var(--hair) solid var(--line)}
 /* lengths sit at the foot of each column, so they share one line across the row */
-.pack-len{padding-top:20px;font-size:12.5px;font-weight:var(--w-title);color:var(--fg-3)}
-.pack-len b{margin-right:9px;font-weight:var(--w-title);color:var(--fg-3)}
+.pack-len{font-size:var(--t-meta);font-weight:var(--w-title);letter-spacing:.11em;
+  text-transform:uppercase;color:var(--fg-3)}
+.pack-len b{margin-right:9px;font-weight:inherit;color:inherit}
 /* the three marks breathe out of step with each other, the way the reference's marks do */
 .motion .pack-ic svg{animation:pack-breath 6s ease-in-out infinite}
 .motion .pack:nth-child(2) .pack-ic svg{animation-delay:-2s}
@@ -617,10 +622,8 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
   .dl:hover b{color:var(--fg)}
   .dl:hover span{color:var(--fg-2)}
   /* packages answer hover like the focus items */
-  .pack:hover::before{background:var(--fg-2)}
-  .packs:has(.pack:hover) .pack:not(:hover) > *{opacity:.45}
+  .pack:hover{box-shadow:inset 0 0 0 var(--hair) var(--ink-border);transform:translateY(-3px)}
   .pack:hover .pack-ic{color:var(--fg)}
-  .pack:hover > p{color:var(--fg-2)}
   /* every section mark answers the pointer with the reference's overshoot: it lifts and comes back */
   .value-ic,.focus-ic,.pack-ic,.step .dot{transition:transform .4s var(--ease-spring),color .5s var(--ease-out)}
   .value:hover .value-ic,.focus-item:hover .focus-ic,.pack:hover .pack-ic,.step:hover .dot{transform:translateY(-5px) scale(1.06)}
@@ -859,10 +862,17 @@ nav .nav-sheet .wrap{display:block;height:auto}
   transition:box-shadow .32s var(--ease-out),transform .32s var(--ease-out)}
 @media(hover:hover){.card-s:hover{box-shadow:inset 0 0 0 var(--hair) var(--ink-border);transform:translateY(-3px)}}
 
-/* the four phases, as a row of those cards */
+/* The four stages are not cards: a mark, the name, the copy and the length, as type on the page. */
 .steps{list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:clamp(10px,1vw,14px);margin-top:clamp(26px,3vw,38px)}
-.step-card{min-height:clamp(212px,19vw,268px)}
+  gap:clamp(24px,2.5vw,36px);margin-top:clamp(26px,2.6vw,34px)}
+.step-card{display:flex;flex-direction:column;align-items:flex-start;gap:14px}
+.step-ic{display:block;color:var(--fg-2);transition:color .5s var(--ease-out)}
+.step-ic svg{display:block;width:24px;height:24px}
+.step-card h3{font-size:clamp(21px,1.9vw,24.5px);font-weight:var(--w-title);letter-spacing:-0.026em;line-height:1.1}
+.step-card p{font-size:14px;line-height:1.6;letter-spacing:-0.014em;color:var(--fg-3)}
+.step-len{font-size:var(--t-meta);font-weight:var(--w-title);letter-spacing:.11em;
+  text-transform:uppercase;color:var(--fg-3)}
+@media(hover:hover){.step-card:hover .step-ic{color:var(--fg)}}
 .step-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .step-no{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;flex:none;
   border-radius:var(--r-cap);box-shadow:inset 0 0 0 var(--hair) var(--ink-border);
@@ -874,11 +884,9 @@ nav .nav-sheet .wrap{display:block;height:auto}
   font-size:11.5px;font-weight:var(--w-title);letter-spacing:-0.008em;color:var(--fg-3);white-space:nowrap}
 .step-foot h3{font-size:var(--t-h3);font-weight:var(--w-title);letter-spacing:-0.026em;line-height:1.1}
 .step-foot p{margin-top:9px;font-size:13.5px;line-height:1.5;color:var(--fg-3)}
-@media(hover:hover){.step-card:hover .step-no{background:var(--fill);color:var(--on-fill);box-shadow:none}}
 @media(max-width:900px){.steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){
   .steps{grid-template-columns:minmax(0,1fr)}
-  .step-card{min-height:0;gap:22px}
 }
 
 /* updates: one dated note per row, read across the width the way the other row lists do. No rule

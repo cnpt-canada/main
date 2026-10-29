@@ -10,7 +10,7 @@
     { "source": "/practices", "destination": "/#s-about", "permanent": true },
     { "source": "/about", "destination": "/#what", "permanent": true },
     { "source": "/packages", "destination": "/#packages", "permanent": true },
-    { "source": "/process", "destination": "/#s-about", "permanent": true },
+    { "source": "/process", "destination": "/#process", "permanent": true },
     { "source": "/team", "destination": "/network#team", "permanent": true },
     { "source": "/talent", "destination": "/network#talent", "permanent": true },
     { "source": "/contact", "destination": "/#contact", "permanent": false },
