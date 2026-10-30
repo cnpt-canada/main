@@ -2,11 +2,11 @@
    Fetched only when the mark at the foot of the page is pressed, so a visitor loads neither this
    file nor anything of Google's.
 
-   Pressing the mark puts a bar along the bottom. If nobody is signed in, the bar carries Google's
-   own sign-in button: picking an account happens in Google's popup and the page stays exactly where
-   it was — no redirect out and none back. Google hands over a signed id_token, the bar posts it to
-   /api/admin, and if that address is one of the site's editors the same bar turns into the editing
-   bar and every line of copy on the page becomes typeable.
+   Pressing it asks Google for an account straight away — Google's own chooser, over the page, which
+   stays exactly where it was. Nothing of ours is on screen while that happens. Google hands over a
+   signed id_token, it goes to /api/admin, and only if that address is one of the site's editors does
+   the bar appear and every line of copy on the page become typeable. Any other account gets no bar
+   and no message: the page is simply as it was.
 
    A line is read out as runs — its words, and which of them are emphasised — rather than as markup,
    so nothing sent to the server is ever parsed as HTML there; ⌘B and ⌘I work because a bold or
@@ -15,9 +15,7 @@
 (function () {
   var EDITABLE = { '/': 1, '/work': 1, '/network': 1 };
   var SAID = {
-    not_configured: 'Admin mode is not set up on this deployment.',
     not_signed_in: 'Google’s hour is up. Press Exit and sign in again.',
-    not_allowed: 'That account is not one of the site’s editors.',
     bad_credential: 'Google’s answer could not be checked. Try once more.',
     no_repository: 'The editor cannot write to the repository: check GITHUB_REPO and GITHUB_TOKEN.',
     out_of_date: 'This page changed in the repository since you opened it. Reload, then edit again.',
@@ -31,7 +29,7 @@
   var fields = [];
   var before = {};
   var page = '';
-  var bar, who, status, tools, saveButton, revertButton;
+  var bar, who, status, tools, saveButton, revertButton, gate, patience;
   var busy = false;
   var editing = false;
   var token = '';
@@ -101,7 +99,7 @@
 
   function withGoogle(then) {
     if (window.google && window.google.accounts && window.google.accounts.id) return then();
-    if (gsi === false) return say('Google’s sign-in script could not be loaded.', true);
+    if (gsi === false) return;
     waiting.push(then);
     if (gsi === 'loading') return;
     gsi = 'loading';
@@ -115,14 +113,15 @@
     script.onerror = function () {
       gsi = false;
       waiting.length = 0;
-      say('Google’s sign-in script could not be loaded.', true);
+      console.warn('cnpt admin: Google’s sign-in script could not be loaded.');
     };
     document.head.appendChild(script);
   }
 
-  // the id_token Google just handed the browser, taken to the server to be checked
+  // the id_token Google just handed the browser, taken to the server to be checked. An address the
+  // site does not edit with gets nothing: no bar, no message, the page as it was.
   function signedIn(response) {
-    say('Checking that with Google…');
+    drop();
     fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -133,44 +132,60 @@
         if (reply.status === 200 && reply.data.email) {
           // kept in a variable for the hour it is good for, and sent with each save
           token = response.credential;
+          build();
           return edit(reply.data.email);
         }
         if (window.google) window.google.accounts.id.disableAutoSelect();
-        say(SAID[reply.data.error] || 'That sign-in did not go through.', true);
       })
-      .catch(function () { say('That sign-in could not be sent.', true); });
+      .catch(function () {});
   }
 
-  function offerGoogle(info) {
-    tools.textContent = '';
-    var slot = make('span', 'admin-gbtn');
-    tools.appendChild(slot);
-    tools.appendChild(button('Close', close));
-    measure();
+  // Google's own account chooser, asked for straight away. If Google cannot show it — nobody is
+  // signed in to Google in this browser, or it has been dismissed too often — its own button is put
+  // at the foot of the page instead, and that is the only thing that ever appears before an editor
+  // is through.
+  function askGoogle(clientId) {
     withGoogle(function () {
       window.google.accounts.id.initialize({
-        client_id: info.client_id,
+        client_id: clientId,
         callback: signedIn,
         auto_select: false,
-        cancel_on_tap_outside: true
+        cancel_on_tap_outside: true,
+        use_fedcm_for_prompt: true
       });
-      window.google.accounts.id.renderButton(slot, {
-        theme: 'filled_black', size: 'medium', shape: 'pill', text: 'signin_with', logo_alignment: 'center'
-      });
-      measure();
-      say('Sign in with the Google account that edits this site.');
+      window.google.accounts.id.prompt();
+      // whether the chooser actually came up cannot be seen from here, so if no account has come
+      // back shortly, Google's button goes up as well — that is the way in when nobody is signed
+      // in to Google in this browser at all.
+      clearTimeout(patience);
+      patience = setTimeout(function () { offerButton(clientId); }, 3000);
     });
   }
 
+  function offerButton(clientId) {
+    if (gate) return;
+    gate = make('div', 'admin-signin');
+    gate.setAttribute('data-cursor-off', '');
+    document.body.appendChild(gate);
+    window.google.accounts.id.renderButton(gate, {
+      theme: 'filled_black', size: 'medium', shape: 'pill', text: 'signin_with', logo_alignment: 'center'
+    });
+  }
+
+  function drop() {
+    clearTimeout(patience);
+    if (gate) gate.remove();
+    gate = null;
+  }
+
   function ask() {
-    say('…');
     fetch('/api/admin', { headers: { Accept: 'application/json' } })
       .then(answer)
       .then(function (reply) {
-        if (reply.status === 200 && reply.data.client_id) return offerGoogle(reply.data);
-        say(SAID[reply.data.error] || 'Admin mode is unavailable.', true);
+        if (reply.status === 200 && reply.data.client_id) return askGoogle(reply.data.client_id);
+        console.warn('cnpt admin:', reply.data.error || reply.status);
       })
-      .catch(function () { say('Admin mode is unavailable.', true); });
+      .catch(function () {});
   }
 
   /* ── a line, as the file will hold it ──
@@ -411,6 +426,7 @@
     document.removeEventListener('keydown', keys, true);
     window.removeEventListener('beforeunload', warn);
     window.removeEventListener('resize', measure);
+    drop();
     document.documentElement.classList.remove('admin-editing');
     document.documentElement.classList.remove('admin-open');
     document.documentElement.style.removeProperty('--admin-h');
@@ -423,8 +439,7 @@
   }
 
   function open() {
-    if (bar) return;
-    build();
+    if (bar || gate) return;
     ask();
   }
 

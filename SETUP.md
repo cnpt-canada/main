@@ -40,10 +40,12 @@ missing key is visible instead of losing messages.
 
 ## Admin mode
 
-Clicking `© 2026 cnpt` at the foot of any page puts a bar along the bottom with Google's sign-in
-button in it. Picking an account happens in Google's popup, so the page never leaves; an address
-that is one of the editors gets the lines of copy on that page made typeable, and Save commits the
-page file to `main`. Anyone else is told the account is not an editor and nothing happens.
+Clicking `© 2026 cnpt` at the foot of any page asks Google for an account straight away — Google's
+own chooser, over the page, which stays where it is. Nothing of ours is on screen while that
+happens. An address that is one of the editors gets a bar along the bottom and the lines of copy on
+that page made typeable; Save commits the page file to `main`. Any other account gets no bar and no
+message: the page is simply as it was. If Google cannot show the chooser — nobody is signed in to
+Google in that browser — its own button goes up at the foot of the page instead.
 
 Signing in needs nothing set: the Google client id is a public value and lives in
 `api/_lib/admin.js`, and the editors are held there as SHA-256 of each address, so this public
