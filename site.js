@@ -13,21 +13,6 @@ window.addEventListener('error', function (e) {
   if (el && el.tagName === 'IMG' && el.hasAttribute('data-drop-if-missing')) el.remove();
 }, true); // capture: error events on elements do not bubble
 
-/* practices — one row open at a time */
-(function () {
-  var items = Array.prototype.slice.call(document.querySelectorAll('.acc'));
-  items.forEach(function (item) {
-    item.querySelector('.acc-row').addEventListener('click', function () {
-      var willOpen = item.getAttribute('data-open') !== 'true';
-      items.forEach(function (other) {
-        var open = (other === item) && willOpen;
-        other.setAttribute('data-open', open ? 'true' : 'false');
-        other.querySelector('.acc-row').setAttribute('aria-expanded', open ? 'true' : 'false');
-      });
-    });
-  });
-})();
-
 /* talent pool form — the same shape as the enquiry form: pick what you are, write a note, send it to talent@cnpt.ca */
 (function () {
   var form = document.getElementById('talent-form');
@@ -268,11 +253,10 @@ window.addEventListener('error', function (e) {
   document.documentElement.addEventListener('mouseleave', hide);
 })();
 
-/* the hero film, and the entrance reveals */
+/* the entrance reveals */
 (function () {
   var root = document.documentElement;
   var motion = root.classList.contains('motion');
-  var hero = document.querySelector('.hero');
 
   if (!motion) return;
 
@@ -303,15 +287,12 @@ window.addEventListener('error', function (e) {
   // [selector, reveal type, fixed delay ms, extra delay per match]
   // Targets without a fixed delay are staggered in the order they enter the viewport.
   var plan = [
-    ['.hero h1', 'split', 120],
-    ['.hero p', 'up', 480],
-    ['.hero-cta .btn', 'up', 620, 80],
     ['.eyebrow', 'clip'],
     ['.sec h1, .sec h2, .cta h1, .cta h2', 'split'],
     ['.sec-head p, .prac-note, .lede, .split, .cta-grid > div > p, .cta-row, .cta-form, .works-note', 'up'],
-    ['.acc, .fgrid > *, .sum-list li, .up', 'up'],
-    ['.prac, .step-card', 'up', 0, 80],
-    ['.value, .step, .dl, .focus-item, .member, .pack', 'rule'],
+    ['.fgrid > *, .sum-list li', 'up'],
+    ['.step-card', 'up', 0, 80],
+    ['.value, .member, .pack', 'rule'],
     ['.cta', 'cta'],
     ['.fbottom', 'fade']
   ];
@@ -370,180 +351,3 @@ window.addEventListener('error', function (e) {
   window.addEventListener('resize', measure);
 })();
 
-/* hero headline: with the mouse inside the headline's box, the headline eases from ExtraBold to Regular and the
-   letters near the pointer stay heavy (the closest ones a little past ExtraBold), so the weight follows the pointer;
-   leaving eases everything back to ExtraBold.
-   A smooth change of weight needs a font with a weight axis: Manrope carries one (200–800), so the headline
-   keeps its font and only the weight moves, once the file has loaded. Both ends stay inside that range — a
-   weight the file does not carry is clamped, and the effect looks broken rather than absent.
-   Mouse and trackpad only, and only with motion on. */
-(function () {
-  var h1 = document.querySelector('.hero h1');
-  if (!h1 || !document.documentElement.classList.contains('motion')) return;
-  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches || !document.fonts || !document.fonts.load) return;
-
-  // REST is the ladder's own weight, so a headline nobody is pointing at is simply the headline.
-  var REST = 350, PEAK = 520;
-  document.fonts.load(PEAK + ' 80px "Manrope"').then(function (faces) { if (faces.length) start(); }, function () {});
-
-  function start() {
-    var letters = [];
-    h1.setAttribute('aria-label', h1.textContent.replace(/\s+/g, ' ').trim()); // read as one sentence, not letter by letter
-    (function walk(node) {
-      Array.prototype.slice.call(node.childNodes).forEach(function (child) {
-        if (child.nodeType === 1) return walk(child);
-        if (child.nodeType !== 3 || !child.textContent.trim()) return;
-        var frag = document.createDocumentFragment();
-        Array.prototype.forEach.call(child.textContent, function (ch) {
-          if (/\s/.test(ch)) return frag.appendChild(document.createTextNode(ch));
-          var el = document.createElement('span');
-          el.className = 'wt';
-          el.setAttribute('aria-hidden', 'true');
-          el.textContent = ch;
-          frag.appendChild(el);
-          letters.push({ el: el, v: 0, shown: REST, cx: 0, cy: 0 });
-        });
-        node.replaceChild(frag, child);
-      });
-    })(h1);
-    h1.classList.add('is-var');
-
-    // A heavier letter is a wider letter: across this headline the difference between Medium and the
-    // peak is some 240px, so a letter near the end of a line was being shoved sideways by every
-    // letter in front of it as the pointer went past. The weight is meant to follow the pointer; the
-    // words are meant to stay where they are.
-    //
-    // So each letter is given the advance it has at rest and keeps it. The glyph thickens inside a
-    // box that never changes, and nothing moves. The spaces between words are not letters and never
-    // carry a weight of their own, so they were always still.
-    //
-    // Line breaks are pinned at the same time, because a locked line cannot wrap out of trouble.
-    var words = Array.prototype.slice.call(h1.querySelectorAll('.wd'));
-    function lockLines() {
-      Array.prototype.forEach.call(h1.querySelectorAll('br.wl'), function (br) { br.remove(); });
-      h1.classList.remove('lines-locked');
-      // Measured at the heaviest the letter will ever be, so the box it keeps is the widest the glyph
-      // can need. A box measured at rest is the one the glyph overflows, and the overflow lands on the
-      // letter beside it.
-      var saved = letters.map(function (l) {
-        var w = l.el.style.fontWeight;
-        l.el.style.fontWeight = PEAK;
-        l.el.style.width = '';
-        return w;
-      });
-      var top = null;
-      words.forEach(function (wd) {
-        var t = Math.round(wd.getBoundingClientRect().top);
-        if (top !== null && t > top + 2) {
-          var br = document.createElement('br');
-          br.className = 'wl';
-          wd.parentNode.insertBefore(br, wd);
-        }
-        top = t;
-      });
-      // measure every letter before writing any width back, or each write would lay the line out again
-      var widths = letters.map(function (l) { return l.el.getBoundingClientRect().width; });
-      // the line breaks above were found at this same weight, so they match the widths being written
-      letters.forEach(function (l, i) {
-        l.el.style.width = widths[i].toFixed(2) + 'px';
-        l.el.style.fontWeight = saved[i];
-      });
-      h1.classList.add('lines-locked');
-    }
-    lockLines();
-    var lastWidth = window.innerWidth;
-    window.addEventListener('resize', function () {
-      if (window.innerWidth === lastWidth) return;
-      lastWidth = window.innerWidth;
-      fontSize = 0; // a narrower page means a smaller headline, so the reach around the pointer changes too
-      lockLines();
-    });
-
-    var mouseX = -1e4, mouseY = -1e4, raf = 0, last = 0, fontSize = 0;
-    function frame(now) {
-      // Everything is measured first and only then written. Reading a letter's place right after changing
-      // the one before it would make the browser lay the headline out again for every letter, forty times a frame.
-      var box = h1.getBoundingClientRect();
-      if (!fontSize) fontSize = parseFloat(getComputedStyle(h1).fontSize) || 80;
-      var inside = mouseX >= box.left && mouseX <= box.right && mouseY >= box.top && mouseY <= box.bottom;
-      var i, l;
-      if (inside) {
-        for (i = 0; i < letters.length; i++) {
-          var r = letters[i].el.getBoundingClientRect();
-          letters[i].cx = r.left + r.width / 2;
-          letters[i].cy = r.top + r.height / 2;
-        }
-      }
-      // and the same easing whatever the screen's refresh rate, so it settles in about half a second either way
-      var step = last ? Math.min(now - last, 64) : 16.7;
-      last = now;
-      var k = 1 - Math.pow(1 - 0.09, step / 16.7);
-      var core = fontSize * 0.35, reach = fontSize * 1.4, moving = false;
-      for (i = 0; i < letters.length; i++) {
-        l = letters[i];
-        var target = 0; // the headline's own weight while the mouse is outside it
-        if (inside) {
-          var dx = l.cx - mouseX, dy = l.cy - mouseY;
-          // heaviest within the core around the pointer, easing back to Medium further out
-          var p = Math.max(0, 1 - Math.max(0, Math.sqrt(dx * dx + dy * dy) - core) / reach);
-          target = p * p * (3 - 2 * p);
-        }
-        l.v += (target - l.v) * k;
-        if (Math.abs(target - l.v) > 0.002) moving = true;
-        else l.v = target;
-        var w = Math.round(REST + (PEAK - REST) * l.v);
-        if (w !== l.shown) {
-          l.shown = w;
-          l.el.style.fontWeight = w === REST ? '' : w;
-        }
-      }
-      if (moving) raf = requestAnimationFrame(frame);
-      else { raf = 0; last = 0; }
-    }
-    function kick() { if (!raf) { last = 0; raf = requestAnimationFrame(frame); } }
-
-    document.addEventListener('pointermove', function (e) {
-      if (e.pointerType && e.pointerType !== 'mouse') return;
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      kick();
-    }, { passive: true });
-    document.documentElement.addEventListener('mouseleave', function () { mouseX = mouseY = -1e4; kick(); });
-    window.addEventListener('scroll', kick, { passive: true }); // scrolling can carry the headline out from under the pointer
-  }
-})();
-
-/* the practice marks, brought into the page so their letters can move on their own.
-   A <use> keeps its artwork in a shadow tree that the page's CSS cannot reach, so the two letterforms
-   in cnpt ai / ux / df could only ever move as one lump. This swaps each reference for the artwork
-   itself — the sprite is already in the browser's cache from every other icon on the page — and
-   numbers the shapes so the stylesheet can start them one after the other. If the sprite cannot be
-   read the marks are left exactly as they were, drawn by the <use> that is already there. */
-(function () {
-  var marks = document.querySelectorAll('.acc-mk');
-  if (!marks.length || !window.fetch || !window.DOMParser) return;
-
-  fetch('/site-icons.svg').then(function (r) {
-    return r.ok ? r.text() : Promise.reject(new Error('sprite ' + r.status));
-  }).then(function (text) {
-    var sprite = new DOMParser().parseFromString(text, 'image/svg+xml');
-    if (sprite.querySelector('parsererror')) return;
-    Array.prototype.forEach.call(marks, function (svg) {
-      var use = svg.querySelector('use');
-      if (!use) return;
-      var href = use.getAttribute('href') || use.getAttribute('xlink:href') || '';
-      var symbol = sprite.getElementById(href.slice(href.indexOf('#') + 1));
-      if (!symbol) return;
-      var frag = document.createDocumentFragment();
-      Array.prototype.forEach.call(symbol.childNodes, function (node) {
-        frag.appendChild(document.importNode(node, true));
-      });
-      svg.replaceChild(frag, use);
-      // the shapes are the letters: number them so they can move in reading order
-      Array.prototype.forEach.call(svg.querySelectorAll('path,circle,rect,ellipse,polygon'), function (shape, i) {
-        shape.style.setProperty('--i', i);
-      });
-      svg.classList.add('is-live');
-    });
-  }).catch(function () { /* the <use> already drew it */ });
-})();

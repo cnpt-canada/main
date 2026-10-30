@@ -120,50 +120,10 @@ nav .wrap{height:var(--nav-h);display:grid;grid-template-columns:minmax(0,1fr) a
   background:var(--fg-3);transition:background-color .25s ease}
 .link-out svg{display:block;width:11px;height:11px;transition:transform .25s var(--ease-out)}
 
-/* ---------- the pieces the pages are built out of ---------- */
-
-/* A picture, or the grey standing in for one until there is a picture. Flat on purpose: a
-   placeholder that tries to look like a photograph is a placeholder nobody replaces. */
-.slab{position:relative;display:flex;flex-direction:column;justify-content:space-between;
-  border-radius:var(--r-card);background:var(--bg-3);overflow:hidden;isolation:isolate}
-.slab-dark{background:var(--slab);color:var(--on-slab)}
 /* A paragraph that begins in ink and finishes in grey: the claim, then the explanation. */
 .split{font-size:var(--t-lede);font-weight:var(--w-body);line-height:1.34;letter-spacing:-0.02em;color:var(--fg-3)}
 .split b{font-weight:inherit;color:var(--fg)}
-
-/* A row of numbers, each with its caption and a way through. */
-.readings{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:clamp(24px,3vw,44px)}
-.reading{display:flex;flex-direction:column;gap:14px;align-items:flex-start}
-.reading strong{font-size:clamp(34px,4.4vw,58px);font-weight:var(--w-display);letter-spacing:-0.04em;line-height:.95}
-.reading p{font-size:12.5px;line-height:1.45;color:var(--fg-3);max-width:22ch}
-.slab-dark .reading p{color:var(--on-slab-2)}
-
-/* The circular way through the references put beside a number. */
-.go{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;flex:none;
-  border-radius:var(--r-cap);box-shadow:inset 0 0 0 var(--hair) var(--ink-border);color:var(--fg);
-  transition:background-color .25s var(--ease-out),color .25s var(--ease-out),box-shadow .25s var(--ease-out)}
-.go svg{display:block;width:12px;height:12px}
-.slab-dark .go{box-shadow:inset 0 0 0 var(--hair) rgba(255,255,255,.28);color:var(--on-slab)}
-@media(hover:hover){
-  .go:hover{background:var(--fill);color:var(--on-fill);box-shadow:none}
-  .slab-dark .go:hover{background:var(--on-slab);color:var(--slab)}
-}
-
-/* hero */
-.hero{padding:10px 0 0}.hero h1{font-size:var(--t-display);font-weight:var(--w-display);letter-spacing:-0.05em;line-height:.88;max-width:none}
-/* the opening block: a picture's worth of dark with one word on it */
-.hero-slab{min-height:clamp(320px,44vh,460px);padding:var(--card-pad)}
-.hero-slab .hero-top{display:flex;flex-direction:column;gap:clamp(18px,2.4vw,30px);align-items:flex-start;
-  padding-bottom:calc(34px + clamp(18px,2.4vw,30px))}
-.hero-foot-line{font-size:13px;color:var(--on-slab-2)}
-/* the card of numbers the references lift over the bottom of the hero */
-.hero-card{position:relative;z-index:1;margin:calc(-1 * clamp(28px,4vw,64px)) auto 0;
-  border-radius:var(--r-card);background:var(--bg-2);padding:var(--card-pad);
-  display:grid;gap:clamp(26px,3.2vw,48px)}
-/* :where() so the container does not count: these set the default for a paragraph in here, and a
-   paragraph given a class of its own is meant to beat them */
-:where(.hero) p{margin-top:30px;font-size:var(--t-lede);color:var(--fg-2);max-width:54ch;line-height:1.5}
-.hero-cta{display:flex;flex-wrap:wrap;align-items:center;gap:16px 30px;margin-top:44px}/* the three things we do run past as a band: one set, then the same set again, so translating the
+/* the three things we do run past as a band: one set, then the same set again, so translating the
    track by half its width returns it exactly where it started. Each line carries its own spacing,
    so half the track is exactly the first set. */
 .ticker{overflow:hidden;
@@ -182,9 +142,9 @@ nav .wrap{height:var(--nav-h);display:grid;grid-template-columns:minmax(0,1fr) a
   letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);font-variant-numeric:tabular-nums}
 /* on a dark block it takes the block's own quiet ink, not the page's */
 .slab-dark .eyebrow,.cta .eyebrow{color:var(--on-slab-2)}
-.pack-len,.step .len,.acc-seg,.member-spec dt,.fbottom,.tags,.acc-out,.count,.member-role{
+.pack-len,.member-spec dt,.fbottom,.tags,.count,.member-role{
   font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:.04em}
-.pack-len,.step .len,.acc-seg,.member-spec dt{
+.pack-len,.member-spec dt{
   font-size:var(--t-meta);text-transform:uppercase;letter-spacing:.06em}
 /* A running head: the rule says a section starts, then the label and the line that says what the
    section covers, together on one line. It was a two-column grid, which left that line stranded in
@@ -228,30 +188,13 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 .tags span{position:relative}
 .tags span:not(:last-child)::after{content:"·";position:absolute;right:-11px}
 
-/* practices — accordion rows */
-.acc-list{margin-top:clamp(28px,3vw,40px)}
 .acc-row{
   width:100%;background:none;border:0;cursor:pointer;text-align:left;
   font-family:inherit;color:inherit;padding:34px 0;
   display:grid;grid-template-columns:minmax(0,1fr) auto;gap:44px;align-items:center;
   transition:opacity .5s var(--ease-out);-webkit-tap-highlight-color:transparent;
 }.acc-row:focus-visible{outline:2px solid var(--signal);outline-offset:6px;border-radius:4px}
-/* The practice signs itself: its own mark, then the wordmark. The mark is set well above the
-   wordmark's own height, because the mark is the name and cnpt is the surname. The gap is wide
-   enough that it can grow on hover without reaching the wordmark, since a transform takes no room.
-   Widths are each mark's own, kept to its artwork's proportions rather than a shared box. */
-.acc-lockup{display:flex;align-items:center;gap:26px;color:var(--fg)}
-.acc-wm{display:block;width:78px;height:auto;flex:none}
-/* the letterforms sit flush against the top of their own viewBox, and an svg clips to it, so a
-   letter that lifts would have its head shorn off. Nothing else is drawn near it. */
-.acc-mk{display:block;flex:none;height:42px;width:auto;overflow:visible;
-  transform-origin:50% 50%;transition:transform .45s var(--ease-spring)}
-.mk-ai{width:64px}
-.mk-ux{width:89px}
-.mk-df{width:68px}
-/* Once site.js has brought the artwork into the page, each letterform is a shape of its own and can
-   move on its own clock. Until then the mark is still drawn, just as one piece. */
-.acc-mk :is(path,circle,rect,ellipse,polygon){transform-box:fill-box;transform-origin:50% 50%}
+
 /* A letterform arrives as a point of ink and grows into itself. What opens is a circle cut out of
    the shape, so what you see is always the letter's own edge: a round dot at first, because a small
    enough piece of anything is round, and then its true outline as the circle passes the contours.
@@ -268,28 +211,7 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 :root{--ease-morph:cubic-bezier(.5,0,.25,1)}
 .motion :is(.acc,.sum-list li).in .acc-mk.is-live :is(path,circle,rect,ellipse,polygon){
   animation:mk-morph 1.05s var(--ease-morph) calc(var(--d,0ms) + 220ms + var(--i,0) * 190ms) backwards}
-.acc-name .kor{display:block;font-size:13.5px;font-weight:var(--w-title);color:var(--fg-3);margin-top:8px}
-.acc-seg{font-size:12px;font-weight:var(--w-title);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);white-space:nowrap}
-/* each practice carries its own mark: what the row is about, beside who it is for */
-.acc-right{display:flex;align-items:center;gap:18px}
-.acc-ic{position:relative;width:20px;height:20px}
-.acc-ic::before,.acc-ic::after{
-  content:"";position:absolute;left:0;top:8.75px;width:20px;height:2.5px;
-  border-radius:var(--r-cap);background:var(--fg-3);transition:transform .3s ease,background .2s ease;
-}
-.acc-ic::after{transform:rotate(90deg)}
-.acc[data-open="true"] .acc-ic::before,
-.acc[data-open="true"] .acc-ic::after{background:var(--fill)}
-.acc[data-open="true"] .acc-ic::after{transform:rotate(90deg) scaleX(0)}
-.acc-panel{display:grid;grid-template-rows:0fr;transition:grid-template-rows .34s var(--ease-ref)}
-.acc[data-open="true"] .acc-panel{grid-template-rows:1fr}
-.acc-panel > div{overflow:hidden;min-height:0}
-.acc-inner{padding:0 0 40px 164px;opacity:0;transform:translateY(-6px);transition:opacity .3s ease .05s,transform .3s ease .05s}
-.acc[data-open="true"] .acc-inner{opacity:1;transform:none}
-.acc-inner p{font-size:15px;line-height:1.66;color:var(--fg-3);max-width:62ch}
-.acc-out{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:22px;font-size:12.5px;font-weight:var(--w-title);color:var(--fg-3)}
-.acc-out span{position:relative}
-.acc-out span + span::before{content:"·";position:absolute;left:-11px}
+
 .prac-note{font-size:14px;color:var(--fg-3);margin-top:28px;max-width:64ch}
 
 /* packages — three columns of work a client can commission by name. Each one is a ruled column:
@@ -323,42 +245,10 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 @media(max-width:900px){.packs{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.packs{grid-template-columns:minmax(0,1fr)}}
 
-/* These rows used to open on a hairline. They are separated by the space around them now, so the
-   "rule" reveal has nothing to draw and only raises their contents. */
-
-/* process — a timeline: icon dots strung on one hairline */
-.track{display:grid;grid-template-columns:repeat(4,1fr);margin-top:56px}
-.step{position:relative;display:flex;flex-direction:column;padding-right:36px}
-/* the rule leads into each icon: from 12px after the previous icon to 12px before this one */
-.step::before{top:calc(24px - .5px);right:36px}
-.step + .step::before{left:-24px}
-/* icons sit right-aligned on the rule; the black backing masks the line around them */
-.step .dot{position:relative;display:flex;width:max-content;margin:0 -12px 0 auto;padding:0 12px;background:var(--bg);color:var(--fg-2)}
-.step .dot svg{display:block;width:48px;height:48px}
-.step-last .dot{color:var(--fg)}
-.step h3{font-size:20px;font-weight:var(--w-title);letter-spacing:-0.024em;margin-top:28px}
-.step p{font-size:14.5px;line-height:1.6;color:var(--fg-3);margin-top:10px}
-/* durations sit at the foot of each (equal-height) column, so they share one line across the row */
-.step .len{margin-top:auto;padding-top:18px;font-size:12.5px;font-weight:var(--w-title);color:var(--fg-3)}
-
-/* entry — deliverables read as a ruled spec sheet */
-.entry{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:72px;align-items:start}
-.dl{position:relative;display:grid;grid-template-columns:150px 1fr;gap:24px;align-items:baseline;padding:20px 0}
-.dl b{font-size:15px;font-weight:var(--w-title);letter-spacing:-0.012em}
-.dl span{font-size:15px;color:var(--fg-3);line-height:1.5}
-
 /* focus */
 :is(h1,h2) em{font-style:normal;color:inherit}
 /* a heading that only has half the page to itself takes the step below the full-width one */
-.entry :is(h1,h2),.cta-grid :is(h1,h2){font-size:clamp(28px,3.6vw,52px);letter-spacing:-0.036em}
-.focus{display:grid;grid-template-columns:repeat(2,1fr);gap:0 64px;margin-top:52px}
-.focus-item{position:relative;padding:28px 0 44px}
-/* icon on the left, number pinned to the right */
-.focus-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
-.focus-ic{display:block;color:var(--fg-2);transition:color .5s var(--ease-out)}
-.focus-ic svg{display:block;width:48px;height:48px}
-.focus-item h3{font-size:clamp(24px,2.8vw,34px);font-weight:var(--w-title);letter-spacing:-0.032em;line-height:1.05;margin-top:26px}
-.focus-item p{font-size:15px;line-height:1.6;color:var(--fg-3);max-width:40ch;margin-top:12px}
+.cta-grid :is(h1,h2){font-size:clamp(28px,3.6vw,52px);letter-spacing:-0.036em}
 
 /* team — one ruled column per person: portrait on top, then the name, what they do, and a small spec sheet.
    Stacking the card is what lets three sit across the page instead of two. */
@@ -449,7 +339,7 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 
 /* contact form — stage chips above a prompt-style message box */
 button.btn{border:0;font-family:inherit;cursor:pointer}
-.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .cta-form{position:relative;display:grid;gap:22px}
 .stage{border:0;min-width:0}
@@ -576,18 +466,12 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
 .btn:active{transform:scale(.97)}
 .btn:focus-visible{outline:2px solid var(--fg);outline-offset:3px}
 .navlinks a,.nav-actions a:not(.btn),.fcol a{transition:color .25s ease}
-.acc-name{transform-origin:0 50%;transition:transform .5s var(--ease-ref)}
-.acc-out span{opacity:0;transform:translateY(8px);transition:opacity .2s ease,transform .2s ease}
-.acc[data-open="true"] .acc-out span{opacity:1;transform:none;
-  transition:opacity .5s var(--ease-out) calc(140ms + var(--i,0) * 50ms),transform .6s var(--ease-out) calc(140ms + var(--i,0) * 50ms)}
-.acc-out span:nth-child(2){--i:1}
-.acc-out span:nth-child(3){--i:2}
-.acc-out span:nth-child(4){--i:3}
+
 /* :where() keeps these below the reveal transitions until a step has finished revealing */
 :where(.step > *, .step .dot, .step .dot svg, .value > *, .member > *, .focus-item > *, .pack > *){transition:opacity .5s var(--ease-out),color .5s var(--ease-out)}
-.dl b,.dl span{transition:color .35s ease}
+
 /* the step is a transition on the row itself, so it also eases back out when the pointer leaves */
-.sum-list li,.value,.dl,.pack-in li{transition:padding-left .3s var(--ease-ref)}
+.sum-list li,.value,.pack-in li{transition:padding-left .3s var(--ease-ref)}
 .value{transition:padding-left .3s var(--ease-ref),border-color .5s var(--ease-out)}
 @media(hover:hover){
   .btn:not(:disabled):hover::before{transform:none}
@@ -606,32 +490,26 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
   .acc-row:hover .acc-name{transform:translateX(8px)}
   .acc-row:hover .acc-ic::before,.acc-row:hover .acc-ic::after{background:var(--fill)}
   .acc-row:hover .acc-seg{color:var(--fg-2)}
-  /* rules light together up to the hovered stage; text and icons respond per stage (hovered bright, the rest dim) */
-  :is(.step:hover, .step:has(~ .step:hover))::before{background:var(--fg-2)}
+
   /* dim the icon, not its black backing, so a lit rule never shows through a dimmed icon */
   .track:has(.step:hover) .step:not(:hover) > :not(.dot),
   .track:has(.step:hover) .step:not(:hover) .dot svg{opacity:.45}
-  .step:hover .dot{color:var(--fg)}
-  .step-last:hover .dot{color:var(--fg)}
-  .step:hover p{color:var(--fg-2)}
+
   /* same as the process: rules light together down to the hovered row; text and icons respond per row */
   :is(.value:hover, .value:has(~ .value:hover)){border-bottom-color:var(--ink-border)}
   .values:has(.value:hover) .value:not(:hover) > *{opacity:.45}
   .value:hover .value-ic{color:var(--fg)}
   .value-core:hover .value-ic{color:var(--fg)}
-  .dl:hover b{color:var(--fg)}
-  .dl:hover span{color:var(--fg-2)}
+
   /* packages answer hover like the focus items */
   .pack:hover{box-shadow:inset 0 0 0 var(--hair) var(--ink-border);transform:translateY(-3px)}
   .pack:hover .pack-ic{color:var(--fg)}
   /* every section mark answers the pointer with the reference's overshoot: it lifts and comes back */
-  .value-ic,.focus-ic,.pack-ic,.step .dot{transition:transform .4s var(--ease-spring),color .5s var(--ease-out)}
-  .value:hover .value-ic,.focus-item:hover .focus-ic,.pack:hover .pack-ic,.step:hover .dot{transform:translateY(-5px) scale(1.06)}
-  /* focus items: the hovered item's rule lights and its icon takes the signal colour; the others dim */
-  .focus-item:hover::before{background:var(--fg-2)}
+  .value-ic,.pack-ic{transition:transform .4s var(--ease-spring),color .5s var(--ease-out)}
+  .value:hover .value-ic,.pack:hover .pack-ic{transform:translateY(-5px) scale(1.06)}
+
   .focus:has(.focus-item:hover) .focus-item:not(:hover) > *{opacity:.45}
-  .focus-item:hover .focus-ic{color:var(--fg)}
-  .focus-item:hover p{color:var(--fg-2)}
+
   /* a ruled row steps into its own rule when you point at it, the way the reference's contact rows
      do. The row keeps its width and only its contents inset, so nothing beside it moves. */
   :is(.sum-list li,.value,.dl,.pack-in li):hover{padding-left:10px}
@@ -652,40 +530,21 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
 @media(max-width:1180px){
   .team{gap:0 24px}
 }
-/* responsive — laptop */
-@media(max-width:1100px){
-  .step{padding-right:24px}
-  .step::before{right:24px}
-  .step + .step::before{left:-12px}
-  .entry{gap:48px}
-}
+
 /* tablet */
 @media(max-width:1000px){
   :root{--sec-pad:80px}
-  .hero{padding:0 0 64px}  .sec-head{margin-bottom:36px}
-  .acc-list,.track,.focus{margin-top:40px}
+  .sec-head{margin-bottom:36px}
+
   .navlinks,.nav-actions{gap:20px}
   .acc-row{grid-template-columns:minmax(0,1fr) auto;gap:18px 16px;padding:26px 0}
-  .acc-wm{width:68px}
-  .acc-mk{height:34px}
-  .mk-ai{width:52px} .mk-ux{width:72px} .mk-df{width:55px}
-  .acc-right{gap:14px}
-  .acc-inner{padding-left:0;padding-bottom:30px}
-  /* timeline turns vertical: icons on the right, rule running down between them */
-  .track{grid-template-columns:1fr}
-  .step{padding:0 76px 48px 0}
-  .step-last{padding-bottom:0}
-  .step-last::before{display:none}
-  .step::before,.step + .step::before{top:0;bottom:0;left:auto;right:calc(24px - .5px);width:var(--hair);height:auto;transform-origin:top}
+
   .motion .step[data-rv]:not(.in)::before{transform:scaleY(0)}
-  .step .dot{position:absolute;right:0;top:-12px;margin:0;padding:12px 0}
-  /* vertically a stage's rule runs on to the next stage, so only the rules before the hovered stage light */
-  @media(hover:hover){.track .step:hover::before{background:var(--line)}}
-  .step h3{margin-top:8px}
+
   .packs{gap:0 32px;margin-top:40px}
   .value{grid-template-columns:24px minmax(0,1fr);gap:12px 20px;padding:22px 0}
   .value-body{grid-column:2}
-  .entry{grid-template-columns:1fr;gap:36px}
+
   .team{margin-top:44px}
   .member{padding:32px 0 40px}
   footer{padding:56px 0 40px}
@@ -695,7 +554,7 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
   .fbottom{margin-top:48px}
 }
 @media(max-width:760px){
-  .focus{grid-template-columns:1fr}
+
   .lede{font-size:17px}
 }
 /* phone */
@@ -707,23 +566,20 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
   .nav-actions .btn{height:36px;padding:0 15px;font-size:13px}
   .theme-btn{width:32px;height:32px}
   .theme-btn svg{width:18px;height:18px}
-  .hero{padding:0 0 48px}  :where(.hero) p{margin-top:22px}
-  .hero-cta{margin-top:32px}  .sec-head{gap:12px 16px;margin-bottom:28px}
+  .sec-head{gap:12px 16px;margin-bottom:28px}
   .eyebrow + :is(h1,h2){margin-top:20px}
-  .acc-list,.track,.focus{margin-top:32px}
+
   .acc-row{padding:22px 0}
-  .acc-inner{padding-bottom:26px}
+
   .prac-note{margin-top:24px}
-  .step{padding-right:68px}
+
   .packs{margin-top:32px}
   .pack{padding:24px 0 4px}
   .pack h3{margin-top:18px}
   .value{grid-template-columns:1fr;gap:12px;padding:20px 0}
   .value-body{grid-column:auto}
   .value-ic{margin-top:0}
-  .dl{grid-template-columns:1fr;gap:4px;padding:16px 0}
-  .focus-item{padding:22px 0 32px}
-  .focus-item h3{margin-top:16px}
+
   /* phone: small portrait beside the name, spec sheet full width underneath */
   .team{margin-top:36px}
   .member{grid-template-columns:112px minmax(0,1fr);grid-template-rows:auto;gap:0 18px;padding:28px 0 32px;align-items:center}
@@ -841,31 +697,6 @@ nav .nav-sheet .wrap{display:block;height:auto}
 #s-network .sum-list li{border-bottom:var(--hair) solid var(--line)}
 #s-network .sum-list p{max-width:none}
 @media(min-width:761px){#s-network .sum-list li > div > p{text-align:right}}
-/* the three practices, three across. No box is drawn: a card here is its share of the row, the air
-   around it and the rule it opens under — the same rule every other block on this page opens under. */
-.pracs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px 18px;list-style:none;
-  margin-block:clamp(40px,4.6vw,66px)}
-/* The practices are not cards: no fill, no border, so the marks and the names sit on the page the
-   way type does. Named through the list, because .card-s carries the same weight further down the
-   file and would otherwise win on order. Nothing lifts on hover either -- there is no card to lift,
-   so the mark growing is the whole of the feedback. */
-.pracs .prac{min-height:0;background:none;box-shadow:none;padding:0;gap:clamp(14px,1.4vw,20px)}
-@media(hover:hover){.pracs .prac:hover{box-shadow:none;transform:none}}
-/* The card used to hold a mark and its name apart at either end of its own top edge. With no card
-   there is nothing to hold them apart, so they read as one lockup and the name follows the mark. */
-.pracs .step-top{justify-content:flex-start}
-/* the mark sits in the corner the number sits in on a phase card, at the size that corner allows */
-.prac .acc-mk{height:clamp(30px,2.9vw,42px);width:auto;transform-origin:0 50%}
-@media(hover:hover){.prac:hover .acc-mk{transform:scale(1.1)}}
-
-/* The card the page is built from: white on the paper's light grey, a hairline to hold the edge,
-   and a foot it closes on. The difference between a card and the page behind it is meant to be
-   small -- it separates them without drawing a box around everything. */
-.card-s{display:flex;flex-direction:column;justify-content:space-between;gap:clamp(26px,3vw,44px);
-  background:var(--bg-2);border-radius:var(--r-card);padding:clamp(18px,1.8vw,24px);
-  box-shadow:inset 0 0 0 var(--hair) var(--line);
-  transition:box-shadow .32s var(--ease-out),transform .32s var(--ease-out)}
-@media(hover:hover){.card-s:hover{box-shadow:inset 0 0 0 var(--hair) var(--ink-border);transform:translateY(-3px)}}
 
 /* The four stages are not cards: a mark, the name, the copy and the length, as type on the page. */
 .steps{list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
@@ -878,36 +709,10 @@ nav .nav-sheet .wrap{display:block;height:auto}
 .step-len{font-size:var(--t-meta);font-weight:var(--w-title);letter-spacing:.11em;
   text-transform:uppercase;color:var(--fg-3)}
 @media(hover:hover){.step-card:hover .step-ic{color:var(--fg)}}
-.step-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.step-no{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;flex:none;
-  border-radius:var(--r-cap);box-shadow:inset 0 0 0 var(--hair) var(--ink-border);
-  font-size:12px;font-weight:var(--w-title);letter-spacing:.02em;color:var(--fg-3);
-  font-variant-numeric:tabular-nums;transition:background .32s var(--ease-out),color .32s var(--ease-out),box-shadow .32s var(--ease-out)}
-/* the length is a pill, the way the reference tags a card in its top corner */
-.step-cap{display:inline-flex;align-items:center;height:28px;padding:0 13px;border-radius:var(--r-cap);
-  box-shadow:inset 0 0 0 var(--hair) var(--ink-border);
-  font-size:11.5px;font-weight:var(--w-title);letter-spacing:-0.008em;color:var(--fg-3);white-space:nowrap}
-.step-foot h3{font-size:var(--t-h3);font-weight:var(--w-title);letter-spacing:-0.026em;line-height:1.1}
-.step-foot p{margin-top:9px;font-size:13.5px;line-height:1.5;color:var(--fg-3)}
+
 @media(max-width:900px){.steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){
   .steps{grid-template-columns:minmax(0,1fr)}
-}
-
-/* updates: one dated note per row, read across the width the way the other row lists do. No rule
-   between rows — the page draws none anywhere else either. */
-.ups{list-style:none;margin-top:clamp(24px,2.6vw,32px)}
-.up{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px clamp(20px,4vw,64px);
-  align-items:baseline;padding:18px 0}
-.up-date{font-family:var(--mono);font-size:var(--t-meta);font-weight:var(--w-title);letter-spacing:.11em;
-  text-transform:uppercase;color:var(--fg-3);white-space:nowrap;min-width:72px}
-.up h3{font-size:clamp(20px,1.9vw,24px);font-weight:var(--w-title);letter-spacing:-0.028em;line-height:1.1}
-.up p{margin-top:8px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:62ch}
-/* a row still waiting for its entry says so by staying in the quieter grey */
-.up p a{color:var(--fg);text-decoration:underline;text-underline-offset:3px}
-.up-waiting h3{color:var(--fg-3)}
-@media(max-width:620px){
-  .up{grid-template-columns:minmax(0,1fr);gap:6px;padding:16px 0}
 }
 
 .sum-note{margin-top:22px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:52ch}
@@ -917,20 +722,12 @@ nav .nav-sheet .wrap{display:block;height:auto}
 @media(max-width:760px){
   .sum-list li{padding:20px 0}
   .sum-list li > div{gap:6px}
-  .pracs{grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 20px;max-width:none}
-  .prac{aspect-ratio:auto;gap:16px}
-}
-/* after the block above, or it would not win: two across leaves the third card on a row of its own */
-@media(max-width:620px){
-  .pracs{grid-template-columns:minmax(0,1fr)}
+
 }
 
 /* the way out to a client's own site, sitting under the row it belongs to. Qualified, because
    `.sum-list p` is a class plus a type and would otherwise keep its own 8px. */
 .sum-list .work-link{margin-top:18px}
-/* the client's own mark over the row that is about them */
-.work-mark{margin-bottom:14px}
-.work-mark svg{display:block;height:30px;width:auto;color:var(--fg-2)}
 
 /* the marks of the clients so far. It is the hero band again, so it rides on .ticker and adds only
    what differs. Each mark carries its own trailing space instead of the row using `gap`: with `gap`
@@ -994,7 +791,6 @@ nav .nav-sheet .wrap{display:block;height:auto}
   opacity:0;transform:scale(.6);transform-origin:0 0;transition:opacity .18s ease,transform .25s var(--ease-out)}
 .cursor-tip.on span{opacity:1;transform:none}
 
-@media(hover:hover){}
 @media(max-width:1000px){
   .works{grid-template-columns:1fr}
   .cta-short .cta-row{justify-content:flex-start}
