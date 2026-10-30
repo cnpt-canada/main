@@ -820,7 +820,7 @@ nav .nav-sheet .wrap{display:block;height:auto}
    Only ever on screen for an editor Google and ADMIN_EMAILS have both agreed on: the script puts
    .admin-editing on <html> and builds the bar. The bar is a tool rather than part of the page, so
    it is the dark slab in both themes, and the words on its pink stay #fff like every other. */
-footer .foot-home[role="button"]{cursor:pointer}
+footer .fbottom span[role="button"]{cursor:pointer}
 .admin-note{margin-top:14px;font-size:13px;line-height:1.5;color:var(--fg-3);max-width:34ch}
 
 /* every line the editor may change, marked without moving anything: an outline takes no space */

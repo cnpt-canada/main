@@ -340,12 +340,12 @@ window.addEventListener('error', function (e) {
   root.classList.add('motion-ready');
 })();
 
-/* the mark in the footer opens admin mode: a bar along the bottom with Google's sign-in button in
-   it, and once an editor is in, the same bar saves. The page never goes anywhere.
-   site-admin.js carries all of that and is fetched only when the mark is pressed, so a visitor
-   loads neither it nor anything of Google's. */
+/* the copyright line at the foot of the page — © 2026 cnpt, bottom left — opens admin mode: a bar
+   along the bottom with Google's sign-in button in it, and once an editor is in, the same bar saves.
+   The page never goes anywhere. site-admin.js carries all of that and is fetched only when the line
+   is pressed, so a visitor loads neither it nor anything of Google's. */
 (function () {
-  var mark = document.querySelector('footer .foot-home');
+  var mark = document.querySelector('footer .fbottom span');
   if (!mark) return;
   var loading = false;
 
@@ -366,7 +366,7 @@ window.addEventListener('error', function (e) {
       note.className = 'admin-note';
       note.setAttribute('role', 'status');
       note.textContent = 'The editor could not be loaded.';
-      mark.parentNode.appendChild(note);
+      (mark.closest('.wrap') || document.body).appendChild(note);
       setTimeout(function () { note.remove(); }, 8000);
     };
     document.head.appendChild(script);

@@ -28,13 +28,22 @@ const ISSUERS = ['https://accounts.google.com', 'accounts.google.com'];
 // an unlocked one.
 export function adminConfig() {
   const id = process.env.GOOGLE_CLIENT_ID;
-  const key = process.env.ADMIN_SECRET;
   const emails = String(process.env.ADMIN_EMAILS || '')
     .split(/[,;\s]+/)
     .map((s) => s.trim().toLowerCase())
     .filter((s) => s.includes('@'));
-  if (!id || !key || key.length < 24 || !emails.length) return null;
-  return { id, key, emails: new Set(emails) };
+  if (!id || !emails.length || !sessionKey()) return null;
+  return { id, key: sessionKey(), emails: new Set(emails) };
+}
+
+// What signs the session cookie. ADMIN_SECRET if it is set; otherwise one derived from the client
+// secret the Google project already has, so a deployment that was set up for Google sign-in before
+// needs nothing new. The derived key never leaves the function and signs nothing but our own cookie.
+function sessionKey() {
+  const given = process.env.ADMIN_SECRET;
+  if (given && given.length >= 24) return given;
+  const secret = process.env.GOOGLE_CLIENT_SECRET;
+  return secret ? createHmac('sha256', secret).update('cnpt-admin-session-v1').digest('base64url') : '';
 }
 
 const b64url = (buf) => Buffer.from(buf).toString('base64url');

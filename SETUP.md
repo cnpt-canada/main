@@ -53,7 +53,7 @@ there is no editor at all: the mark says admin mode is not set up and nothing el
 | --- | --- |
 | `GOOGLE_CLIENT_ID` | from the OAuth client below |
 | `ADMIN_EMAILS` | the Google addresses that may edit, comma separated |
-| `ADMIN_SECRET` | 32+ random characters, `openssl rand -base64 32` -- signs the session cookie |
+| `ADMIN_SECRET` | optional -- without it one is derived from `GOOGLE_CLIENT_SECRET` |
 | `GITHUB_REPO` | `cnpt-canada/main` |
 | `GITHUB_TOKEN` | fine-grained token, this repository only, **Contents: read and write** |
 
