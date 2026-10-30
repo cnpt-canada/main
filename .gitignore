@@ -6,3 +6,6 @@ node_modules/
 
 # headless Chrome output from the local verification harness
 chrome.log
+
+# personal permission settings, not the team's
+.claude/settings.local.json
