@@ -18,12 +18,16 @@ cnpt.ca, so a push is a release.
 
 ## How the site is put together
 
-- Four pages: `/` `/about` `/network` `/work`. There is no sign-in and no database — the only two
-  functions, `api/contact.js` and `api/talent.js`, take a form and send it as an email through Resend.
-- One stylesheet, `site.css`, with two themes: `:root` is dark, `:root[data-theme="light"]` is light.
+- Three pages: `/` (home and about are one page) `/work` `/network`. There is no database.
+  `api/contact.js` and `api/talent.js` take a form and send it as an email through Resend.
+- One stylesheet, `site.css`, with two themes: `:root` is light, `:root[data-theme="dark"]` is dark.
   Colours are tokens (`--bg`, `--fg`, `--line`, `--signal`); anything sitting on the signal pink stays `#fff`
   in both themes.
 - `site-head.js` applies the saved theme before the first paint; `site.js` is everything else.
+- Admin mode: the mark at the foot of the page signs an editor in with Google (`api/admin.js`) and
+  lets them retype the lines marked `data-ed` in the HTML. Saving commits the page file to `main`
+  (`api/content.js`), so a save is a release and there is no content store. `site-admin.js` is
+  fetched only for an editor who is already in. `SETUP.md` has the whole of it.
 - Icons live in `site-icons.svg` and are used as `<use href="/site-icons.svg#id">`, drawn 24×24 with a 2px
   stroke in `currentColor`.
 - The site has no dependencies at all, so a deploy is just Vercel copying files. Keep it that way:

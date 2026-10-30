@@ -1,5 +1,6 @@
 # cnpt.ca
-# Every page is public. The two form endpoints are not pages, so they stay out of the index.
+# Every page is public. Nothing under /api/ is a page — the two forms, and the sign-in and save that
+# admin mode uses — so none of it is indexed.
 User-agent: *
 Allow: /
 Disallow: /api/

@@ -122,7 +122,7 @@ nav .wrap{height:var(--nav-h);display:grid;grid-template-columns:minmax(0,1fr) a
 
 /* A paragraph that begins in ink and finishes in grey: the claim, then the explanation. */
 .split{font-size:var(--t-lede);font-weight:var(--w-body);line-height:1.34;letter-spacing:-0.02em;color:var(--fg-3)}
-.split b{font-weight:inherit;color:var(--fg)}
+.split strong{font-weight:inherit;color:var(--fg)}
 /* the three things we do run past as a band: one set, then the same set again, so translating the
    track by half its width returns it exactly where it started. Each line carries its own spacing,
    so half the track is exactly the first set. */
@@ -235,7 +235,7 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 /* lengths sit at the foot of each column, so they share one line across the row */
 .pack-len{font-size:var(--t-meta);font-weight:var(--w-title);letter-spacing:.11em;
   text-transform:uppercase;color:var(--fg-3)}
-.pack-len b{margin-right:9px;font-weight:inherit;color:inherit}
+.pack-len strong{margin-right:9px;font-weight:inherit;color:inherit}
 /* the three marks breathe out of step with each other, the way the reference's marks do */
 .motion .pack-ic svg{animation:pack-breath 6s ease-in-out infinite}
 .motion .pack:nth-child(2) .pack-ic svg{animation-delay:-2s}
@@ -323,7 +323,7 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 .cta .wrap{padding:0 var(--card-pad)}
 .cta :is(h1,h2){max-width:18ch}
 :where(.cta) p{font-size:17px;color:var(--on-slab-2);max-width:52ch;margin-top:22px;line-height:1.6}
-.cta .split b{color:var(--on-slab)}
+.cta .split strong{color:var(--on-slab)}
 .cta .btn-signal{background:var(--on-slab);color:var(--slab);--btn-fill:var(--signal)}
 @media(hover:hover){.cta .btn-signal:hover{color:#fff}}
 .cta .link-out{color:var(--on-slab)}
@@ -805,6 +805,8 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .nav-actions{gap:6px}
   .nav-actions .btn{padding:0 12px;font-size:12.5px}
   .nav-home .wm-line{display:none}
+  /* beside a 112px portrait there is no room to keep a two-word role on one line */
+  .member-role span{white-space:normal}
 }
 @media(max-width:620px){
   .nav-menu{width:36px;height:36px}
@@ -814,13 +816,35 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .nav-menu[aria-expanded="true"] span:first-child,.nav-menu[aria-expanded="true"] span:last-child{top:17.25px} /* a wide band is too thin on a phone */
 }
 
-/* hero headline weight follows the mouse (site.js). Manrope's own weight axis carries it, so the headline
-   keeps the same font and only its weight moves; the class marks that the effect has taken over. */
-.hero h1.is-var{font-weight:var(--w-display)}
-/* Each letter is a box that keeps the advance it has at rest, so a letter thickening under the
-   pointer grows inside its own place instead of shoving the rest of the line sideways. site.js
-   measures the widths and writes them on; the glyph sits in the middle and is free to bleed past
-   the edges, which is what makes the ink look as though it is flooding in. */
-.hero h1 .wt{display:inline-block;text-align:center}
-.hero h1.lines-locked{white-space:nowrap} /* site.js pins the line breaks with <br>s */
-.hero h1:not([data-rv]) .wd{overflow:visible} /* once the words have risen, nothing clips a letter */
+/* admin mode (site-admin.js)
+   Only ever on screen for an editor Google and ADMIN_EMAILS have both agreed on: the script puts
+   .admin-editing on <html> and builds the bar. The bar is a tool rather than part of the page, so
+   it is the dark slab in both themes, and the words on its pink stay #fff like every other. */
+footer .foot-home[role="button"]{cursor:pointer}
+.admin-note{margin-top:14px;font-size:13px;line-height:1.5;color:var(--fg-3);max-width:34ch}
+
+/* every line the editor may change, marked without moving anything: an outline takes no space */
+.admin-editing [data-ed]{outline:var(--hair) dashed var(--ink-border);outline-offset:3px;border-radius:2px}
+.admin-editing [data-ed]:focus{outline:2px solid var(--signal)}
+.admin-editing [data-ed].is-changed{outline-style:solid;outline-color:var(--signal)}
+.admin-editing [data-ed]:empty::before{content:"empty";font-style:italic;color:var(--fg-3)}
+/* the bar is as tall as its own rows: on a phone they wrap, so site-admin.js measures it and the
+   page keeps exactly that much room under the footer */
+.admin-editing body{padding-bottom:calc(var(--admin-h,96px) + 28px)}
+
+.admin-bar{position:fixed;left:0;right:0;bottom:0;z-index:90;display:flex;align-items:center;
+  flex-wrap:wrap;gap:10px 14px;padding:14px var(--pad);background:var(--slab);color:var(--on-slab);
+  font-size:13px;letter-spacing:-0.014em;box-shadow:0 -1px 0 rgba(255,255,255,.14)}
+.admin-mode{font-weight:var(--w-title);flex:none}
+.admin-who{flex:none;min-width:0;max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--on-slab-2)}
+.admin-status{flex:1 1 240px;min-width:0;color:var(--on-slab-2)}
+.admin-status.is-trouble{color:#fff}
+.admin-status.is-trouble::before{content:"";display:inline-block;width:7px;height:7px;margin-right:8px;
+  border-radius:var(--r-cap);background:var(--signal);vertical-align:1px}
+.admin-btn{flex:none;height:34px;padding:0 15px;border-radius:var(--r-cap);border:var(--hair) solid rgba(255,255,255,.3);
+  background:none;color:var(--on-slab);font:inherit;font-weight:var(--w-title);letter-spacing:-0.014em;cursor:pointer;
+  transition:border-color .25s var(--ease-out),opacity .25s ease}
+.admin-btn:disabled{opacity:.42;cursor:default}
+.admin-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.admin-btn-go{background:var(--signal);border-color:var(--signal);color:#fff}
+@media(hover:hover){.admin-btn:not(:disabled):hover{border-color:#fff}}

@@ -18,7 +18,7 @@
     { "source": "/signin", "destination": "/#contact", "permanent": false },
     { "source": "/onboarding", "destination": "/#contact", "permanent": false },
     { "source": "/account", "destination": "/#contact", "permanent": false },
-    { "source": "/admin", "destination": "/", "permanent": false }
+    { "source": "/admin", "destination": "/#admin", "permanent": false }
   ],
   "headers": [
     {
