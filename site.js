@@ -340,36 +340,53 @@ window.addEventListener('error', function (e) {
   root.classList.add('motion-ready');
 })();
 
-/* the copyright line at the foot of the page — © 2026 cnpt, bottom left — opens admin mode: a bar
-   along the bottom with Google's sign-in button in it, and once an editor is in, the same bar saves.
-   The page never goes anywhere. site-admin.js carries all of that and is fetched only when the line
-   is pressed, so a visitor loads neither it nor anything of Google's. */
+/* © 2026 cnpt, at the foot of the page, is the way in to admin mode.
+   Pressing it opens Google's account chooser in a popup — opened by the press itself, because a
+   window opened any later is a window the browser blocks — while the page stays exactly where it
+   is. Google sends the popup back to /api/auth/callback, which hands the signed token here and
+   closes. From then on it is site-admin.js's business: only an address that is one of the site's
+   editors gets a bar and typeable lines, and any other account gets nothing at all. */
 (function () {
   var mark = document.querySelector('footer .fbottom span');
   if (!mark) return;
-  var loading = false;
 
   mark.setAttribute('role', 'button');
   mark.setAttribute('tabindex', '0');
   mark.setAttribute('aria-label', 'Admin sign-in');
 
-  function open() {
+  // the token can land before the editor has finished loading, so it is held here for it
+  var waiting = '';
+  var hand = null;
+  window.cnptSignin = {
+    take: function (fn) {
+      hand = fn;
+      if (waiting) { fn(waiting); waiting = ''; }
+    }
+  };
+  function got(token) {
+    if (hand) hand(token);
+    else waiting = token;
+  }
+  window.addEventListener('message', function (e) {
+    if (e.origin !== location.origin || !e.data || !e.data.cnptIdToken) return;
+    got(String(e.data.cnptIdToken));
+  });
+
+  function editor() {
     if (window.cnptAdmin) return window.cnptAdmin.open();
-    if (loading) return;
-    loading = true;
+    if (editor.loading) return;
+    editor.loading = true;
     var script = document.createElement('script');
     script.src = '/site-admin.js';
-    script.onload = function () { loading = false; window.cnptAdmin.open(); };
-    script.onerror = function () {
-      loading = false;
-      var note = document.createElement('p');
-      note.className = 'admin-note';
-      note.setAttribute('role', 'status');
-      note.textContent = 'The editor could not be loaded.';
-      (mark.closest('.wrap') || document.body).appendChild(note);
-      setTimeout(function () { note.remove(); }, 8000);
-    };
+    script.onload = function () { window.cnptAdmin.open(); };
+    script.onerror = function () { editor.loading = false; };
     document.head.appendChild(script);
+  }
+
+  function open() {
+    // opened here and nowhere else: this is the click, so the popup is allowed
+    window.open('/api/admin?signin=1', 'cnpt-admin', 'width=480,height=640');
+    editor();
   }
 
   mark.addEventListener('click', open);
@@ -377,10 +394,16 @@ window.addEventListener('error', function (e) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
   });
 
-  // cnpt.ca/admin redirects to /#admin, which is the same as pressing the mark
+  // cnpt.ca/admin lands on /#admin; so does the popup's own page if the popup was blocked and
+  // Google came back in this tab instead, in which case it left the token behind for us
   if (location.hash === '#admin') {
     history.replaceState(null, '', location.pathname + location.search);
-    open();
+    var left = '';
+    try {
+      left = sessionStorage.getItem('cnpt-admin-token') || '';
+      sessionStorage.removeItem('cnpt-admin-token');
+    } catch (e) {}
+    if (left) { got(left); editor(); } else open();
   }
 })();
 

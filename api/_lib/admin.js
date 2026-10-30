@@ -16,10 +16,15 @@
 // address so that this public repository carries no one's email. Either can be overridden by
 // GOOGLE_CLIENT_ID and ADMIN_EMAILS, which is how a different studio, or a new address, gets in
 // without a commit.
-import { createHash, createPublicKey, createVerify } from 'node:crypto';
+import { createHash, createPublicKey, createVerify, randomBytes } from 'node:crypto';
 
+const GOOGLE_AUTH = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_CERTS = 'https://www.googleapis.com/oauth2/v3/certs';
 const ISSUERS = ['https://accounts.google.com', 'accounts.google.com'];
+
+// Where Google is allowed to send the popup back to. This path is what the client has registered as
+// an authorised redirect URI, which is why the sign-in works with nothing added in Google Cloud.
+export const CALLBACK = '/api/auth/callback';
 
 // Google Cloud → Credentials → "cnpt web". Public: it is in every page that draws the button.
 const CLIENT_ID = '1018487057646-ugttb3b2j04g0uu770t3uo6pjlsmk00k.apps.googleusercontent.com';
@@ -43,6 +48,31 @@ export function adminConfig() {
 }
 
 const unb64url = (text) => Buffer.from(String(text), 'base64url');
+
+export function proto(req) {
+  const forwarded = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+  if (forwarded) return forwarded;
+  return /^(localhost|127\.0\.0\.1)(:|$)/.test(String(req.headers.host || '')) ? 'http' : 'https';
+}
+
+export function origin(req) {
+  return proto(req) + '://' + req.headers.host;
+}
+
+// Google's account chooser, asked for the identity and nothing else. response_type=id_token means
+// Google hands the answer straight to the browser as a signed token, so there is no code to
+// exchange and no client secret anywhere in this site.
+export function chooserUrl(config, from) {
+  const query = new URLSearchParams({
+    client_id: config.id,
+    redirect_uri: from + CALLBACK,
+    response_type: 'id_token',
+    scope: 'openid email',
+    nonce: randomBytes(16).toString('base64url'),
+    prompt: 'select_account' // the studio shares machines; never silently reuse the last account
+  });
+  return GOOGLE_AUTH + '?' + query;
+}
 
 // Google's signing keys, kept for an hour. A warm function reuses them; a cold one fetches once.
 let certs = { at: 0, keys: [] };

@@ -839,10 +839,6 @@ footer .fbottom span[role="button"]{cursor:pointer}
 .admin-who{flex:none;min-width:0;max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--on-slab-2)}
 .admin-status{flex:1 1 200px;min-width:0;color:var(--on-slab-2)}
 .admin-tools{flex:none;display:flex;align-items:center;flex-wrap:wrap;gap:10px}
-/* Nothing of ours shows before an editor is through. This is the one exception: where Google cannot
-   put its account chooser up — nobody is signed in to Google in this browser — its own button stands
-   in, at the foot of the page by the line that was pressed. */
-.admin-signin{position:fixed;left:var(--pad);bottom:18px;z-index:90}
 .admin-status.is-trouble{color:#fff}
 .admin-status.is-trouble::before{content:"";display:inline-block;width:7px;height:7px;margin-right:8px;
   border-radius:var(--r-cap);background:var(--signal);vertical-align:1px}

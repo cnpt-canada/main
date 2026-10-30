@@ -1,18 +1,26 @@
 // Who is editing. Nothing here navigates anywhere: signing in happens in the page.
 //
-//   GET  /api/admin   → { client_id } — what the bar needs to draw Google's own button
+//   GET  /api/admin?signin=1 → off to Google's account chooser. The page opens this in a popup, so
+//                       this is the popup's first stop and the page itself never moves.
+//   GET  /api/admin   → { client_id }, which is all there is to say about how to sign in
 //   POST /api/admin   → { credential } — the id_token Google handed the browser. Answers with the
 //                       address if it is one of the editors, and 403 if it is not.
 //
 // The browser keeps that token for the hour it is good for and sends it with each save, so this
 // route hands out nothing to keep and there is no session to end. Saving is /api/content.
 import { fail, json, methodNotAllowed, readBody, route } from './_lib/http.js';
-import { adminConfig, isEditor, verifyIdToken } from './_lib/admin.js';
+import { adminConfig, chooserUrl, isEditor, origin, verifyIdToken } from './_lib/admin.js';
 
 export default route(async (req, res) => {
   const config = adminConfig();
   if (!config) return fail(res, 503, 'not_configured');
 
+  if (req.method === 'GET' && req.query.signin) {
+    res.statusCode = 302;
+    res.setHeader('Location', chooserUrl(config, origin(req)));
+    res.setHeader('Cache-Control', 'no-store');
+    return res.end();
+  }
   if (req.method === 'GET') return json(res, 200, { ok: true, client_id: config.id });
   if (req.method !== 'POST') return methodNotAllowed(res, ['GET', 'POST']);
 

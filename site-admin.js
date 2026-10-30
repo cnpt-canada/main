@@ -2,11 +2,11 @@
    Fetched only when the mark at the foot of the page is pressed, so a visitor loads neither this
    file nor anything of Google's.
 
-   Pressing it asks Google for an account straight away — Google's own chooser, over the page, which
-   stays exactly where it was. Nothing of ours is on screen while that happens. Google hands over a
-   signed id_token, it goes to /api/admin, and only if that address is one of the site's editors does
-   the bar appear and every line of copy on the page become typeable. Any other account gets no bar
-   and no message: the page is simply as it was.
+   The press itself opened Google's account chooser in a popup (site.js), and the signed token it
+   comes back with arrives here. Nothing of ours is on screen while that happens. The token goes to
+   /api/admin, and only if that address is one of the site's editors does the bar appear and every
+   line of copy on the page become typeable. Any other account gets no bar and no message: the page
+   is simply as it was.
 
    A line is read out as runs — its words, and which of them are emphasised — rather than as markup,
    so nothing sent to the server is ever parsed as HTML there; ⌘B and ⌘I work because a bold or
@@ -29,12 +29,10 @@
   var fields = [];
   var before = {};
   var page = '';
-  var bar, who, status, tools, saveButton, revertButton, gate, patience;
+  var bar, who, status, tools, saveButton, revertButton;
   var busy = false;
   var editing = false;
   var token = '';
-  var gsi = null;
-  var waiting = [];
 
   function pageKey() {
     var path = location.pathname.replace(/\/+$/, '') || '/';
@@ -95,95 +93,23 @@
       .then(function (data) { return { status: response.status, data: data }; });
   }
 
-  /* ── signing in, on the page ── */
+  /* ── signing in ── */
 
-  function withGoogle(then) {
-    if (window.google && window.google.accounts && window.google.accounts.id) return then();
-    if (gsi === false) return;
-    waiting.push(then);
-    if (gsi === 'loading') return;
-    gsi = 'loading';
-    var script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.onload = function () {
-      gsi = true;
-      waiting.splice(0).forEach(function (fn) { fn(); });
-    };
-    script.onerror = function () {
-      gsi = false;
-      waiting.length = 0;
-      console.warn('cnpt admin: Google’s sign-in script could not be loaded.');
-    };
-    document.head.appendChild(script);
-  }
-
-  // the id_token Google just handed the browser, taken to the server to be checked. An address the
-  // site does not edit with gets nothing: no bar, no message, the page as it was.
-  function signedIn(response) {
-    drop();
+  // the id_token Google handed the popup, taken to the server to be checked. An address the site
+  // does not edit with gets nothing: no bar, no message, the page as it was.
+  function signedIn(credential) {
     fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ credential: response.credential })
+      body: JSON.stringify({ credential: credential })
     })
       .then(answer)
       .then(function (reply) {
-        if (reply.status === 200 && reply.data.email) {
-          // kept in a variable for the hour it is good for, and sent with each save
-          token = response.credential;
-          build();
-          return edit(reply.data.email);
-        }
-        if (window.google) window.google.accounts.id.disableAutoSelect();
-      })
-      .catch(function () {});
-  }
-
-  // Google's own account chooser, asked for straight away. If Google cannot show it — nobody is
-  // signed in to Google in this browser, or it has been dismissed too often — its own button is put
-  // at the foot of the page instead, and that is the only thing that ever appears before an editor
-  // is through.
-  function askGoogle(clientId) {
-    withGoogle(function () {
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: signedIn,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-        use_fedcm_for_prompt: true
-      });
-      window.google.accounts.id.prompt();
-      // whether the chooser actually came up cannot be seen from here, so if no account has come
-      // back shortly, Google's button goes up as well — that is the way in when nobody is signed
-      // in to Google in this browser at all.
-      clearTimeout(patience);
-      patience = setTimeout(function () { offerButton(clientId); }, 3000);
-    });
-  }
-
-  function offerButton(clientId) {
-    if (gate) return;
-    gate = make('div', 'admin-signin');
-    gate.setAttribute('data-cursor-off', '');
-    document.body.appendChild(gate);
-    window.google.accounts.id.renderButton(gate, {
-      theme: 'filled_black', size: 'medium', shape: 'pill', text: 'signin_with', logo_alignment: 'center'
-    });
-  }
-
-  function drop() {
-    clearTimeout(patience);
-    if (gate) gate.remove();
-    gate = null;
-  }
-
-  function ask() {
-    fetch('/api/admin', { headers: { Accept: 'application/json' } })
-      .then(answer)
-      .then(function (reply) {
-        if (reply.status === 200 && reply.data.client_id) return askGoogle(reply.data.client_id);
-        console.warn('cnpt admin:', reply.data.error || reply.status);
+        if (reply.status !== 200 || !reply.data.email) return;
+        // kept in a variable for the hour it is good for, and sent with each save
+        token = credential;
+        build();
+        edit(reply.data.email);
       })
       .catch(function () {});
   }
@@ -383,7 +309,6 @@
   // there is no session on the server to end: forgetting the token is signing out
   function signOut() {
     if (busy) return;
-    if (window.google && window.google.accounts) window.google.accounts.id.disableAutoSelect();
     token = '';
     close(true);
   }
@@ -426,7 +351,6 @@
     document.removeEventListener('keydown', keys, true);
     window.removeEventListener('beforeunload', warn);
     window.removeEventListener('resize', measure);
-    drop();
     document.documentElement.classList.remove('admin-editing');
     document.documentElement.classList.remove('admin-open');
     document.documentElement.style.removeProperty('--admin-h');
@@ -439,8 +363,8 @@
   }
 
   function open() {
-    if (bar || gate) return;
-    ask();
+    if (bar) return;
+    window.cnptSignin.take(signedIn);
   }
 
   window.cnptAdmin = { open: open };
