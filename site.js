@@ -2,7 +2,7 @@
 
 /* old single-page links (cnpt.ca/#team) go to the page that now holds that section */
 (function () {
-  var moved = { '#practices': '/#s-about', '#process': '/#s-about', '#team': '/network#team', '#talent': '/network#talent' };
+  var moved = { '#practices': '/#what', '#process': '/#process', '#top': '/', '#team': '/network#team', '#talent': '/network#talent' };
   if (location.pathname === '/' && moved[location.hash]) location.replace(moved[location.hash]);
 })();
 

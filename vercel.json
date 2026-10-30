@@ -7,7 +7,7 @@
     { "source": "/(.*)", "has": [{ "type": "host", "value": "main-cnpt.vercel.app" }], "destination": "https://cnpt.ca/$1", "permanent": true },
     { "source": "/(.*)", "has": [{ "type": "host", "value": "main-git-main-cnpt.vercel.app" }], "destination": "https://cnpt.ca/$1", "permanent": true },
     { "source": "/what-we-do", "destination": "/#what", "permanent": true },
-    { "source": "/practices", "destination": "/#s-about", "permanent": true },
+    { "source": "/practices", "destination": "/#what", "permanent": true },
     { "source": "/about", "destination": "/#what", "permanent": true },
     { "source": "/packages", "destination": "/#packages", "permanent": true },
     { "source": "/process", "destination": "/#process", "permanent": true },

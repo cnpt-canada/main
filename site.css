@@ -836,6 +836,11 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .sum-list li:hover .acc-mk{transform:scale(1.32)}
 }
 .sum-list p{margin-top:8px;font-size:15px;line-height:1.6;color:var(--fg-3);max-width:62ch}
+/* the short list of the same people: the name on the left, what they do set against it on the
+   right, and a hairline under each of them, the way the reference draws the row */
+#s-network .sum-list li{border-bottom:var(--hair) solid var(--line)}
+#s-network .sum-list p{max-width:none}
+@media(min-width:761px){#s-network .sum-list li > div > p{text-align:right}}
 /* the three practices, three across. No box is drawn: a card here is its share of the row, the air
    around it and the rule it opens under — the same rule every other block on this page opens under. */
 .pracs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px 18px;list-style:none;
