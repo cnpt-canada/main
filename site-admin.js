@@ -16,10 +16,9 @@
   var EDITABLE = { '/': 1, '/work': 1, '/network': 1 };
   var SAID = {
     not_configured: 'Admin mode is not set up on this deployment.',
-    not_signed_in: 'That session has expired. Sign in again.',
+    not_signed_in: 'Google’s hour is up. Press Exit and sign in again.',
     not_allowed: 'That account is not one of the site’s editors.',
     bad_credential: 'Google’s answer could not be checked. Try once more.',
-    stale_nonce: 'That took too long. Press the button again.',
     no_repository: 'The editor cannot write to the repository: check GITHUB_REPO and GITHUB_TOKEN.',
     out_of_date: 'This page changed in the repository since you opened it. Reload, then edit again.',
     empty_line: 'A line cannot be saved empty.',
@@ -35,6 +34,7 @@
   var bar, who, status, tools, saveButton, revertButton;
   var busy = false;
   var editing = false;
+  var token = '';
   var gsi = null;
   var waiting = [];
 
@@ -100,7 +100,7 @@
   /* ── signing in, on the page ── */
 
   function withGoogle(then) {
-    if (gsi === true) return then();
+    if (window.google && window.google.accounts && window.google.accounts.id) return then();
     if (gsi === false) return say('Google’s sign-in script could not be loaded.', true);
     waiting.push(then);
     if (gsi === 'loading') return;
@@ -126,15 +126,17 @@
     fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'signin', credential: response.credential })
+      body: JSON.stringify({ credential: response.credential })
     })
       .then(answer)
       .then(function (reply) {
-        if (reply.status === 200 && reply.data.email) return edit(reply.data.email);
+        if (reply.status === 200 && reply.data.email) {
+          // kept in a variable for the hour it is good for, and sent with each save
+          token = response.credential;
+          return edit(reply.data.email);
+        }
         if (window.google) window.google.accounts.id.disableAutoSelect();
         say(SAID[reply.data.error] || 'That sign-in did not go through.', true);
-        // a nonce that has gone stale only needs a fresh one and another press
-        if (reply.data.error === 'stale_nonce') ask(true);
       })
       .catch(function () { say('That sign-in could not be sent.', true); });
   }
@@ -148,7 +150,6 @@
     withGoogle(function () {
       window.google.accounts.id.initialize({
         client_id: info.client_id,
-        nonce: info.nonce,
         callback: signedIn,
         auto_select: false,
         cancel_on_tap_outside: true
@@ -161,14 +162,12 @@
     });
   }
 
-  // quiet is true when only a fresh nonce is wanted and the bar already says what it should
-  function ask(quiet) {
-    if (!quiet) say('…');
+  function ask() {
+    say('…');
     fetch('/api/admin', { headers: { Accept: 'application/json' } })
       .then(answer)
       .then(function (reply) {
-        if (reply.status === 200 && reply.data.email) return edit(reply.data.email);
-        if (reply.status === 401) return offerGoogle(reply.data);
+        if (reply.status === 200 && reply.data.client_id) return offerGoogle(reply.data);
         say(SAID[reply.data.error] || 'Admin mode is unavailable.', true);
       })
       .catch(function () { say('Admin mode is unavailable.', true); });
@@ -335,7 +334,7 @@
     say('Saving…');
     fetch('/api/content', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
       body: JSON.stringify({
         page: page,
         edits: list.map(function (el) { return { key: el.getAttribute('data-ed'), runs: runs(el) }; })
@@ -366,16 +365,12 @@
     sync();
   }
 
+  // there is no session on the server to end: forgetting the token is signing out
   function signOut() {
     if (busy) return;
     if (window.google && window.google.accounts) window.google.accounts.id.disableAutoSelect();
-    fetch('/api/admin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'logout' })
-    })
-      .catch(function () {})
-      .then(function () { close(true); });
+    token = '';
+    close(true);
   }
 
   // an editor is in: the same bar becomes the editing bar, and the page becomes typeable
@@ -424,6 +419,7 @@
     fields = [];
     before = {};
     editing = false;
+    token = '';
   }
 
   function open() {

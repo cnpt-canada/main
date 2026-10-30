@@ -1,9 +1,9 @@
 # Setting up cnpt.ca
 
 The site is static HTML, CSS and vanilla JavaScript, with no database and no build step: Vercel
-serves the files as they are. The moving parts are four functions in `api/` — two that take a form
-and send it as an email, and two behind admin mode, which signs an editor in with Google and saves
-by committing to this repository.
+serves the files as they are. The moving parts are four functions in `api/` — two that take a form and send it as
+an email, and two behind admin mode, which signs an editor in with Google and saves by committing
+to this repository.
 
 ## Running it locally
 
@@ -40,34 +40,28 @@ missing key is visible instead of losing messages.
 
 ## Admin mode
 
-Clicking the cnpt mark at the foot of any page puts a bar along the bottom with Google's sign-in
-button in it. Picking an account happens in Google's popup, so the page never leaves; once an
-address in `ADMIN_EMAILS` is in, the lines of copy on the page become typeable and Save commits the
-page file to `main`. There is no content store — the HTML in git is the content, and a save is a
-release like any other commit.
+Clicking `© 2026 cnpt` at the foot of any page puts a bar along the bottom with Google's sign-in
+button in it. Picking an account happens in Google's popup, so the page never leaves; an address
+that is one of the editors gets the lines of copy on that page made typeable, and Save commits the
+page file to `main`. Anyone else is told the account is not an editor and nothing happens.
 
-Set these in Vercel -> Settings -> Environment Variables. Leave any of the first three empty and
-there is no editor at all: the mark says admin mode is not set up and nothing else changes.
+Signing in needs nothing set: the Google client id is a public value and lives in
+`api/_lib/admin.js`, and the editors are held there as SHA-256 of each address, so this public
+repository carries no one's email. `GOOGLE_CLIENT_ID` and `ADMIN_EMAILS` override both if a new
+address has to get in without a commit.
 
-| Variable | Value |
-| --- | --- |
-| `GOOGLE_CLIENT_ID` | from the OAuth client below |
-| `ADMIN_EMAILS` | the Google addresses that may edit, comma separated |
-| `ADMIN_SECRET` | optional -- without it one is derived from `GOOGLE_CLIENT_SECRET` |
-| `GITHUB_REPO` | `cnpt-canada/main` |
-| `GITHUB_TOKEN` | fine-grained token, this repository only, **Contents: read and write** |
+There is no session cookie and no secret of ours. Google's id_token, good for about an hour, travels
+with every request and is checked from scratch each time -- signature against Google's published
+keys, then issuer, audience, expiry, `email_verified`, and the address against the editors.
 
-The Google client: [Google Cloud Console](https://console.cloud.google.com) -> APIs & Services ->
-**OAuth consent screen** (External, scopes `openid` and `email` only, so it never goes for
-verification -- add each editor under Test users, or publish it, since `ADMIN_EMAILS` is what
-actually decides) -> **Credentials -> OAuth client ID -> Web application**, with
-**Authorised JavaScript origins** = `https://cnpt.ca`. No redirect URI: the sign-in happens in the
-page, so there is nothing to redirect to. No client secret either -- the browser receives the
-`id_token` and `api/admin.js` verifies it against Google's published keys, checking the issuer,
-audience, expiry, the nonce that page asked for, and that Google has verified the address.
+Two things it does need:
 
-`GITHUB_TOKEN` can push to the branch that deploys, so it can publish the site. Scope it to this one
-repository, give it nothing but Contents, and give it an expiry.
+- **Google Cloud** -> Credentials -> the web client -> **Authorised JavaScript origins** must include
+  `https://cnpt.ca`. Without it Google answers `invalid_client / no registered origin` and the button
+  cannot sign anyone in. No redirect URI is used.
+- **Saving** needs `GITHUB_REPO` (`cnpt-canada/main`) and `GITHUB_TOKEN` in Vercel -- a fine-grained
+  token for this repository only, **Contents: read and write**. It can push to the branch that
+  deploys, so it can publish the site: give it an expiry. Without it everything but Save works.
 
 Admin mode edits text on `/`, `/work` and `/network` -- 178 lines, each marked with a `data-ed` key
 in the HTML. It cannot touch layout, images, links or section order, and a line sharing its element

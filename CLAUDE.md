@@ -24,10 +24,12 @@ cnpt.ca, so a push is a release.
   Colours are tokens (`--bg`, `--fg`, `--line`, `--signal`); anything sitting on the signal pink stays `#fff`
   in both themes.
 - `site-head.js` applies the saved theme before the first paint; `site.js` is everything else.
-- Admin mode: the mark at the foot of the page signs an editor in with Google (`api/admin.js`) and
-  lets them retype the lines marked `data-ed` in the HTML. Saving commits the page file to `main`
-  (`api/content.js`), so a save is a release and there is no content store. `site-admin.js` is
-  fetched only for an editor who is already in. `SETUP.md` has the whole of it.
+- Admin mode: `© 2026 cnpt` at the foot of the page opens a bar with Google's sign-in button in it;
+  an editor retypes the lines marked `data-ed` in the HTML and Save commits the page file to `main`
+  (`api/content.js`), so a save is a release and there is no content store. Google's id_token travels
+  with each request and is verified every time — no session cookie, no secret of ours. The client id
+  and the editors (as hashes) are in `api/_lib/admin.js`. `site-admin.js` is fetched only when the
+  line is pressed. `SETUP.md` has the rest.
 - Icons live in `site-icons.svg` and are used as `<use href="/site-icons.svg#id">`, drawn 24×24 with a 2px
   stroke in `currentColor`.
 - The site has no dependencies at all, so a deploy is just Vercel copying files. Keep it that way:

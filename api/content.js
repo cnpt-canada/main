@@ -1,10 +1,10 @@
 // POST /api/content — save the lines an editor changed on one page.
 //
-// Three things have to hold before anything is written: the request came from this site, the cookie
-// is a live session for an address that is still in ADMIN_EMAILS, and every line still sits in an
-// element that holds words only. Then the page file is committed, and the deploy is the publish.
+// Three things have to hold before anything is written: the request came from this site, it carries
+// an id_token Google signed for an address that is one of the editors, and every line still sits in
+// an element that holds words only. Then the page file is committed, and the deploy is the publish.
 import { fail, json, methodNotAllowed, readBody, route } from './_lib/http.js';
-import { adminConfig, adminEmail } from './_lib/admin.js';
+import { adminConfig, editor } from './_lib/admin.js';
 import { EditError, KEY_RE, applyEdits, pageFile } from './_lib/edit.js';
 import { readFile, repoConfig, writeFile } from './_lib/github.js';
 
@@ -13,7 +13,7 @@ export default route(async (req, res) => {
 
   const config = adminConfig();
   if (!config) return fail(res, 503, 'not_configured');
-  const email = adminEmail(req, config);
+  const email = await editor(req, config);
   if (!email) return fail(res, 401, 'not_signed_in');
   const repo = repoConfig();
   if (!repo) return fail(res, 503, 'no_repository');
