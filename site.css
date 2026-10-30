@@ -830,14 +830,17 @@ footer .foot-home[role="button"]{cursor:pointer}
 .admin-editing [data-ed]:empty::before{content:"empty";font-style:italic;color:var(--fg-3)}
 /* the bar is as tall as its own rows: on a phone they wrap, so site-admin.js measures it and the
    page keeps exactly that much room under the footer */
-.admin-editing body{padding-bottom:calc(var(--admin-h,96px) + 28px)}
+.admin-open body{padding-bottom:calc(var(--admin-h,96px) + 28px)}
 
 .admin-bar{position:fixed;left:0;right:0;bottom:0;z-index:90;display:flex;align-items:center;
   flex-wrap:wrap;gap:10px 14px;padding:14px var(--pad);background:var(--slab);color:var(--on-slab);
   font-size:13px;letter-spacing:-0.014em;box-shadow:0 -1px 0 rgba(255,255,255,.14)}
 .admin-mode{font-weight:var(--w-title);flex:none}
 .admin-who{flex:none;min-width:0;max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--on-slab-2)}
-.admin-status{flex:1 1 240px;min-width:0;color:var(--on-slab-2)}
+.admin-status{flex:1 1 200px;min-width:0;color:var(--on-slab-2)}
+/* Google's own button sits in the bar beside ours, so the sign-in is where the editing is */
+.admin-tools{flex:none;display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.admin-gbtn{display:flex;align-items:center;min-height:34px}
 .admin-status.is-trouble{color:#fff}
 .admin-status.is-trouble::before{content:"";display:inline-block;width:7px;height:7px;margin-right:8px;
   border-radius:var(--r-cap);background:var(--signal);vertical-align:1px}

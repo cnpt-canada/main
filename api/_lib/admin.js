@@ -5,18 +5,22 @@
 // rides in one signed cookie until it expires. Nothing is provisioned, so nothing can be suspended
 // out from under the site — if these variables are missing the site is simply a site with no editor.
 //
-// The login is the ordinary OAuth 2.0 authorization-code flow, run on the server. The browser never
-// loads Google's sign-in script — it could not, the site's Content-Security-Policy allows scripts
-// from this origin only — and the client secret never leaves the function.
+// Signing in happens in the page. The editor presses Google's own button in the bar at the foot of
+// the screen, picks an account in Google's popup, and the page they were reading is still there
+// underneath — nothing navigates away and nothing comes back on a redirect. Google hands the browser
+// a signed id_token, the browser posts it here, and this file checks it: the signature against
+// Google's published keys, then the issuer, the audience, the expiry, the nonce this page asked for,
+// and that Google has verified the address itself. Only then is there a session.
+//
+// That is why there is no client secret: nothing here ever speaks to Google on the editor's behalf,
+// it only reads what Google signed.
 import { createHmac, createPublicKey, createVerify, randomBytes, timingSafeEqual } from 'node:crypto';
 
 export const SESSION_COOKIE = 'cnpt_admin';
-export const LOGIN_COOKIE = 'cnpt_login';
+export const NONCE_COOKIE = 'cnpt_nonce';
 export const SESSION_MS = 12 * 60 * 60 * 1000; // a working day, then sign in again
-export const LOGIN_MS = 10 * 60 * 1000;        // long enough to pick an account
+export const NONCE_MS = 15 * 60 * 1000;        // long enough to pick an account
 
-const GOOGLE_AUTH = 'https://accounts.google.com/o/oauth2/v2/auth';
-const GOOGLE_TOKEN = 'https://oauth2.googleapis.com/token';
 const GOOGLE_CERTS = 'https://www.googleapis.com/oauth2/v3/certs';
 const ISSUERS = ['https://accounts.google.com', 'accounts.google.com'];
 
@@ -24,14 +28,13 @@ const ISSUERS = ['https://accounts.google.com', 'accounts.google.com'];
 // an unlocked one.
 export function adminConfig() {
   const id = process.env.GOOGLE_CLIENT_ID;
-  const secret = process.env.GOOGLE_CLIENT_SECRET;
   const key = process.env.ADMIN_SECRET;
   const emails = String(process.env.ADMIN_EMAILS || '')
     .split(/[,;\s]+/)
     .map((s) => s.trim().toLowerCase())
     .filter((s) => s.includes('@'));
-  if (!id || !secret || !key || key.length < 24 || !emails.length) return null;
-  return { id, secret, key, emails: new Set(emails) };
+  if (!id || !key || key.length < 24 || !emails.length) return null;
+  return { id, key, emails: new Set(emails) };
 }
 
 const b64url = (buf) => Buffer.from(buf).toString('base64url');
@@ -114,37 +117,6 @@ export const newToken = () => randomBytes(24).toString('base64url');
 
 // ─── Google ───
 
-export function loginUrl(config, redirectUri, state, nonce) {
-  const query = new URLSearchParams({
-    client_id: config.id,
-    redirect_uri: redirectUri,
-    response_type: 'code',
-    scope: 'openid email',
-    state,
-    nonce,
-    access_type: 'online',
-    prompt: 'select_account' // the studio shares machines; never silently reuse the last account
-  });
-  return GOOGLE_AUTH + '?' + query;
-}
-
-export async function exchangeCode(config, code, redirectUri) {
-  const response = await fetch(GOOGLE_TOKEN, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      code,
-      client_id: config.id,
-      client_secret: config.secret,
-      redirect_uri: redirectUri,
-      grant_type: 'authorization_code'
-    })
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data.id_token) throw new Error('token_exchange_failed: ' + (data.error || response.status));
-  return data.id_token;
-}
-
 // Google's signing keys, kept for an hour. A warm function reuses them; a cold one fetches once.
 let certs = { at: 0, keys: [] };
 async function googleKeys() {
@@ -156,9 +128,9 @@ async function googleKeys() {
   return certs.keys;
 }
 
-// The token came straight from Google's token endpoint over TLS, so this is belt and braces — but
-// the braces are cheap: the signature against Google's published keys, then the issuer, the
-// audience, the expiry, the nonce this login sent, and that Google has verified the address itself.
+// This token reached us through the browser, so every part of it is checked before it means
+// anything: the signature against Google's published keys, then the issuer, the audience, the
+// expiry, the nonce this page asked for, and that Google has verified the address itself.
 export async function verifyIdToken(idToken, config, nonce) {
   const parts = String(idToken).split('.');
   if (parts.length !== 3) throw new Error('malformed_id_token');

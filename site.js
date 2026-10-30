@@ -340,10 +340,10 @@ window.addEventListener('error', function (e) {
   root.classList.add('motion-ready');
 })();
 
-/* the mark in the footer is the way in to admin mode.
-   Google says who is clicking, ADMIN_EMAILS says whether that person may edit the site's words. For
-   anyone else the click says so and nothing on the page changes; the editor itself (site-admin.js)
-   is only fetched once an address has been let in, so a visitor never loads it. */
+/* the mark in the footer opens admin mode: a bar along the bottom with Google's sign-in button in
+   it, and once an editor is in, the same bar saves. The page never goes anywhere.
+   site-admin.js carries all of that and is fetched only when the mark is pressed, so a visitor
+   loads neither it nor anything of Google's. */
 (function () {
   var mark = document.querySelector('footer .foot-home');
   if (!mark) return;
@@ -353,60 +353,34 @@ window.addEventListener('error', function (e) {
   mark.setAttribute('tabindex', '0');
   mark.setAttribute('aria-label', 'Admin sign-in');
 
-  function here() { return location.pathname + location.search; }
-
-  function note(text) {
-    var el = document.querySelector('.admin-note');
-    if (!el) {
-      el = document.createElement('p');
-      el.className = 'admin-note';
-      el.setAttribute('role', 'status');
-      mark.parentNode.appendChild(el);
-    }
-    el.textContent = text;
-    clearTimeout(note.timer);
-    note.timer = setTimeout(function () { el.remove(); }, 8000);
-  }
-
-  function edit(email) {
-    if (window.cnptAdmin) return window.cnptAdmin.open(email);
+  function open() {
+    if (window.cnptAdmin) return window.cnptAdmin.open();
     if (loading) return;
     loading = true;
     var script = document.createElement('script');
     script.src = '/site-admin.js';
-    script.onload = function () { loading = false; window.cnptAdmin.open(email); };
-    script.onerror = function () { loading = false; note('The editor could not be loaded.'); };
+    script.onload = function () { loading = false; window.cnptAdmin.open(); };
+    script.onerror = function () {
+      loading = false;
+      var note = document.createElement('p');
+      note.className = 'admin-note';
+      note.setAttribute('role', 'status');
+      note.textContent = 'The editor could not be loaded.';
+      mark.parentNode.appendChild(note);
+      setTimeout(function () { note.remove(); }, 8000);
+    };
     document.head.appendChild(script);
   }
 
-  // back is true on the hop back from Google: a session that is somehow still not there must not
-  // send the browser round again, or it never stops
-  function enter(back) {
-    fetch('/api/admin', { headers: { Accept: 'application/json' } })
-      .then(function (r) {
-        return r.json().catch(function () { return {}; }).then(function (data) {
-          if (r.status === 200 && data.email) return edit(data.email);
-          if (r.status === 401) {
-            if (back) return note('That sign-in did not stick. Check that this browser is keeping cookies.');
-            return location.assign('/api/admin?login=1&next=' + encodeURIComponent(here()));
-          }
-          note(data.error === 'not_configured' ? 'Admin mode is not set up on this deployment.' : 'Admin mode is unavailable.');
-        });
-      })
-      .catch(function () { note('Admin mode is unavailable.'); });
-  }
-
-  mark.addEventListener('click', function () { enter(); });
+  mark.addEventListener('click', open);
   mark.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); enter(); }
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
   });
 
-  // back from Google: the callback returns the editor to the page they started on, and says how it went
-  var how = location.hash;
-  if (how === '#admin' || how === '#admin-denied' || how === '#admin-error') {
-    history.replaceState(null, '', here());
-    if (how === '#admin') enter(true);
-    else note(how === '#admin-denied' ? 'That account is not one of the site’s editors.' : 'That sign-in did not complete.');
+  // cnpt.ca/admin redirects to /#admin, which is the same as pressing the mark
+  if (location.hash === '#admin') {
+    history.replaceState(null, '', location.pathname + location.search);
+    open();
   }
 })();
 
