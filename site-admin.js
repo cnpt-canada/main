@@ -109,7 +109,7 @@
         // kept in a variable for the hour it is good for, and sent with each save
         token = credential;
         build();
-        edit(reply.data.email);
+        edit(reply.data.email, reply.data.save !== false);
       })
       .catch(function () {});
   }
@@ -314,7 +314,7 @@
   }
 
   // an editor is in: the same bar becomes the editing bar, and the page becomes typeable
-  function edit(email) {
+  function edit(email, canSave) {
     if (editing) return;
     editing = true;
     who.textContent = email;
@@ -337,6 +337,8 @@
     sync();
     if (!page) say('Admin mode edits the home page, Client works and Network. This is not one of them.', true);
     else if (!fields.length) say('Nothing on this page is marked editable.', true);
+    // better said now than after a page of typing
+    else if (canSave === false) say(SAID.no_repository, true);
   }
 
   function close(force) {
