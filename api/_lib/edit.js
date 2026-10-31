@@ -39,7 +39,9 @@ const escapeText = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').r
 
 // One line, as the file will hold it: whitespace collapsed, the ends trimmed, empty runs dropped.
 export function renderRuns(runs, key) {
-  if (!Array.isArray(runs) || !runs.length || runs.length > MAX_RUNS) throw new EditError('invalid_runs', key);
+  if (!Array.isArray(runs) || runs.length > MAX_RUNS) throw new EditError('invalid_runs', key);
+  // a line the editor emptied is a thing that happens, not malformed input: say which it is
+  if (!runs.length) throw new EditError('empty_line', key);
   let text = '';
   const parts = [];
   for (const run of runs) {

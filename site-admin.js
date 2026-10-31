@@ -19,7 +19,8 @@
     bad_credential: 'Google’s answer could not be checked. Try once more.',
     no_repository: 'The editor cannot write to the repository: check GITHUB_REPO and GITHUB_TOKEN.',
     out_of_date: 'This page changed in the repository since you opened it. Reload, then edit again.',
-    empty_line: 'A line cannot be saved empty.',
+    empty_line: 'A line cannot be saved empty. Put something back, or press Revert.',
+    invalid_runs: 'That line could not be read. Reload, then edit again.',
     line_too_long: 'That line is too long to save.',
     not_a_text_element: 'That line holds more than words now, so nothing was saved.',
     unknown_key: 'That line is no longer in the page. Reload, then edit again.',
@@ -270,6 +271,13 @@
   function save() {
     var list = changed();
     if (busy || !list.length) return;
+    // an emptied line is caught here rather than by the server, so the editor is put on the line
+    // that is wrong instead of being handed an error about the whole page
+    var blank = list.filter(function (el) { return !runs(el).length; });
+    if (blank.length) {
+      blank[0].focus();
+      return say(SAID.empty_line, true);
+    }
     busy = true;
     saveButton.disabled = revertButton.disabled = true;
     say('Saving…');
