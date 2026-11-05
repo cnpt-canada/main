@@ -8,7 +8,9 @@
   /* one accent, spent on the action that starts a project and nothing else */
   --signal:#E60045;
   --ink:#0E0E0D; --paper:#FFFFFF;
-  --nav-h:68px; --sec-pad:clamp(54px,5.6vw,92px);
+  /* the bar's own height, and how far down the window it floats: anything that has to clear the
+     bar needs both, because the bar's bottom edge is the two added together */
+  --nav-h:68px; --nav-top:8px; --sec-pad:clamp(54px,5.6vw,92px);
   --max:1400px; --pad:clamp(16px,2.6vw,34px); --hair:1px;
   /* one geometry, and it is generous: the references round a card hard enough that the corner is
      part of the look rather than an apology for a rectangle */
@@ -55,7 +57,10 @@
 }
 ::selection{background:var(--signal);color:#fff}
 *{box-sizing:border-box;margin:0;padding:0}
-html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:var(--nav-h)}
+/* a link to a section lands below the bar, not behind it: the bar's height, the gap it floats in,
+   and that gap again underneath so the first line is not touching it */
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;
+  scroll-padding-top:calc(var(--nav-h) + var(--nav-top) * 2)}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:var(--t-body);
   line-height:1.6;font-weight:var(--w-body);letter-spacing:-0.014em;-webkit-font-smoothing:antialiased;
   text-rendering:optimizeLegibility}
@@ -70,7 +75,7 @@ a{color:inherit;text-decoration:none}
 /* nav */
 /* the gutter comes off the width as well as off the cap, the same way the contact band takes it,
    so the bar keeps its margin on a window narrower than the page */
-nav{position:sticky;top:8px;z-index:20;margin:8px auto 0;
+nav{position:sticky;top:var(--nav-top);z-index:20;margin:var(--nav-top) auto 0;
   width:calc(100% - var(--pad) * 2);max-width:calc(var(--max) - var(--pad) * 2);
   background:var(--bg-2);border-radius:var(--r-nav);box-shadow:0 1px 2px rgba(0,0,0,.04)}
 /* a card's own padding, so the wordmark starts where the type on every card below it starts */
@@ -267,7 +272,9 @@ h2,:is(.sec,.cta) h1{font-size:var(--t-h2);font-weight:var(--w-display);letter-s
 .member-role{font-size:13px;color:var(--fg-3);margin-top:8px}
 /* a line or two on what each person does, under their role */
 .member-bio{margin-top:12px;font-size:13px;line-height:1.55;color:var(--fg-3)}
-.member-role span{white-space:nowrap}
+/* a role keeps to one line while there is room for it; one too long for the line beside it drops
+   whole to the next, and only one too long for the card at all breaks inside */
+.member-role span{display:inline-block;max-width:100%;white-space:normal}
 /* spec sheet: label | value rows */
 .member-spec > div{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px;align-items:baseline;
   padding:7px 0}
@@ -621,7 +628,7 @@ footer .tag{font-size:14px;color:var(--fg-3);margin-top:22px;max-width:34ch;line
 
 /* a page built from several sections keeps that section's title at the top while you are inside it,
    so the page stays divided as it scrolls */
-.page-sections .sec-head{position:sticky;top:var(--nav-h);z-index:6;gap:8px 20px;
+.page-sections .sec-head{position:sticky;top:calc(var(--nav-h) + var(--nav-top));z-index:6;gap:8px 20px;
   margin-bottom:40px;padding:14px var(--card-pad) 15px;border-top:0;background:var(--bg)}
 
 /* phone menu: the section links move into a sheet under the nav */
@@ -805,8 +812,6 @@ nav .nav-sheet .wrap{display:block;height:auto}
   .nav-actions{gap:6px}
   .nav-actions .btn{padding:0 12px;font-size:12.5px}
   .nav-home .wm-line{display:none}
-  /* beside a 112px portrait there is no room to keep a two-word role on one line */
-  .member-role span{white-space:normal}
 }
 @media(max-width:620px){
   .nav-menu{width:36px;height:36px}
