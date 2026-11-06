@@ -418,3 +418,32 @@ window.addEventListener('error', function (e) {
   window.addEventListener('resize', measure);
 })();
 
+
+/* a film plays while it is on screen
+   Nothing is fetched until it is wanted: a visitor who never scrolls to the entry pays nothing for
+   the film, and one who scrolls past it again stops paying for it. A reader who has asked for less
+   motion, or whose connection is saving data, keeps the poster and is given controls instead, so
+   the film is still theirs to start. */
+(function () {
+  var films = document.querySelectorAll('video[data-film]');
+  if (!films.length) return;
+  var each = function (fn) { Array.prototype.forEach.call(films, fn); };
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    || (navigator.connection && navigator.connection.saveData)) {
+    return each(function (film) { film.controls = true; });
+  }
+
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      var film = e.target;
+      if (!e.isIntersecting) return film.pause();
+      // the first time it comes into view is the first time it is worth downloading
+      if (film.preload === 'none') film.preload = 'auto';
+      var started = film.play();
+      if (started && started.catch) started.catch(function () { film.controls = true; });
+    });
+  }, { threshold: 0.35 });
+
+  each(function (film) { io.observe(film); });
+})();
