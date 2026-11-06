@@ -9,3 +9,7 @@ chrome.log
 
 # personal permission settings, not the team's
 .claude/settings.local.json
+
+# the full-quality export a film was made from: it stays on the machine that made it, because
+# what the site serves is the encode beside it and the master is too heavy to carry to every deploy
+*-master.mp4
